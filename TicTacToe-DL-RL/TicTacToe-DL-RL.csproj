@@ -42,8 +42,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="NeuralNetwork.cs" />
+    <Compile Include="Params.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TicTacToe.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

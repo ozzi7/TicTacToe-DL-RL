@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace TicTacToe_DL_RL
 {
-    class Program
+    class NeuralNetwork
     {
-        static void Main(string[] args)
+        public NeuralNetwork()
         {
-            NeuralNetwork nn = new NeuralNetwork();
+         
         }
     }
 }
