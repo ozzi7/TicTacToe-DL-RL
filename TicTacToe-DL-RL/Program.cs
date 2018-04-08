@@ -8,9 +8,15 @@ namespace TicTacToe_DL_RL
 {
     class Program
     {
-        static void Main(string[] args)
+        void Main(string[] args)
         {
             NeuralNetwork nn = new NeuralNetwork();
+
+            Train();
+        }
+        void Train()
+        {
+            Trainer trainer = new Trainer();
         }
     }
 }

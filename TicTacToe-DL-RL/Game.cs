@@ -8,9 +8,9 @@ namespace TicTacToe_DL_RL
 {
     class Game
     {
-        int[,] gameBoard = new int[3, 3] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
-        int playerX = 1;
-        int playerY = -1;
+        public int[,] gameBoard = new int[3, 3] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 0, 0 } };
+        public int playerX = 1;
+        public int playerY = -1;
 
         public List<Tuple<int,int>> GetMoves()
         {
