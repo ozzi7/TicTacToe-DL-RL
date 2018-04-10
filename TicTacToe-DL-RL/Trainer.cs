@@ -8,39 +8,60 @@ namespace TicTacToe_DL_RL
 {
     class Trainer
     {
-        Trainer()
+        public Trainer()
         {
 
         }
 
-        public void GenerateTrainingGames() {
-           /* List<Position> history;
-
-            for (int game_ply = 0; game_ply < 450; ++game_ply)
+        public int PlayOneGame()
+        {
+            List<Tuple<int, int>> history = new List<Tuple<int, int>>();
+            Game game = new Game();
+            for (int curr_ply = 0; curr_ply < Params.maxPlies; ++curr_ply)
             {
-                if (bh.cur().is_draw())
+                List<Tuple<int, int>> moves = game.GetMoves();
+
+                if (game.HasWinner())
+                {
+                    return (game.sideToMove == 1) ? -1 : 1;
+                }
+                else if (moves.Count == 0 && game.IsDrawn())
                 {
                     return 0;
                 }
-                MoveList<LEGAL> moves(bh.cur());
-                if (moves.size() == 0)
-                {
-                    if (bh.cur().checkers())
-                    {
-                        // Checkmate
-                        return bh.cur().side_to_move() == WHITE ? -1 : 1;
-                    }
-                    else
-                    {
-                        // Stalemate
-                        return 0;
-                    }
-                }
-                Limits.startTime = now();
-                Move move = search->think(bh.shallow_clone());
 
-                bh.do_move(move);*/
+                Tuple<int,int> move = game.GetMove();
+                game.DoMove(move);
+                history.Add(move);
             }
+            return game.score;
+        }
+        private void Search()
+        {
+            /*
+             * def search(s, game, nnet):
+    if game.gameEnded(s): return -game.gameReward(s)
+
+    if s not in visited:
+        visited.add(s)
+        P[s], v = nnet.predict(s)
+        return -v
+  
+    max_u, best_a = -float("inf"), -1
+    for a in range(game.getValidActions(s)):
+        u = Q[s][a] + c_puct*P[s][a]*sqrt(sum(N[s]))/(1+N[s][a])
+        if u>max_u:
+            max_u = u
+            best_a = a
+    a = best_a
+    
+    sp = game.nextState(s, a)
+    v = search(sp, game, nnet)
+
+    Q[s][a] = (N[s][a]*Q[s][a] + v)/(N[s][a]+1)
+    N[s][a] += 1
+    return -v
+    */
         }
     }
 }
