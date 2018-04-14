@@ -12,12 +12,10 @@ namespace TicTacToe_DL_RL
         {
          
         }
-<<<<<<< HEAD
+
         public void SaveToFile(string filename)
         {
 
         }
-=======
->>>>>>> e402893c6ab723b8426140b7615569a223867169
     }
 }

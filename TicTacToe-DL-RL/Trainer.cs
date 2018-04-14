@@ -8,7 +8,6 @@ namespace TicTacToe_DL_RL
 {
     class Trainer
     {
-<<<<<<< HEAD
         private NeuralNetwork nn;
         private Node<Position> MCTSRootNode;
 
@@ -24,41 +23,33 @@ namespace TicTacToe_DL_RL
                 PlayOneGame();
             }
         }
-=======
+
         public Trainer()
         {
 
         }
 
->>>>>>> e402893c6ab723b8426140b7615569a223867169
         public int PlayOneGame()
         {
             List<Tuple<int, int>> history = new List<Tuple<int, int>>();
             Game game = new Game();
-<<<<<<< HEAD
+
             MCTSRootNode = new Node<Position>();
             MCTSRootNode.Value = game.pos;
 
-=======
->>>>>>> e402893c6ab723b8426140b7615569a223867169
             for (int curr_ply = 0; curr_ply < Params.maxPlies; ++curr_ply)
             {
                 List<Tuple<int, int>> moves = game.GetMoves();
 
                 if (game.HasWinner())
                 {
-<<<<<<< HEAD
                     return (game.pos.sideToMove == 1) ? -1 : 1;
-=======
-                    return (game.sideToMove == 1) ? -1 : 1;
->>>>>>> e402893c6ab723b8426140b7615569a223867169
                 }
                 else if (moves.Count == 0 && game.IsDrawn())
                 {
                     return 0;
                 }
 
-<<<<<<< HEAD
                 Tuple<int,int> move = MCTSRootNode.Value.bestMove;
                 game.DoMove(move);
                 history.Add(move);
@@ -85,16 +76,9 @@ namespace TicTacToe_DL_RL
             if (!game.HasMoves())
             {
                 return -game.pos.score;
-            } 
-                
-            if (currNode.visitCount == 0)
-            {
-                currNode.visitCount++;
-                Tuple<List<double>, double> currPosPrediction = nn.Predict(currNode.Value);
-                return -currPosPrediction.Item2;
             }
 
-            for(int i = 0; i < game.GetMoves().Count; ++i)
+            /*for(int i = 0; i < game.GetMoves().Count; ++i)
             {
                 UCT_score = Q[s][a] + c_puct * P[s][a] * sqrt(sum(N[s])) / (1 + N[s][a])
                 if u > max_u:
@@ -111,40 +95,6 @@ namespace TicTacToe_DL_RL
             N[s][a] += 1
             return -v
             */
-=======
-                Tuple<int,int> move = game.GetMove();
-                game.DoMove(move);
-                history.Add(move);
-            }
-            return game.score;
-        }
-        private void Search()
-        {
-            /*
-             * def search(s, game, nnet):
-    if game.gameEnded(s): return -game.gameReward(s)
-
-    if s not in visited:
-        visited.add(s)
-        P[s], v = nnet.predict(s)
-        return -v
-  
-    max_u, best_a = -float("inf"), -1
-    for a in range(game.getValidActions(s)):
-        u = Q[s][a] + c_puct*P[s][a]*sqrt(sum(N[s]))/(1+N[s][a])
-        if u>max_u:
-            max_u = u
-            best_a = a
-    a = best_a
-    
-    sp = game.nextState(s, a)
-    v = search(sp, game, nnet)
-
-    Q[s][a] = (N[s][a]*Q[s][a] + v)/(N[s][a]+1)
-    N[s][a] += 1
-    return -v
-    */
->>>>>>> e402893c6ab723b8426140b7615569a223867169
         }
     }
 }
