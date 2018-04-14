@@ -50,7 +50,11 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Game.cs" />
     <Compile Include="Trainer.cs" />
+<<<<<<< HEAD
     <Compile Include="Node.cs" />
+=======
+    <Compile Include="GameTree.cs" />
+>>>>>>> e402893c6ab723b8426140b7615569a223867169
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
