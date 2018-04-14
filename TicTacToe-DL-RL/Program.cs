@@ -8,8 +8,16 @@ namespace TicTacToe_DL_RL
 {
     class Program
     {
-        static void Main(string[] args)
+        void Main(string[] args)
         {
+            Train();
+        }
+        public void Train()
+        {
+            NeuralNetwork nn = new NeuralNetwork();
+            Trainer trainer = new Trainer(nn);
+            trainer.Train();
+            nn.SaveToFile("test.txt");
         }
     }
 }
