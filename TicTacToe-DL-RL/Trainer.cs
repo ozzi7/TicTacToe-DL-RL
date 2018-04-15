@@ -64,11 +64,12 @@ namespace TicTacToe_DL_RL
         /// <returns></returns>Eval
         private double Search(Node<Position> currNode)
         {
-            Tuple<List<double>, double> currPosPrediction = nn.Predict(currNode.Value);
+            Tuple<List<float>, float> currPosPrediction = nn.Predict(currNode.Value);
 
             if (currNode.visitCount == 0)
             {
                 currNode.visitCount++;
+
                 return -currPosPrediction.Item2;
             }
             Game game = new Game(currNode.Value);
@@ -116,6 +117,24 @@ namespace TicTacToe_DL_RL
                 currNode.N_a[i] += 1;
             }
             return -v;
+
+            /*for(int i = 0; i < game.GetMoves().Count; ++i)
+            {
+                UCT_score = Q[s][a] + c_puct * P[s][a] * sqrt(sum(N[s])) / (1 + N[s][a])
+                if u > max_u:
+                    max_u = u
+                    best_a = a
+            }
+               
+            a = best_a
+    
+            sp = game.nextState(s, a)
+            v = search(sp, game, nnet)
+
+            Q[s][a] = (N[s][a]*Q[s][a] + v)/(N[s][a]+1)
+            N[s][a] += 1
+            return -v
+            */
         }
     }
 }
