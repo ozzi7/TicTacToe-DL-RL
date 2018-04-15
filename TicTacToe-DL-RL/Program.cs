@@ -10,21 +10,14 @@ namespace TicTacToe_DL_RL
     {
         void Main(string[] args)
         {
-            NeuralNetwork nn = new NeuralNetwork();
-            Game game = new Game();
             Train();
         }
-        void Train()
+        public void Train()
         {
-            Trainer trainer = new Trainer();
-            GenerateTrainingGames(trainer);
-        }
-        public void GenerateTrainingGames(Trainer trainer)
-        {
-            for (int i = 0; i < Params.nofTrainingGames; ++i)
-            {
-                trainer.PlayOneGame();
-            }
+            NeuralNetwork nn = new NeuralNetwork();
+            Trainer trainer = new Trainer(nn);
+            trainer.Train();
+            nn.SaveToFile("test.txt");
         }
     }
 }

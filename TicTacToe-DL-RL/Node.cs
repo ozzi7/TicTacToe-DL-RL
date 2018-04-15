@@ -1,5 +1,6 @@
 ﻿/*
  * Used for MCTS
+ * Nodes have a board position and some metadata such as upper confidence score
 */
 using System;
 using System.Collections.Generic;
@@ -17,10 +18,10 @@ namespace TicTacToe_DL_RL
          * N_p visit count of parent
          * c >= 0, low c = choose lucrative nodes, else explore
         */
-        public double UCT_score_initial = 0.0;
-        public double UCT_score = 0.0;
-        public bool visited = false;
-        public int N_p = 0;
+        public double UCT_score = Double.NegativeInfinity;
+        public int visitCount = 0;
+        public List<int> N_a = new List<int>();
+        public List<double> Q_a = new List<double>();
 
         public TValue Value { get; set; }
         public List<Node<TValue>> Children { get; private set; }
