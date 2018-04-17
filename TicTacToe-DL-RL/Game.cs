@@ -51,16 +51,16 @@ namespace TicTacToe_DL_RL
         }
         public bool HasWinner()
         {
-            if (((pos.gameBoard[0, 0] == pos.gameBoard[0, 1]) && (pos.gameBoard[0, 0] == pos.gameBoard[0, 2])) ||
-               ((pos.gameBoard[1, 0] == pos.gameBoard[1, 1]) && (pos.gameBoard[1, 0] == pos.gameBoard[1, 2])) ||
-               ((pos.gameBoard[2, 0] == pos.gameBoard[2, 1]) && (pos.gameBoard[2, 0] == pos.gameBoard[2, 2])) ||
+            if (((pos.gameBoard[0, 0] == pos.gameBoard[0, 1]) && (pos.gameBoard[0, 0] == pos.gameBoard[0, 2]) && pos.gameBoard[0, 2] != 0) ||
+               ((pos.gameBoard[1, 0] == pos.gameBoard[1, 1]) && (pos.gameBoard[1, 0] == pos.gameBoard[1, 2]) && pos.gameBoard[1, 2] != 0) ||
+               ((pos.gameBoard[2, 0] == pos.gameBoard[2, 1]) && (pos.gameBoard[2, 0] == pos.gameBoard[2, 2]) && pos.gameBoard[2, 2] != 0) ||
 
-               ((pos.gameBoard[0, 0] == pos.gameBoard[1, 0]) && (pos.gameBoard[0, 0] == pos.gameBoard[2, 0])) ||
-               ((pos.gameBoard[0, 1] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 1] == pos.gameBoard[2, 1])) ||
-               ((pos.gameBoard[0, 2] == pos.gameBoard[1, 2]) && (pos.gameBoard[0, 2] == pos.gameBoard[2, 2])) ||
+               ((pos.gameBoard[0, 0] == pos.gameBoard[1, 0]) && (pos.gameBoard[0, 0] == pos.gameBoard[2, 0]) && pos.gameBoard[2, 0] != 0) ||
+               ((pos.gameBoard[0, 1] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 1] == pos.gameBoard[2, 1]) && pos.gameBoard[2, 1] != 0) ||
+               ((pos.gameBoard[0, 2] == pos.gameBoard[1, 2]) && (pos.gameBoard[0, 2] == pos.gameBoard[2, 2]) && pos.gameBoard[2, 2] != 0) ||
 
-               ((pos.gameBoard[0, 0] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 0] == pos.gameBoard[2, 2])) ||
-               ((pos.gameBoard[0, 2] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 2] == pos.gameBoard[2, 0])))
+               ((pos.gameBoard[0, 0] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 0] == pos.gameBoard[2, 2]) && pos.gameBoard[2, 2] != 0) ||
+               ((pos.gameBoard[0, 2] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 2] == pos.gameBoard[2, 0]) && pos.gameBoard[2, 2] != 0))
                 return true;
             else
                 return false;

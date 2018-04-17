@@ -62,7 +62,7 @@ namespace TicTacToe_DL_RL
         /// </summary>
         /// <param name="currNode"></param>
         /// <returns></returns>Eval
-        private double Search(Node<Position> currNode)
+        private float Search(Node<Position> currNode)
         {
             Tuple<List<float>, float> currPosPrediction = nn.Predict(currNode.Value);
 
@@ -96,8 +96,8 @@ namespace TicTacToe_DL_RL
 
             for (int i = 0; i < moves.Count; ++i)
             {
-                double temp_UCT_score = currNode.Q_a[i] + Params.c_puct * currPosPrediction.Item1[i] *
-                    Math.Sqrt(N_a_sum) / (1 + currNode.Children[i].visitCount);
+                float temp_UCT_score = currNode.Q_a[i] + Params.c_puct * currPosPrediction.Item1[i] *
+                    (float)Math.Sqrt(N_a_sum) / (1 + currNode.Children[i].visitCount);
 
                 if(temp_UCT_score > currNode.UCT_score)
                 {
@@ -109,7 +109,7 @@ namespace TicTacToe_DL_RL
             }
 
             game.DoMove(currNode.Value.bestMove);
-            double v = Search(currNode.Children[currNode.Value.bestChildIndex]);
+            float v = Search(currNode.Children[currNode.Value.bestChildIndex]);
 
             for (int i = 0; i < moves.Count; ++i)
             {
