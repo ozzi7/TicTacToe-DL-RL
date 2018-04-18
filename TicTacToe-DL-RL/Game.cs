@@ -51,16 +51,16 @@ namespace TicTacToe_DL_RL
         }
         public bool HasWinner()
         {
-            if (((pos.gameBoard[0, 0] == pos.gameBoard[0, 1]) && (pos.gameBoard[0, 0] == pos.gameBoard[0, 2])) ||
-               ((pos.gameBoard[1, 0] == pos.gameBoard[1, 1]) && (pos.gameBoard[1, 0] == pos.gameBoard[1, 2])) ||
-               ((pos.gameBoard[2, 0] == pos.gameBoard[2, 1]) && (pos.gameBoard[2, 0] == pos.gameBoard[2, 2])) ||
+            if (((pos.gameBoard[0, 0] == pos.gameBoard[0, 1]) && (pos.gameBoard[0, 0] == pos.gameBoard[0, 2]) && pos.gameBoard[0, 2] != 0) ||
+               ((pos.gameBoard[1, 0] == pos.gameBoard[1, 1]) && (pos.gameBoard[1, 0] == pos.gameBoard[1, 2]) && pos.gameBoard[1, 2] != 0) ||
+               ((pos.gameBoard[2, 0] == pos.gameBoard[2, 1]) && (pos.gameBoard[2, 0] == pos.gameBoard[2, 2]) && pos.gameBoard[2, 2] != 0) ||
 
-               ((pos.gameBoard[0, 0] == pos.gameBoard[1, 0]) && (pos.gameBoard[0, 0] == pos.gameBoard[2, 0])) ||
-               ((pos.gameBoard[0, 1] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 1] == pos.gameBoard[2, 1])) ||
-               ((pos.gameBoard[0, 2] == pos.gameBoard[1, 2]) && (pos.gameBoard[0, 2] == pos.gameBoard[2, 2])) ||
+               ((pos.gameBoard[0, 0] == pos.gameBoard[1, 0]) && (pos.gameBoard[0, 0] == pos.gameBoard[2, 0]) && pos.gameBoard[2, 0] != 0) ||
+               ((pos.gameBoard[0, 1] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 1] == pos.gameBoard[2, 1]) && pos.gameBoard[2, 1] != 0) ||
+               ((pos.gameBoard[0, 2] == pos.gameBoard[1, 2]) && (pos.gameBoard[0, 2] == pos.gameBoard[2, 2]) && pos.gameBoard[2, 2] != 0) ||
 
-               ((pos.gameBoard[0, 0] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 0] == pos.gameBoard[2, 2])) ||
-               ((pos.gameBoard[0, 2] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 2] == pos.gameBoard[2, 0])))
+               ((pos.gameBoard[0, 0] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 0] == pos.gameBoard[2, 2]) && pos.gameBoard[2, 2] != 0) ||
+               ((pos.gameBoard[0, 2] == pos.gameBoard[1, 1]) && (pos.gameBoard[0, 2] == pos.gameBoard[2, 0]) && pos.gameBoard[2, 2] != 0))
                 return true;
             else
                 return false;
@@ -77,7 +77,7 @@ namespace TicTacToe_DL_RL
         public int score = 0;
 
         public Tuple<int,int> bestMove = Tuple.Create(-1,-1);
-        public Node<Position> bestChild = null;
+        public int bestChildIndex = -1;
 
         public Position() {}
     }

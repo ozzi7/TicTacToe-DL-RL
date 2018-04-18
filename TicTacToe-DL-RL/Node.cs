@@ -21,7 +21,7 @@ namespace TicTacToe_DL_RL
         public double UCT_score = Double.NegativeInfinity;
         public int visitCount = 0;
         public List<int> N_a = new List<int>();
-        public List<int> Q_a = new List<int>();
+        public List<float> Q_a = new List<float>();
 
         public TValue Value { get; set; }
         public List<Node<TValue>> Children { get; private set; }
