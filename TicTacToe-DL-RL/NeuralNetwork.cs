@@ -20,6 +20,7 @@ namespace TicTacToe_DL_RL
         const int nofResidualLayers = 6; // half of (conv-1), 1 conv layer is for input (heads are seperate)
         const int nofPolicyPlanes = 32; // for some reason we only want 32 planes in policy/value heads (the input to is 64 and
         const int nofValuePlanes = 32; // conv makes it 32) [cheat sheet alphazero go -> 2]
+        const float softmaxTemperature = 1.0f;
 
         // for input layer
         float[] input = new float[nofPlanes * height * width]; // input to complete NN
@@ -33,22 +34,25 @@ namespace TicTacToe_DL_RL
         float[] convFilterWeights = new float[(nofConvLayers-1) * filterHeight * filterWidth];
 
         // for policy layer
-        float[] convolutionWeightsPolicy = new float[nofPolicyPlanes];
-        float[] convolutionBiasesPolicy = new float[nofPolicyPlanes];
-        float[] batchnorm_meansPolicy = new float[nofPolicyPlanes];
-        float[] batchnorm_stddevPolicy = new float[nofPolicyPlanes];
+        float[] convolutionWeightsPolicy = new float[nofPolicyPlanes* nofFilters];
+        float[] convolutionBiasesPolicy = new float[nofPolicyPlanes* nofFilters];
+        float[] batchnormMeansPolicy = new float[nofPolicyPlanes];
+        float[] batchnormStddevPolicy = new float[nofPolicyPlanes];
         float[] policyConnectionWeights = new float[width * height * nofPolicyPlanes * nofOutputPolicies];
         float[] policyBiases = new float[nofOutputPolicies];
         float[] inputFullyConnectedLayerPolicy = new float[nofPolicyPlanes * width * height];
+        float[] outputPolicyData = new float[nofOutputPolicies];
 
         // for value layer
-        float[] convolutionWeightsValue = new float[nofValuePlanes];
-        float[] convolutionBiasesValue = new float[nofValuePlanes];
-        float[] batchnorm_meansValue = new float[nofValuePlanes];
-        float[] batchnorm_stddevValue = new float[nofValuePlanes];
-        float[] valueConnectionWeights = new float[width * height * nofValuePlanes * nofOutputValues];
-        float[] valueBiases = new float[nofOutputValues];
+        float[] convolutionWeightsValue1 = new float[nofValuePlanes];
+        float[] convolutionWeightsValue2 = new float[128];
+        float[] batchnormMeansValue = new float[nofValuePlanes];
+        float[] batchnormStddevValue = new float[nofValuePlanes];
+        float[] valueConnectionWeights = new float[width * height * nofValuePlanes * 128];
+        float[] valueBiases = new float[128];
+        float[] valueBiasLast = new float[1];
         float[] inputFullyConnectedLayerValue = new float[nofValuePlanes * width * height];
+        float[] outputValueData = new float[nofPlanes * width * height];
 
         // for all
         float[] convBiases = new float[nofConvLayers * nofFilters];
@@ -56,8 +60,8 @@ namespace TicTacToe_DL_RL
         float[] batchnorm_stddev = new float[nofConvLayers * nofFilters];
 
         // output of NN
-        float[] outputValueData = new float[nofPlanes * width * height];
-        float[] outputPolicyData = new float[nofOutputPolicies];
+        float[] softmaxPolicy = new float[nofOutputPolicies];
+        float[] winrateOut = new float[1];
 
         public NeuralNetwork()
         {
@@ -106,14 +110,18 @@ namespace TicTacToe_DL_RL
             }
 
             /*value head*/
-            Convolution(inputResidualLayer, outputValueData, convolutionWeightsValue, nofFilters, nofValuePlanes, 1, 1, 0);
-            BatchNorm(outputValueData, outputValueData, batchnorm_meansValue, batchnorm_stddevValue, nofValuePlanes, 0);
-            FullyConnectedLayer(inputFullyConnectedLayerValue, outputValueData, valueConnectionWeights, valueBiases,  true);
+            Convolution(inputResidualLayer, outputValueData, convolutionWeightsValue1, nofFilters, nofValuePlanes, 1, 1, 0);
+            BatchNorm(outputValueData, outputValueData, batchnormMeansValue, batchnormStddevValue, nofValuePlanes, 0);
+            FullyConnectedLayer(inputFullyConnectedLayerValue, outputValueData, valueConnectionWeights, valueBiases,  true); // with rectifier
+
+            FullyConnectedLayer(outputValueData, winrateOut, convolutionWeightsValue2, valueBiasLast, false); // 1 output, 1 bias
+            float winrateSig = (1.0f + (float)Math.Tanh(winrateOut[0])) / 2.0f;
 
             /*policy head*/
             Convolution(inputResidualLayer, inputFullyConnectedLayerPolicy, convolutionWeightsPolicy, nofFilters, nofPolicyPlanes, 1, 1, 0);
-            BatchNorm(inputFullyConnectedLayerPolicy, inputFullyConnectedLayerPolicy, batchnorm_meansPolicy, batchnorm_stddevPolicy, nofPolicyPlanes, 0);
-            FullyConnectedLayer(inputFullyConnectedLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false);
+            BatchNorm(inputFullyConnectedLayerPolicy, inputFullyConnectedLayerPolicy, batchnormMeansPolicy, batchnormStddevPolicy, nofPolicyPlanes, 0);
+            FullyConnectedLayer(inputFullyConnectedLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false); // without rectifier
+            Softmax(outputPolicyData, softmaxPolicy, softmaxTemperature);
         }
         public void SaveToFile(string filename)
         {
@@ -198,7 +206,7 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
-        public void FullyConnectedLayer(float[] input, float[] output, float[] connectionWeights, float[] outputBiases, bool valueHead)
+        public void FullyConnectedLayer(float[] input, float[] output, float[] connectionWeights, float[] outputBiases, bool rectifier)
         {
             for (int i = 0; i < output.Count(); ++i)
             {
@@ -209,9 +217,44 @@ namespace TicTacToe_DL_RL
                 output[i] /= input.Count();
                 output[i] += outputBiases[i];
 
-                if(valueHead && output[i] > 0.0f)
+                if(rectifier && output[i] > 0.0f)
                 {
                     output[i] = 0.0f;
+                }
+            }
+        }
+        public void Softmax(float[] input, float[] output, float temperature)
+        {
+            // must be input length == output length
+            float alpha = input.Max();
+            alpha /= temperature;
+
+            float denom = 0.0f;
+            float[] helper = new float[output.Count()];
+            for (int i = 0; i < output.Count(); i++) {
+                float val = (float)Math.Exp((input[i] / temperature) - alpha);
+                helper[i] = val;
+                denom += val;
+            }
+
+            for (int i = 0; i < output.Count(); ++i)
+            {
+                output[i] = helper[i] / denom;
+            }
+        }
+        public void Rectifier(int nofFilters, )
+        {
+            for (int i = 0; i < nofFilters; ++i)
+            {
+                for (int j = 0; j < width * height; ++j)
+                {
+                    // batch norm/ batch stddev
+                    output[i * width * height + j] = batchNormStdDev[index * nofFilters + i] * (residual[i * width * height + j]
+                        + input[i * width * height + j] - batchNormMeans[index * nofFilters + i]);
+
+                    // relu
+                    if (output[i * width * height + j] > 0.0f)
+                        output[i * width * height + j] = 0.0f;
                 }
             }
         }
