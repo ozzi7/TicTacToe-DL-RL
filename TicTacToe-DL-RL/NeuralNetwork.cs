@@ -18,8 +18,8 @@ namespace TicTacToe_DL_RL
         const int nofFilters = 64; // the convolution layer has 64 filters
         const int nofConvLayers = 13; // currently 13 conv layers, 1 input, 2 in each of 6 residual layers
         const int nofResidualLayers = 6; // half of (conv-1), 1 conv layer is for input (heads are seperate)
-        const int nofPolicyInputPlanes = 32; // for some reason we only want 32 planes in policy/value heads (the input to is 64 and
-        const int nofValueInputPlanes = 32; // conv makes it 32)
+        const int nofPolicyPlanes = 32; // for some reason we only want 32 planes in policy/value heads (the input to is 64 and
+        const int nofValuePlanes = 32; // conv makes it 32) [cheat sheet alphazero go -> 2]
 
         // for input layer
         float[] input = new float[nofPlanes * height * width]; // input to complete NN
@@ -33,12 +33,22 @@ namespace TicTacToe_DL_RL
         float[] convFilterWeights = new float[(nofConvLayers-1) * filterHeight * filterWidth];
 
         // for policy layer
-        float[] convolutionWeightsPolicy = new float[nofPolicyInputPlanes];
-        float[] convolutionBiasesPolicy = new float[nofPolicyInputPlanes];
+        float[] convolutionWeightsPolicy = new float[nofPolicyPlanes];
+        float[] convolutionBiasesPolicy = new float[nofPolicyPlanes];
+        float[] batchnorm_meansPolicy = new float[nofPolicyPlanes];
+        float[] batchnorm_stddevPolicy = new float[nofPolicyPlanes];
+        float[] policyConnectionWeights = new float[width * height * nofPolicyPlanes * nofOutputPolicies];
+        float[] policyBiases = new float[nofOutputPolicies];
+        float[] inputFullyConnectedLayerPolicy = new float[nofPolicyPlanes * width * height];
 
         // for value layer
-        float[] convolutionWeightsValue = new float[nofValueInputPlanes];
-        float[] convolutionBiasesValue = new float[nofValueInputPlanes];
+        float[] convolutionWeightsValue = new float[nofValuePlanes];
+        float[] convolutionBiasesValue = new float[nofValuePlanes];
+        float[] batchnorm_meansValue = new float[nofValuePlanes];
+        float[] batchnorm_stddevValue = new float[nofValuePlanes];
+        float[] valueConnectionWeights = new float[width * height * nofValuePlanes * nofOutputValues];
+        float[] valueBiases = new float[nofOutputValues];
+        float[] inputFullyConnectedLayerValue = new float[nofValuePlanes * width * height];
 
         // for all
         float[] convBiases = new float[nofConvLayers * nofFilters];
@@ -76,91 +86,47 @@ namespace TicTacToe_DL_RL
             {   // the board itself
                 input[9+i] = gameBoard[i];
             }
-            ForwardPassCPU(input, outputPolicyData, outputValueData);
+            ForwardPassCPU(input);
             return null;
         }
-        public void ForwardPassCPU(float[] input, float[] outputPolicyData, float[] outputValueData)
+        public void ForwardPassCPU(float[] input)
         {
             /*Conv layer */
-            Convolution(input, outputConvFilter, firstConvFilterWeights, nofPlanes, nofFilters, filterWidth, filterHeight);
-            BatchNorm(outputConvFilter, inputResidualLayer, batchnorm_means, batchnorm_stddev, nofFilters);
+            Convolution(input, outputConvFilter, firstConvFilterWeights, nofPlanes, nofFilters, filterWidth, filterHeight, 0);
+            BatchNorm(outputConvFilter, inputResidualLayer, batchnorm_means, batchnorm_stddev, nofFilters, 0);
 
             /*Residual tower*/
-            for (int i = 0; i < nofResidualLayers; i += 1) {
-                ResLayerConvolution(inputResidualLayer, outputResidualLayer, nofFilters);
-                BatchNorm(outputResidualLayer, outputResidualLayer, batchnorm_means, batchnorm_stddev, nofFilters);
-                ResLayerConvolution(outputResidualLayer, temporary, nofFilters);
-                BatchNormWithResidual(temporary, inputResidualLayer);
+            for (int index = 0; index < nofResidualLayers; index += 1) {
+                Convolution(inputResidualLayer, outputResidualLayer, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2);
+                BatchNorm(outputResidualLayer, outputResidualLayer, batchnorm_means, batchnorm_stddev, nofFilters, index*2);
+                Convolution(outputResidualLayer, temporary, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2+1);
+                BatchNormWithResidual(temporary, outputResidualLayer, inputResidualLayer, batchnorm_means, batchnorm_stddev, nofFilters, index*2+1);
                 // temporary holds result
                 inputResidualLayer = temporary;
             }
 
             /*value head*/
-            ConvolutionPolicy(inputResidualLayer, outputPolicyData);
-            BatchNorm(outputResidualLayer, outputResidualLayer);
-            //convolve < 1 > (NUM_VALUE_INPUT_PLANES, conv_out, conv_val_w, conv_val_b, value_data);
-            batchnorm < width * height > (NUM_VALUE_INPUT_PLANES, value_data, bn_val_w1.data(), bn_val_w2.data());
+            Convolution(inputResidualLayer, outputValueData, convolutionWeightsValue, nofFilters, nofValuePlanes, 1, 1, 0);
+            BatchNorm(outputValueData, outputValueData, batchnorm_meansValue, batchnorm_stddevValue, nofValuePlanes, 0);
+            FullyConnectedLayer(inputFullyConnectedLayerValue, outputValueData, valueConnectionWeights, valueBiases,  true);
+
             /*policy head*/
-            convolve < 1 > (NUM_POLICY_INPUT_PLANES, conv_out, conv_pol_w, conv_pol_b, policy_data);
-            batchnorm < width * height > (NUM_POLICY_INPUT_PLANES, policy_data, bn_pol_w1.data(), bn_pol_w2.data());
-
-
-            innerproduct < NUM_POLICY_INPUT_PLANES * width * height, NUM_OUTPUT_POLICY > (policy_data, ip_pol_w, ip_pol_b, output_pol);
-            innerproduct < NUM_VALUE_INPUT_PLANES * width * height, NUM_VALUE_CHANNELS > (value_data, ip1_val_w, ip1_val_b, output_val);
+            Convolution(inputResidualLayer, inputFullyConnectedLayerPolicy, convolutionWeightsPolicy, nofFilters, nofPolicyPlanes, 1, 1, 0);
+            BatchNorm(inputFullyConnectedLayerPolicy, inputFullyConnectedLayerPolicy, batchnorm_meansPolicy, batchnorm_stddevPolicy, nofPolicyPlanes, 0);
+            FullyConnectedLayer(inputFullyConnectedLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false);
         }
         public void SaveToFile(string filename)
         {
 
         }
-        public void Convolution2(float[] input, float[] output)
+        public void Convolution(float[] input, float[] output, float[] convWeights, 
+            int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index)
         {
             // convolution on width*height*depth
             // with nofFilters filters of filterWidth*filterHeight*nofInputPlanes size
             // resulting in width*height*x volume
             // zero padding
 
-            for (int i = 0; i < nofFilters; ++i)
-            {
-                // apply each of the filters to the complete input..
-                for (int j = 0; j < nofPlanes; ++j)
-                {
-                    for (int k = 0; k < height; ++k)
-                    {
-                        for (int l = 0; l < width; ++l)
-                        {
-                            // looking at a 1x1x1 of the input here, we sum up the 3x3 neighbors (depending on filter size)
-                            for (int x = 0; x < filterHeight; ++x)
-                            {
-                                for (int y = 0; y < filterWidth; ++y)
-                                {
-                                    // going through the neighbors
-                                    if (k - filterHeight / 2 + x < 0 || k - filterHeight / 2 + x >= height ||
-                                        l - filterWidth / 2 + y < 0 || l - filterWidth / 2 + y >= width)
-                                    {
-                                        // the filter is out of bounds, set to 0 (0 padding)
-                                        continue;
-                                    }
-                                    output[i * height * width + k * width + l] +=
-                                        input[j * height * width + k * width + l] * 
-                                        firstConvFilterWeights[i* nofPlanes * filterHeight*filterWidth + j*filterHeight*filterWidth +
-                                        x * filterWidth + y];
-                                }
-                            }
-                            // add the bias in batchnorm to the means
-                        }
-                    }
-                }
-
-                // after summing all values, divide by number of summed up fields
-                for (int u = 0; u < output.Length; ++u)
-                {
-                    output[u] /= nofPlanes * filterHeight * filterWidth;
-                }
-            }
-        }
-        public void Convolution(float[] input, float[] output, float[] convWeights, 
-            int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight)
-        {
             for (int i = 0; i < nofFilters; ++i)
             {
                 // apply each of the filters to the complete input..
@@ -182,10 +148,10 @@ namespace TicTacToe_DL_RL
                                         // the filter is out of bounds, set to 0 (0 padding)
                                         continue;
                                     }
-                                    output[i * height * width + k * width + l] +=
-                                        input[j * height * width + k * width + l] *
-                                        convWeights[i * nofInputPlanes * filterHeight * filterWidth + j * filterHeight * filterWidth +
-                                        x * filterWidth + y];
+                                    output[i * height * width + k * width + l] += input[j * height * width + k * width + l] *
+                                        convWeights[index* nofFilters * nofInputPlanes * filterHeight * filterWidth +
+                                            i * nofInputPlanes * filterHeight * filterWidth + j * filterHeight * filterWidth +
+                                            x * filterWidth + y];
                                 }
                             }
                             // add the bias in batchnorm to the means
@@ -200,7 +166,7 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
-        public void BatchNorm(float[] input, float[] output, float[] batchNormMeans, float[] batchNormStdDev, int nofFilters)
+        public void BatchNorm(float[] input, float[] output, float[] batchNormMeans, float[] batchNormStdDev, int nofFilters, int index)
         {
             // without residual add
             for (int i = 0; i < nofFilters; ++i)
@@ -208,7 +174,7 @@ namespace TicTacToe_DL_RL
                 for (int j = 0; j < width * height; ++j)
                 {
                     // batch norm/ batch stddev
-                    output[i * width * height + j] = batchNormStdDev[i] * (input[i * width * height + j] - batchNormMeans[i]);
+                    output[i * width * height + j] = batchNormStdDev[index * nofFilters + i] * (input[i * width * height + j] - batchNormMeans[index * nofFilters + i]);
 
                     // relu
                     if (output[i * width * height + j] > 0.0f)
@@ -216,19 +182,36 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
-        public void BatchNormWithResidual(float[] input, float[] output, float[] residual, float[] batchNormMeans, float[] batchNormStdDev, int nofFilters)
+        public void BatchNormWithResidual(float[] input, float[] output, float[] residual, float[] batchNormMeans, float[] batchNormStdDev, int nofFilters, int index)
         {
             for (int i = 0; i < nofFilters; ++i)
             {
                 for (int j = 0; j < width * height; ++j)
                 {
                     // batch norm/ batch stddev
-                    output[i * width * height + j] = batchNormStdDev[i] * (residual[i * width * height + j] 
-                        + input[i * width * height + j] - batchNormMeans[i]);
+                    output[i * width * height + j] = batchNormStdDev[index* nofFilters + i] * (residual[i * width * height + j] 
+                        + input[i * width * height + j] - batchNormMeans[index * nofFilters + i]);
 
                     // relu
                     if (output[i * width * height + j] > 0.0f)
                         output[i * width * height + j] = 0.0f;
+                }
+            }
+        }
+        public void FullyConnectedLayer(float[] input, float[] output, float[] connectionWeights, float[] outputBiases, bool valueHead)
+        {
+            for (int i = 0; i < output.Count(); ++i)
+            {
+                for (int j = 0; j < input.Count(); ++j)
+                {
+                    output[i] += input[j] * connectionWeights[i * input.Count() + j];
+                }
+                output[i] /= input.Count();
+                output[i] += outputBiases[i];
+
+                if(valueHead && output[i] > 0.0f)
+                {
+                    output[i] = 0.0f;
                 }
             }
         }
