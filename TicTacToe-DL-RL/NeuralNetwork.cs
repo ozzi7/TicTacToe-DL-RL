@@ -53,6 +53,7 @@ namespace TicTacToe_DL_RL
         float[] valueBiasLast = new float[1];
         float[] inputFullyConnectedLayerValue = new float[nofValuePlanes * width * height];
         float[] outputValueData = new float[nofPlanes * width * height];
+        float[] temporaryValueData = new float[128];
 
         // for all
         float[] convBiases = new float[nofConvLayers * nofFilters];
@@ -112,9 +113,9 @@ namespace TicTacToe_DL_RL
             /*value head*/
             Convolution(inputResidualLayer, outputValueData, convolutionWeightsValue1, nofFilters, nofValuePlanes, 1, 1, 0);
             BatchNorm(outputValueData, outputValueData, batchnormMeansValue, batchnormStddevValue, nofValuePlanes, 0);
-            FullyConnectedLayer(inputFullyConnectedLayerValue, outputValueData, valueConnectionWeights, valueBiases,  true); // with rectifier
-
-            FullyConnectedLayer(outputValueData, winrateOut, convolutionWeightsValue2, valueBiasLast, false); // 1 output, 1 bias
+            FullyConnectedLayer(inputFullyConnectedLayerValue, temporaryValueData, valueConnectionWeights, valueBiases,  true); // with rectifier
+            Rectifier(temporaryValueData);
+            FullyConnectedLayer(temporaryValueData, winrateOut, convolutionWeightsValue2, valueBiasLast, false); // 1 output, 1 bias
             float winrateSig = (1.0f + (float)Math.Tanh(winrateOut[0])) / 2.0f;
 
             /*policy head*/
@@ -242,20 +243,13 @@ namespace TicTacToe_DL_RL
                 output[i] = helper[i] / denom;
             }
         }
-        public void Rectifier(int nofFilters, )
+        public void Rectifier(float[] data)
         {
-            for (int i = 0; i < nofFilters; ++i)
-            {
-                for (int j = 0; j < width * height; ++j)
-                {
-                    // batch norm/ batch stddev
-                    output[i * width * height + j] = batchNormStdDev[index * nofFilters + i] * (residual[i * width * height + j]
-                        + input[i * width * height + j] - batchNormMeans[index * nofFilters + i]);
-
-                    // relu
-                    if (output[i * width * height + j] > 0.0f)
-                        output[i * width * height + j] = 0.0f;
-                }
+            for (int i = 0; i < data.Count(); ++i)
+            { 
+                // relu
+                if (data[i] > 0.0f)
+                    data[i] = 0.0f;
             }
         }
     }
