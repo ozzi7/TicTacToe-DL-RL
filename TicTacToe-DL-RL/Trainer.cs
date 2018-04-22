@@ -64,7 +64,7 @@ namespace TicTacToe_DL_RL
         /// <returns></returns>Eval
         private float Search(Node<Position> currNode)
         {
-            Tuple<List<float>, float> currPosPrediction = nn.Predict(currNode.Value);
+            Tuple<float[], float> currPosPrediction = nn.Predict(currNode.Value);
 
             if (currNode.visitCount == 0)
             {
