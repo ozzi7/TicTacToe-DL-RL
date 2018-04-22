@@ -73,6 +73,7 @@ namespace TicTacToe_DL_RL
         }
         public Tuple<float[], float> Predict(Position pos)
         {
+            // returns array of move evals and V
             /*Not using game history, not using caching*/
             int[] tmp = new int[pos.gameBoard.GetLength(0) * pos.gameBoard.GetLength(1)];
             Buffer.BlockCopy(pos.gameBoard, 0, tmp, 0, tmp.Length * sizeof(int));
@@ -88,7 +89,7 @@ namespace TicTacToe_DL_RL
             }
             for (int i = 0; i < 9; ++i)
             {   // the board itself
-                input[9+i] = gameBoard[i];
+                input[9 + i] = gameBoard[i];
             }
             return ForwardPassCPU(input);
         }
