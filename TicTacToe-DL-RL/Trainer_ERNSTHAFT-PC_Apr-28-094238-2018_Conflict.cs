@@ -34,9 +34,9 @@ namespace TicTacToe_DL_RL
             MCTSRootNode = new Node<Position>();
             MCTSRootNode.Value = game.pos;
 
+            // insert nof simulations here..
             for (int curr_ply = 0; curr_ply < Params.maxPlies; ++curr_ply)
             {
-                // we always finish the game but for other games possibly infinite cycles
                 List<Tuple<int, int>> moves = game.GetMoves();
 
                 if (game.HasWinner())
@@ -48,11 +48,8 @@ namespace TicTacToe_DL_RL
                     return 0;
                 }
 
-                for (int simulations = 0; simulations < Params.nofSimsPerPos; ++simulations)
-                {
-                    Search(MCTSRootNode); // expand tree and improve accuracy at MCTSRootNode
-                }
-                Tuple<int, int> move = MCTSRootNode.Value.bestMove; // add randomness here
+                double v = Search(MCTSRootNode);
+                Tuple<int,int> move = MCTSRootNode.Value.bestMove;
                 game.DoMove(move);
                 history.Add(move);
                 MCTSRootNode = MCTSRootNode.Children[MCTSRootNode.Value.bestChildIndex];
@@ -111,10 +108,10 @@ namespace TicTacToe_DL_RL
             }
 
             currNode.visitCount++;
-            int N_a_sum = 0; // visit count of all children
+            int N_a_sum = 0; // visit count of all childrens
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
-                N_a_sum += currNode.N_a[i];
+                N_a_sum += currNode.Children[i].visitCount;
             }
 
             for (int i = 0; i < currNode.Children.Count; ++i)
@@ -132,7 +129,6 @@ namespace TicTacToe_DL_RL
             }
 
             game.DoMove(currNode.Value.bestMove);
-            currNode.Children[currNode.Value.bestChildIndex].Value = game.pos;
             float v = Search(currNode.Children[currNode.Value.bestChildIndex]);
 
             for (int i = 0; i < moves.Count; ++i)

@@ -15,28 +15,16 @@ namespace TicTacToe_DL_RL
         const int nofPlanes = 2; // = input channels, 1 plane is board 3x3 + 1 plane color 3x3
         const int nofOutputPolicies = 9; // policy net has 9 outputs (1 per potential move)
         const int nofOutputValues = 1; // value head has 1 output
-<<<<<<< HEAD
-        const int nofFilters = 64;
-        const int nofConvLayers = 13;
-        const int nofResidualLayers = 6; // half of (conv-1), 1 conv layer is for input (heads are seperate)
-=======
         const int nofFilters = 64; // the convolution layer has 64 filters
         const int nofConvLayers = 13; // currently 13 conv layers, 1 input, 2 in each of 6 residual layers
         const int nofResidualLayers = 6; // half of (conv-1), 1 conv layer is for input (heads are seperate)
         const int nofPolicyPlanes = 32; // for some reason we only want 32 planes in policy/value heads (the input to is 64 and
         const int nofValuePlanes = 32; // conv makes it 32) [cheat sheet alphazero go -> 2]
         const float softmaxTemperature = 1.0f;
->>>>>>> 8c9ef9a0d6a880ab1b910d640a49bcae563e13eb
 
         // for input layer
         float[] input = new float[nofPlanes * height * width]; // input to complete NN
         float[] outputConvFilter = new float[nofFilters * height * width];
-<<<<<<< HEAD
-        // for input
-        float[] firstConvFilterWeights = new float[nofFilters* nofPlanes * filterHeight * filterWidth];
-        // for res tower
-        float[] convFilterWeights = new float[(nofConvLayers-1) * filterHeight * filterWidth];
-=======
         float[] firstConvFilterWeights = new float[nofFilters* nofPlanes * filterHeight * filterWidth];
 
         // for residual tower
@@ -68,7 +56,6 @@ namespace TicTacToe_DL_RL
         float[] temporaryValueData = new float[128];
 
         // for all
->>>>>>> 8c9ef9a0d6a880ab1b910d640a49bcae563e13eb
         float[] convBiases = new float[nofConvLayers * nofFilters];
         float[] batchnorm_means = new float[nofConvLayers * nofFilters];
         float[] batchnorm_stddev = new float[nofConvLayers * nofFilters];
@@ -93,11 +80,7 @@ namespace TicTacToe_DL_RL
             List<int> gameBoard = new List<int>(tmp);
 
             List<float> inpuData = new List<float>(nofPlanes * width * height);
-<<<<<<< HEAD
-            List<float> outputValueData = new List<float>(nofPlanes* width * height);
-            List<float> outputPolicyData = new List<float>(nofOutputPolicies);
-=======
->>>>>>> 8c9ef9a0d6a880ab1b910d640a49bcae563e13eb
+
             List<float> softmaxData = new List<float>(nofOutputPolicies);
 
             // set nn input
@@ -113,11 +96,6 @@ namespace TicTacToe_DL_RL
         }
         public Tuple<float[], float> ForwardPassCPU(float[] input)
         {
-<<<<<<< HEAD
-            float[] input = inputData.ToArray();
-            Convolution(input, outputConvFilter, nofPlanes);
-            BatchNorm(outputConvFilter);
-=======
             /*Conv layer */
             Convolution(input, outputConvFilter, firstConvFilterWeights, nofPlanes, nofFilters, filterWidth, filterHeight, 0);
             BatchNorm(outputConvFilter, inputResidualLayer, batchnorm_means, batchnorm_stddev, nofFilters, 0);
@@ -149,18 +127,15 @@ namespace TicTacToe_DL_RL
             Softmax(outputPolicyData, softmaxPolicy, softmaxTemperature);
 
             return Tuple.Create(softmaxPolicy, winrateSig);
->>>>>>> 8c9ef9a0d6a880ab1b910d640a49bcae563e13eb
+
         }
         public void SaveToFile(string filename)
         {
 
         }
-<<<<<<< HEAD
-        public void Convolution(float[] input, float[] output, int nofInputPlanes)
-=======
+
         public void Convolution(float[] input, float[] output, float[] convWeights, 
             int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index)
->>>>>>> 8c9ef9a0d6a880ab1b910d640a49bcae563e13eb
         {
             // convolution on width*height*depth
             // with nofFilters filters of filterWidth*filterHeight*nofInputPlanes size
@@ -188,17 +163,10 @@ namespace TicTacToe_DL_RL
                                         // the filter is out of bounds, set to 0 (0 padding)
                                         continue;
                                     }
-<<<<<<< HEAD
-                                    outputConvFilter[i * height * width + k * width + l] +=
-                                        input[j * height * width + k * width + l] * 
-                                        firstConvFilterWeights[i* nofInputPlanes * filterHeight*filterWidth + j*filterHeight*filterWidth +
-                                        x * filterWidth + y];
-=======
                                     output[i * height * width + k * width + l] += input[j * height * width + k * width + l] *
                                         convWeights[index* nofFilters * nofInputPlanes * filterHeight * filterWidth +
                                             i * nofInputPlanes * filterHeight * filterWidth + j * filterHeight * filterWidth +
                                             x * filterWidth + y];
->>>>>>> 8c9ef9a0d6a880ab1b910d640a49bcae563e13eb
                                 }
                             }
                             // add the bias in batchnorm to the means
@@ -207,15 +175,6 @@ namespace TicTacToe_DL_RL
                 }
 
                 // after summing all values, divide by number of summed up fields
-<<<<<<< HEAD
-                for (int u = 0; u < outputConvFilter.Length; ++u)
-                {
-                    outputConvFilter[u] /= nofInputPlanes * filterHeight * filterWidth;
-                }
-            }
-        }
-        public void BatchNorm(float[] data)
-=======
                 for (int u = 0; u < output.Length; ++u)
                 {
                     output[u] /= nofInputPlanes * filterHeight * filterWidth;
@@ -223,7 +182,6 @@ namespace TicTacToe_DL_RL
             }
         }
         public void BatchNorm(float[] input, float[] output, float[] batchNormMeans, float[] batchNormStdDev, int nofFilters, int index)
->>>>>>> 8c9ef9a0d6a880ab1b910d640a49bcae563e13eb
         {
             // without residual add
             for (int i = 0; i < nofFilters; ++i)
@@ -239,30 +197,13 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
-<<<<<<< HEAD
-        public void BatchNormWithResidual(float[] data, float[] res)
-        {
-            // for first input
-=======
         public void BatchNormWithResidual(float[] input, float[] output, float[] residual, float[] batchNormMeans, float[] batchNormStdDev, int nofFilters, int index)
         {
->>>>>>> 8c9ef9a0d6a880ab1b910d640a49bcae563e13eb
             for (int i = 0; i < nofFilters; ++i)
             {
                 for (int j = 0; j < width * height; ++j)
                 {
                     // batch norm/ batch stddev
-<<<<<<< HEAD
-                    data[i * width * height + j] = batchnorm_stddev[i] * (res[i * width * height + j] 
-                        + data[i * width * height + j] - batchnorm_means[i]);
-
-                    // relu
-                    if (data[i * width * height + j] > 0.0f)
-                        data[i * width * height + j] = 0.0f;
-                }
-            }
-        }
-=======
                     output[i * width * height + j] = batchNormStdDev[index* nofFilters + i] * (residual[i * width * height + j] 
                         + input[i * width * height + j] - batchNormMeans[index * nofFilters + i]);
 
@@ -317,6 +258,5 @@ namespace TicTacToe_DL_RL
                     data[i] = 0.0f;
             }
         }
->>>>>>> 8c9ef9a0d6a880ab1b910d640a49bcae563e13eb
     }
 }

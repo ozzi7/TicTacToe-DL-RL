@@ -38,6 +38,8 @@ namespace TicTacToe_DL_RL
         public void AddChild(Node<TValue> treeNode)
         {
             Children.Add(treeNode);
+            N_a.Add(0);
+            Q_a.Add(0.0f);
         }
         public void AddChild(TValue value)
         {
