@@ -14,7 +14,11 @@ namespace TicTacToe_DL_RL
         public static int batchSize = 64;
         public static int nofChannels = 512;
         public static float c_puct = 0.3f; // TODO:
+<<<<<<< HEAD
         public static int nofSimsPerPos = 11; // could/should be time
+=======
+        public static int nofSimsPerPos = 100; // could/should be time
+>>>>>>> 17aa0c384191ce09c521b3292f45eecb4cfe44f0
 
         public static int nofTrainingGames = 100;
         public static int maxPlies = 100;
