@@ -80,6 +80,7 @@ namespace TicTacToe_DL_RL
             List<int> gameBoard = new List<int>(tmp);
 
             List<float> inpuData = new List<float>(nofPlanes * width * height);
+
             List<float> softmaxData = new List<float>(nofOutputPolicies);
 
             // set nn input
@@ -126,11 +127,13 @@ namespace TicTacToe_DL_RL
             Softmax(outputPolicyData, softmaxPolicy, softmaxTemperature);
 
             return Tuple.Create(softmaxPolicy, winrateSig);
+
         }
         public void SaveToFile(string filename)
         {
 
         }
+
         public void Convolution(float[] input, float[] output, float[] convWeights, 
             int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index)
         {

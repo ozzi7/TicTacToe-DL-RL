@@ -22,6 +22,11 @@ namespace TicTacToe_DL_RL
             {
                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
                 int result = PlayOneGame(history);
+                foreach (var tuple in history)
+                {
+                    Console.WriteLine("{0} - {1}", tuple.Item1.ToString(), tuple.Item2.ToString());
+                }
+                Console.WriteLine("Result: " + result);
             }
         }
 
@@ -34,9 +39,9 @@ namespace TicTacToe_DL_RL
             MCTSRootNode = new Node<Position>();
             MCTSRootNode.Value = game.pos;
 
-            // insert nof simulations here..
             for (int curr_ply = 0; curr_ply < Params.maxPlies; ++curr_ply)
             {
+                // we always finish the game but for other games possibly infinite cycles
                 List<Tuple<int, int>> moves = game.GetMoves();
 
                 if (game.HasWinner())
@@ -48,12 +53,15 @@ namespace TicTacToe_DL_RL
                     return 0;
                 }
 
-                double v = Search(MCTSRootNode);
-                Tuple<int,int> move = MCTSRootNode.Value.bestMove;
+                for (int simulations = 0; simulations < Params.nofSimsPerPos; ++simulations)
+                {
+                    Search(MCTSRootNode); // expand tree and improve accuracy at MCTSRootNode
+                }
+                Tuple<int, int> move = MCTSRootNode.Value.bestMove; // add randomness here
                 game.DoMove(move);
                 history.Add(move);
                 MCTSRootNode = MCTSRootNode.Children[MCTSRootNode.Value.bestChildIndex];
-                MCTSRootNode.Value = game.pos;
+                MCTSRootNode.Value = game.pos; // this should already exist
             }
             return game.pos.score;
         }
@@ -108,12 +116,13 @@ namespace TicTacToe_DL_RL
             }
 
             currNode.visitCount++;
-            int N_a_sum = 0; // visit count of all childrens
+            int N_a_sum = 0; // visit count of all children
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
-                N_a_sum += currNode.Children[i].visitCount;
+                N_a_sum += currNode.N_a[i];
             }
 
+            currNode.UCT_score = float.NegativeInfinity;
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
                 float temp_UCT_score = currNode.Q_a[i] + Params.c_puct * currPosPrediction.Item1[i] *
@@ -128,7 +137,8 @@ namespace TicTacToe_DL_RL
                 }
             }
 
-            game.DoMove(currNode.Value.bestMove);
+            game.DoMove(currNode.Value.bestMove);// if doesnt exist
+            currNode.Children[currNode.Value.bestChildIndex].Value = game.pos; // if doesnt exist
             float v = Search(currNode.Children[currNode.Value.bestChildIndex]);
 
             for (int i = 0; i < moves.Count; ++i)

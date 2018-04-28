@@ -18,7 +18,7 @@ namespace TicTacToe_DL_RL
          * N_p visit count of parent
          * c >= 0, low c = choose lucrative nodes, else explore
         */
-        public double UCT_score = Double.NegativeInfinity;
+        public float UCT_score = float.NegativeInfinity;
         public int visitCount = 0;
         public List<int> N_a = new List<int>();
         public List<float> Q_a = new List<float>();
@@ -38,6 +38,8 @@ namespace TicTacToe_DL_RL
         public void AddChild(Node<TValue> treeNode)
         {
             Children.Add(treeNode);
+            N_a.Add(0);
+            Q_a.Add(0.0f);
         }
         public void AddChild(TValue value)
         {
