@@ -137,13 +137,9 @@ namespace TicTacToe_DL_RL
                 }
             }
 
-<<<<<<< HEAD
             game.DoMove(currNode.Value.bestMove);// if doesnt exist
             currNode.Children[currNode.Value.bestChildIndex].Value = game.pos; // if doesnt exist
-=======
-            game.DoMove(currNode.Value.bestMove);
-            currNode.Children[currNode.Value.bestChildIndex].Value = game.pos;
->>>>>>> 17aa0c384191ce09c521b3292f45eecb4cfe44f0
+
             float v = Search(currNode.Children[currNode.Value.bestChildIndex]);
 
             for (int i = 0; i < moves.Count; ++i)
