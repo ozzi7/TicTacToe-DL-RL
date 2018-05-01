@@ -69,7 +69,10 @@ namespace TicTacToe_DL_RL
         public NeuralNetwork()
         {
             SaveWeightsToFile("weights.txt");
+<<<<<<< HEAD
             ReadWeightsFromFile("weights.txt");
+=======
+>>>>>>> dce5a01535d1cb939415833a6efe737291f8d055
             //ReadWeightsFromFile("weights.txt");
             //for (int i = 0; i < convBiases.Count(); ++i) {
             //    batchnorm_means[i] -= convBiases[i];
@@ -265,6 +268,7 @@ namespace TicTacToe_DL_RL
         }
         public void ReadWeightsFromFile(string name)
         {
+<<<<<<< HEAD
             String text;
             String[] tokens;
 
@@ -397,11 +401,15 @@ namespace TicTacToe_DL_RL
             {
                 valueBiasLast[i] = float.Parse(tokens[i]);
             }
+=======
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "\\" + name);
+>>>>>>> dce5a01535d1cb939415833a6efe737291f8d055
         }
         public void SaveWeightsToFile(string name)
         {
             StreamWriter fileWriter = new StreamWriter(name);
 
+<<<<<<< HEAD
             for (int i = 0; i < firstConvFilterWeights.Count() - 1; ++i)
             {
                 fileWriter.Write(firstConvFilterWeights[i] + " ");
@@ -513,6 +521,118 @@ namespace TicTacToe_DL_RL
             }
             fileWriter.Write(valueBiasLast[valueBiasLast.Count() - 1] + "\n");
             fileWriter.Close();
+=======
+            for (int i = 0; i < firstConvFilterWeights.Count(); ++i)
+            {
+                fileWriter.Write(firstConvFilterWeights[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < convFilterWeights.Count(); ++i)
+            {
+                fileWriter.Write(convFilterWeights[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < convBiases.Count(); ++i)
+            {
+                fileWriter.Write(convBiases[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < batchnorm_means.Count(); ++i)
+            {
+                fileWriter.Write(batchnorm_means[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            //w = 1.0f / std::sqrt(w + epsilon) on read of bn stddivs
+            for (int i = 0; i < batchnorm_stddev.Count(); ++i)
+            {
+                fileWriter.Write(batchnorm_stddev[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            // policy head
+            for (int i = 0; i < convolutionWeightsPolicy.Count(); ++i)
+            {
+                fileWriter.Write(convolutionWeightsPolicy[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < convolutionBiasesPolicy.Count(); ++i)
+            {
+                fileWriter.Write(convolutionBiasesPolicy[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < batchnormMeansPolicy.Count(); ++i)
+            {
+                fileWriter.Write(batchnormMeansPolicy[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < batchnormStddevPolicy.Count(); ++i)
+            {
+                fileWriter.Write(batchnormStddevPolicy[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < policyConnectionWeights.Count(); ++i)
+            {
+                fileWriter.Write(policyConnectionWeights[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < policyBiases.Count(); ++i)
+            {
+                fileWriter.Write(policyBiases[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            // for value
+            for (int i = 0; i < convolutionWeightsValue1.Count(); ++i)
+            {
+                fileWriter.Write(convolutionWeightsValue1[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < convolutionWeightsValue2.Count(); ++i)
+            {
+                fileWriter.Write(convolutionWeightsValue2[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < batchnormMeansValue.Count(); ++i)
+            {
+                fileWriter.Write(batchnormMeansValue[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < batchnormStddevValue.Count(); ++i)
+            {
+                fileWriter.Write(batchnormStddevValue[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < valueConnectionWeights.Count(); ++i)
+            {
+                fileWriter.Write(valueConnectionWeights[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < valueBiases.Count(); ++i)
+            {
+                fileWriter.Write(valueBiases[i] + " ");
+            }
+            fileWriter.WriteLine();
+
+            for (int i = 0; i < valueBiasLast.Count(); ++i)
+            {
+                fileWriter.Write(valueBiasLast[i] + " ");
+            }
+            fileWriter.WriteLine();
+>>>>>>> dce5a01535d1cb939415833a6efe737291f8d055
         }
     }
 }
