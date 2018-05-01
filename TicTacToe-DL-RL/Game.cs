@@ -19,7 +19,7 @@ namespace TicTacToe_DL_RL
         }
         public Game(Position aPos)
         {
-            pos = aPos;
+            pos = new Position(aPos);
         }
         public List<Tuple<int,int>> GetMoves()
         {
@@ -80,5 +80,12 @@ namespace TicTacToe_DL_RL
         public int bestChildIndex = -1;
 
         public Position() {}
+        public Position(Position aPos)
+        {
+            // create copy of other position
+            gameBoard = aPos.gameBoard.Clone() as int[,];
+            sideToMove = aPos.sideToMove;
+            score = aPos.score;
+        }
     }
 }
