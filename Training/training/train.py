@@ -1,132 +1,131 @@
 # -*- coding: utf-8 -*-
 """
-@author ozzi7
+@author github/suragnair, ozzi7
 """
 
+import os
+import shutil
+import time
+import random
 import numpy as np
+import math
+import sys
+
+sys.path.append('../')
+from dotdict import *
+
+from pytorch_classification.utils import AverageMeter
+from tictactoe_nn import *
+
 import tensorflow as tf
+sys.path.append('../../')
+
+args = dotdict({
+    'lr': 0.001,
+    'dropout': 0.3,
+    'epochs': 10,
+    'batch_size': 64,
+    'num_channels': 512,
+})
 
 
-class Trainer:
-    def __init__(self):
-        self.NOF_FILTERS = 64
-        self.NOF_RESIDUAL_BLOCKS = 6
-        self.NOF_PLANES = 2
-        self.BOARD_SIZE_X = 3
-        self.BOARD_SIZE_Y = 3
+class NNetWrapper():
+    def __init__(self, game):
+        self.nnet = TicTacToeNet(args)
+        self.board_x, self.board_y = game.getBoardSize()
+        self.action_size = game.getActionSize()
 
-        self.weights = [] # to export
-        construct_net(self.NOF_PLANES)
+        self.sess = tf.Session(graph=self.nnet.graph)
+        self.saver = None
+        with tf.Session() as temp_sess:
+            temp_sess.run(tf.global_variables_initializer())
+        self.sess.run(tf.variables_initializer(self.nnet.graph.get_collection('variables')))
 
-    def train(self):
-        pass
-
-    def residual_block(self, inputs, nof_filters):
+    def train(self, examples):
         """
-        :param inputs:
-        :param nof_filters:
-        :return:
+        examples: list of examples, each example is of form (board, pi, v)
         """
-        # First convnet
-        passthrough = tf.identity(inputs)
-        conv_weights_1 = weight_variable([3, 3, nof_filters, nof_filters])
-        conv_biases_1 = bn_bias_variable([nof_filters])
-        self.weights.append(conv_weights_1)
-        self.weights.append(conv_biases_1)
+
+        for epoch in range(args.epochs):
+            print('EPOCH ::: ' + str(epoch+1))
+            data_time = AverageMeter()
+            batch_time = AverageMeter()
+            pi_losses = AverageMeter()
+            v_losses = AverageMeter()
+            end = time.time()
+
+            bar = Bar('Training Net', max=int(len(examples)/args.batch_size))
+            batch_idx = 0
+
+            # self.sess.run(tf.local_variables_initializer())
+            while batch_idx < int(len(examples)/args.batch_size):
+                sample_ids = np.random.randint(len(examples), size=args.batch_size)
+                boards, pis, vs = list(zip(*[examples[i] for i in sample_ids]))
+
+                # predict and compute gradient and do SGD step
+                input_dict = {self.nnet.input_boards: boards, self.nnet.target_pis: pis, self.nnet.target_vs: vs, self.nnet.dropout: args.dropout, self.nnet.isTraining: True}
+
+                # measure data loading time
+                data_time.update(time.time() - end)
+
+                # record loss
+                self.sess.run(self.nnet.train_step, feed_dict=input_dict)
+                pi_loss, v_loss = self.sess.run([self.nnet.loss_pi, self.nnet.loss_v], feed_dict=input_dict)
+                pi_losses.update(pi_loss, len(boards))
+                v_losses.update(v_loss, len(boards))
+
+                # measure elapsed time
+                batch_time.update(time.time() - end)
+                end = time.time()
+                batch_idx += 1
+
+                # plot progress
+                bar.suffix  = '({batch}/{size}) Data: {data:.3f}s | Batch: {bt:.3f}s | Total: {total:} | ETA: {eta:} | Loss_pi: {lpi:.4f} | Loss_v: {lv:.3f}'.format(
+                            batch=batch_idx,
+                            size=int(len(examples)/args.batch_size),
+                            data=data_time.avg,
+                            bt=batch_time.avg,
+                            total=bar.elapsed_td,
+                            eta=bar.eta_td,
+                            lpi=pi_losses.avg,
+                            lv=v_losses.avg,
+                            )
+                bar.next()
+            bar.finish()
 
 
-        weight_key_1 = self.get_batchnorm_key()
-        self.weights.append(weight_key_1 + "/batch_normalization/moving_mean:0")
-        self.weights.append(weight_key_1 + "/batch_normalization/moving_variance:0")
+    def predict(self, board):
+        """
+        board: np array with board
+        """
+        # timing
+        start = time.time()
 
-        # Second convnet
-        conv_weights_2 = weight_variable([3, 3, nof_filters, nof_filters])
-        conv_biases_2 = bn_bias_variable([nof_filters])
-        self.weights.append(conv_weights_2)
-        self.weights.append(conv_biases_2)
+        # preparing input
+        board = board[np.newaxis, :, :]
 
-        weight_key_2 = self.get_batchnorm_key()
-        self.weights.append(weight_key_2 + "/batch_normalization/moving_mean:0")
-        self.weights.append(weight_key_2 + "/batch_normalization/moving_variance:0")
+        # run
+        prob, v = self.sess.run([self.nnet.prob, self.nnet.v], feed_dict={self.nnet.input_boards: board, self.nnet.dropout: 0, self.nnet.isTraining: False})
 
-        with tf.variable_scope(weight_key_1):
-            h_bn1 = \
-                tf.layers.batch_normalization(
-                    conv2d(inputs, W_conv_1),
-                    epsilon=1e-5, axis=1, fused=True,
-                    center=False, scale=False,
-                    training=self.training)
-        h_out_1 = tf.nn.relu(h_bn1)
-        with tf.variable_scope(weight_key_2):
-            h_bn2 = \
-                tf.layers.batch_normalization(
-                    conv2d(h_out_1, W_conv_2),
-                    epsilon=1e-5, axis=1, fused=True,
-                    center=False, scale=False,
-                    training=self.training)
-        h_out_2 = tf.nn.relu(tf.add(h_bn2, orig))
-        return h_out_2
+        #print('PREDICTION TIME TAKEN : {0:03f}'.format(time.time()-start))
+        return prob[0], v[0]
 
-        def weight_variable(shape):
-            """
-            The idea is to initialize weights such that data passed through the network does not change its magnitude
-            dramatically
-            :param shape:
-            :return:
-            """
-            """Xavier initialization"""
-            stddev = np.sqrt(2.0 / (sum(shape)))
-            initial = tf.truncated_normal(shape, stddev=stddev)
-            weights = tf.Variable(initial)
-            tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, weights)
-            return weights
+    def save_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
+        filepath = os.path.join(folder, filename)
+        if not os.path.exists(folder):
+            print("Checkpoint Directory does not exist! Making directory {}".format(folder))
+            os.mkdir(folder)
+        else:
+            print("Checkpoint Directory exists! ")
+        if self.saver == None:
+            self.saver = tf.train.Saver(self.nnet.graph.get_collection('variables'))
+        with self.nnet.graph.as_default():
+            self.saver.save(self.sess, filepath)
 
-        # No point in learning bias weights as they are cancelled
-        # out by the BatchNorm layers's mean adjustment.
-        def bn_bias_variable(shape):
-            initial = tf.constant(0.0, shape=shape)
-            return tf.Variable(initial, trainable=False)
-
-    def construct_net(self, data):
-        input_boards = tf.reshape(planes, [None, self.NOF_PLANES, self.BOARD_SIZE_Y, self.BOARD_SIZE_X])
-
-        # Input convolution
-        flow = self.conv_block(input_boards, filter_size=3, input_channels=self.NOF_PLANES, output_channels=self.NOF_FILTERS)
-
-        # Residual tower
-        for _ in range(0, self.RESIDUAL_BLOCKS):
-            flow = self.residual_block(flow, self.NOF_FILTERS)
-
-        # Policy head
-        conv_pol = self.conv_block(flow, filter_size=1,
-                                   input_channels=self.RESIDUAL_FILTERS,
-                                   output_channels=32)
-        h_conv_pol_flat = tf.reshape(conv_pol, [-1, 32*8*8])
-        W_fc1 = weight_variable([32*8*8, 1858])
-        b_fc1 = bias_variable([1858])
-        self.weights.append(W_fc1)
-        self.weights.append(b_fc1)
-        h_fc1 = tf.add(tf.matmul(h_conv_pol_flat, W_fc1), b_fc1, name='policy_head')
-
-        # Value head
-        conv_val = self.conv_block(flow, filter_size=1,
-                                   input_channels=self.RESIDUAL_FILTERS,
-                                   output_channels=32)
-        h_conv_val_flat = tf.reshape(conv_val, [-1, 32*8*8])
-        W_fc2 = weight_variable([32 * 8 * 8, 128])
-        b_fc2 = bias_variable([128])
-        self.weights.append(W_fc2)
-        self.weights.append(b_fc2)
-        h_fc2 = tf.nn.relu(tf.add(tf.matmul(h_conv_val_flat, W_fc2), b_fc2))
-        W_fc3 = weight_variable([128, 1])
-        b_fc3 = bias_variable([1])
-        self.weights.append(W_fc3)
-        self.weights.append(b_fc3)
-        h_fc3 = tf.nn.tanh(tf.add(tf.matmul(h_fc2, W_fc3), b_fc3), name='value_head')
-
-        return h_fc1, h_fc3
-
-
-if __name__ == "__main__":
-    trainer = Trainer()
-    trainer.train()
+    def load_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
+        filepath = os.path.join(folder, filename)
+        if not os.path.exists(filepath+'.meta'):
+            raise("No model in path {}".format(filepath))
+        with self.nnet.graph.as_default():
+            self.saver = tf.train.Saver()
+            self.saver.restore(self.sess, filepath)
