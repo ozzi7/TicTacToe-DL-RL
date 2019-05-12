@@ -131,6 +131,11 @@ namespace TicTacToe_DL_RL
             }
             // debug
             //Console.WriteLine("" + string.Join(",", rewards) + "\n");
+            // rewards[i] is total reward for the games of player i
+            for (int i = 0; i < rewards.Count; ++i)
+            {
+                rewards[i] = (rewards[i] > 0) ? rewards[i] : 0; // set reward to 0 if negative
+            }
             /* normalize rewards */
             float sum = rewards.Sum();
             for (int i = 0; i < rewards.Count; ++i)

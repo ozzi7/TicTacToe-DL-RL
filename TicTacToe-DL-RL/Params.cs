@@ -11,8 +11,8 @@ namespace TicTacToe_DL_RL
     { 
         public static int nofEpochs = 1000000;
         public static float c_puct = 1.41f; // roughly sqrt 2 // was 2
-        public static int nofSimsPerPosTest = 10; // could/should be time
-        public static int nofSimsPerPosTrain = 10; // could/should be time
+        public static int nofSimsPerPosTest = 20; // could/should be time
+        public static int nofSimsPerPosTrain = 20; // could/should be time
         public static int populationSize = 10;
 
         public static int nofTrainingGames = 1000000;
@@ -20,8 +20,8 @@ namespace TicTacToe_DL_RL
         public static int maxPlies = 100;
 
         public static int gamesPerIndividuum = 10;
-        public static float sigma = 0.1f;  // noise standard deviation 0.1, 0.01, 2 sims, 1.4puct
-        public static float alpha = 0.1f;// learning rate
+        public static float sigma = 0.01f;  // noise standard deviation 0.1, 0.01, 2 sims, 1.4puct
+        public static float alpha = 0.05f;// learning rate
 
         public static int boardSizeX = 5;
         public static int boardSizeY = 5;

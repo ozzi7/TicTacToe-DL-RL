@@ -511,75 +511,75 @@ namespace TicTacToe_DL_RL
         {
             for (int i = 0; i < firstConvFilterWeights.Length; ++i)
             {
-                firstConvFilterWeights[i] = RandomNr.GetFloat(-1, 1);
+                firstConvFilterWeights[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < convFilterWeights.Length; ++i)
             {
-                convFilterWeights[i] = RandomNr.GetFloat(-1, 1);
+                convFilterWeights[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < convBiases.Length; ++i)
             {
-                convBiases[i] = RandomNr.GetFloat(-1, 1);
+                convBiases[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < batchnorm_means.Length; ++i)
             {
-                batchnorm_means[i] = RandomNr.GetFloat(-1, 1);
+                batchnorm_means[i] = 0.0f;
             }
             for (int i = 0; i < batchnorm_stddev.Length; ++i)
             {
-                batchnorm_stddev[i] = RandomNr.GetFloat(-1, 1);
+                batchnorm_stddev[i] = 1.0f;
             }
             for (int i = 0; i < convolutionWeightsPolicy.Length; ++i)
             {
-                convolutionWeightsPolicy[i] = RandomNr.GetFloat(-1, 1);
+                convolutionWeightsPolicy[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < convolutionBiasesPolicy.Length; ++i)
             {
-                convolutionBiasesPolicy[i] = RandomNr.GetFloat(-1, 1);
+                convolutionBiasesPolicy[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < batchnormMeansPolicy.Length; ++i)
             {
-                batchnormMeansPolicy[i] = RandomNr.GetFloat(-1, 1);
+                batchnormMeansPolicy[i] = 0.0f;
             }
             for (int i = 0; i < batchnormStddevPolicy.Length; ++i)
             {
-                batchnormStddevPolicy[i] = RandomNr.GetFloat(-1, 1);
+                batchnormStddevPolicy[i] = 1.0f;
             }
             for (int i = 0; i < policyConnectionWeights.Length; ++i)
             {
-                policyConnectionWeights[i] = RandomNr.GetFloat(-1, 1);
+                policyConnectionWeights[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < policyBiases.Length; ++i)
             {
-                policyBiases[i] = RandomNr.GetFloat(-1, 1);
+                policyBiases[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < convolutionWeightsValue1.Length; ++i)
             {
-                convolutionWeightsValue1[i] = RandomNr.GetFloat(-1, 1);
+                convolutionWeightsValue1[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < convolutionWeightsValue2.Length; ++i)
             {
-                convolutionWeightsValue2[i] = RandomNr.GetFloat(-1, 1);
+                convolutionWeightsValue2[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < batchnormMeansValue.Length; ++i)
             {
-                batchnormMeansValue[i] = RandomNr.GetFloat(-1, 1);
+                batchnormMeansValue[i] = 0.0f;
             }
             for (int i = 0; i < batchnormStddevValue.Length; ++i)
             {
-                batchnormStddevValue[i] = RandomNr.GetFloat(-1, 1);
+                batchnormStddevValue[i] = 1.0f;
             }
             for (int i = 0; i < valueConnectionWeights.Length; ++i)
             {
-                valueConnectionWeights[i] = RandomNr.GetFloat(-1, 1);
+                valueConnectionWeights[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < valueBiases.Length; ++i)
             {
-                valueBiases[i] = RandomNr.GetFloat(-1, 1);
+                valueBiases[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < valueBiasLast.Length; ++i)
             {
-                valueBiasLast[i] = RandomNr.GetFloat(-1, 1);
+                valueBiasLast[i] = RandomNr.GetGaussianFloat();
             }
         }
     }
