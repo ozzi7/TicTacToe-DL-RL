@@ -16,12 +16,12 @@ namespace TicTacToe_DL_RL
         public static int populationSize = 10;
 
         public static int nofTrainingGames = 1000000;
-        public static int nofTestGames = 20; // only 2 makes sense without noise
+        public static int nofTestGames = 100; // only 2 makes sense without noise
         public static int maxPlies = 100;
 
-        public static int gamesPerIndividuum = 10;
-        public static float sigma = 0.01f;  // noise standard deviation 0.1, 0.01, 2 sims, 1.4puct
-        public static float alpha = 0.05f;// learning rate
+        public static int gamesPerIndividuum = 40;
+        public static float sigma = 0.1f;  // noise standard deviation 0.1, 0.01, 2 sims, 1.4puct
+        public static float alpha = 0.01f;// learning rate
 
         public static int boardSizeX = 5;
         public static int boardSizeY = 5;
@@ -31,9 +31,9 @@ namespace TicTacToe_DL_RL
     public static class RandomNr
     {
         private static Random random = new Random();
-        public static int GetInt(int from, int to)
+        public static int GetInt(int fromInclusive, int toExclusive)
         {
-            return random.Next(from, to);
+            return random.Next(fromInclusive, toExclusive);
         }
         public static float GetFloat(int from, int to)
         {

@@ -17,6 +17,8 @@ namespace TicTacToe_DL_RL
         private NeuralNetwork playingNN;
         private Node<TicTacToePosition> MCTSRootNode;
         private double totalWins = 0;
+        private double totalWinsAgainstRandom = 0;
+        private double totalGamesAgainstRandom = 0;
         private double totalWinsX = 0;
         private double totalWinsZ = 0;
         private double totalDraws = 0;
@@ -65,15 +67,23 @@ namespace TicTacToe_DL_RL
             playingNN.ParseWeights();
 
             /*create noise*/
-            for (int j = 0; j < Params.populationSize; ++j)
+            for (int j = 0; j < Params.populationSize/2; ++j)
             {
-                List<float> temp = new List<float>();
+                List<float> temp1 = new List<float>();
 
                 for (int k = 0; k < currentNN.weights.Count; ++k)
                 {
-                    temp.Add(RandomNr.GetGaussianFloat());
+                    temp1.Add(RandomNr.GetGaussianFloat());
                 }
-                noise.Add(temp);
+                noise.Add(temp1);
+
+                /* add the negative of the previous vector (so the perturbations are balanced in all directions)*/
+                List<float>  temp2 = new List<float>();
+                for (int k = 0; k < currentNN.weights.Count; ++k)
+                {
+                    temp2.Add(-temp1[k]);
+                }
+                noise.Add(temp2);
             }
             for (int j = 0; j < Params.populationSize; ++j)
             {
@@ -143,7 +153,7 @@ namespace TicTacToe_DL_RL
                 rewards[i] -= sum / rewards.Count;
             }
 
-            /* find new best network */
+            /* set weight for new network */
             for (int j = 0; j < currentNN.weights.Count; ++j)
             {
                 float offset = 0.0f;
@@ -164,7 +174,7 @@ namespace TicTacToe_DL_RL
                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
                 Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
 
-                Params.noiseWeight = 0.1f;
+                Params.noiseWeight = 0.2f;
                 int result1 = PlayOneGame(history, evaluationNetworkPlayer, currentNN, previousNN1, false);
                 //int result2 = PlayOneGame(history, evaluationNetworkPlayer, currentNN, previousNN2);
                 //int result3 = PlayOneGame(history, evaluationNetworkPlayer, currentNN, previousNN3);
@@ -199,6 +209,7 @@ namespace TicTacToe_DL_RL
 
             totalDraws += draws;
 
+            double winrateVsRandom = PlayAgainstRandom(20, currentNN);
             Console.WriteLine("Score: W/D/L " + wins + "/" + draws + "/" + losses + " Total winrateX/winrateZ/drawrate "+
                 Math.Round(totalWinsX/totalGames,2) + "/" + Math.Round(totalWinsZ / totalGames, 2) + "/" + Math.Round(totalDraws/totalGames,2));
 
@@ -206,7 +217,7 @@ namespace TicTacToe_DL_RL
             {
                 currentPseudoELO += 0;
 
-                // ignore new network, it was bad
+                // ignore new network, it was badn
                 currentNN.weights = new List<float>(previousNN1.weights);
                 currentNN.ParseWeights();
             }
@@ -223,8 +234,74 @@ namespace TicTacToe_DL_RL
             {
                 file.WriteLine(currentPseudoELO + " " + Math.Round(totalWinsX / totalGames, 3) + " " +
                     Math.Round(totalWinsZ / totalGames, 3) + " " + Math.Round(totalDraws / totalGames, 3) + " " +
-                    Math.Round(totalMoves/totalGames,3));
+                    Math.Round(totalMoves/totalGames,3) + " " + Math.Round(winrateVsRandom,3));
             }
+        }
+        /// <summary>
+        /// Play against random player
+        /// </summary>
+        /// <param name="nofGames"></param>
+        /// <returns>Winrate</returns>
+        public double PlayAgainstRandom(int nofGames, NeuralNetwork NN)
+        {
+            for (int j = 0; j < nofGames; ++j)
+            {
+                List<Tuple<int, int>> history = new List<Tuple<int, int>>();
+                Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
+
+                Params.noiseWeight = 0.0f;
+
+                TicTacToeGame game = new TicTacToeGame();
+
+                float result = 0.0f;
+                for (int curr_ply = 0; curr_ply < Params.maxPlies; ++curr_ply)  // we always finish the game for tic tac toe
+                {
+                    MCTSRootNode = new Node<TicTacToePosition>(null);
+                    MCTSRootNode.Value = game.pos;
+
+                    if (game.IsOver())
+                    {
+                        result = game.GetScore();
+                        break;
+                    }
+
+                    DirichletNoise.InitDirichlet(game.GetMoves().Count); // for root node (all root nodes not just the actual game start)
+                                                                         // also tree use makes this a bit less effective going down the tree, maybe use temperature later
+
+                    int best_child_index = -1;
+                    if (game.pos.sideToMove == evaluationNetworkPlayer)
+                    {
+                        for (int simulation = 0; simulation < Params.nofSimsPerPosTest; ++simulation)
+                        {
+                            SearchUsingNN(MCTSRootNode, NN, NN); 
+                        }
+                        best_child_index = findBestChildWinrate(MCTSRootNode);
+                    }
+                    else
+                    {
+                        SearchUsingNN(MCTSRootNode, NN, NN); // just in case we dont create the children properly for random player
+                        best_child_index = RandomNr.GetInt(0, MCTSRootNode.Children.Count);
+                    }
+
+                    List<Tuple<int, int>> moves = game.GetMoves();
+                    Tuple<int, int> move = moves[best_child_index]; // add randomness here
+                    game.DoMove(move);
+                    history.Add(move);
+
+                    /* tree re-use */
+                    MCTSRootNode = MCTSRootNode.Children[best_child_index];
+                }
+
+                result = game.pos.score;
+
+                if (evaluationNetworkPlayer == Player.X && result == 1 ||
+                    evaluationNetworkPlayer == Player.Z && result == -1)
+                {
+                    totalWinsAgainstRandom++;
+                }
+                totalGamesAgainstRandom++;
+            }
+            return totalWinsAgainstRandom / totalGamesAgainstRandom;
         }
         /// <summary>
         /// 

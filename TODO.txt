@@ -2,7 +2,12 @@ Xavier initialization for weights,
 see https://arxiv.org/pdf/1712.06567.pdf
 
 temperature in addition or replacement to dirichlet noise
+see https://github.com/LeelaChessZero/lczero/blob/release/src/UCTSearch.cpp
 hyperparameter tuning
 distribution 
 -> use random seeds to distribute nodes and build client/server architecture
 port to opencl
+node hashing
+virtual batchnorm
+-> prevent local minimum
+virtual visits for MCTS to OpenCL port
