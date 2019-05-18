@@ -54,11 +54,14 @@
     <Reference Include="WindowsFormsIntegration" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DirichletNoise.cs" />
+    <Compile Include="MovingAverage.cs" />
     <Compile Include="NeuralNetwork.cs" />
     <Compile Include="Params.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RandomNr.cs" />
     <Compile Include="TicTacToeGame.cs" />
     <Compile Include="Trainer.cs" />
     <Compile Include="Node.cs" />

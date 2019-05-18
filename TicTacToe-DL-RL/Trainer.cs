@@ -12,8 +12,8 @@ namespace TicTacToe_DL_RL
         private Player evaluationNetworkPlayer; // the network to be evaulated plays which color?
         private NeuralNetwork currentNN;
         private NeuralNetwork previousNN1;
-        private NeuralNetwork previousNN2;
-        private NeuralNetwork previousNN3;
+        //private NeuralNetwork previousNN2;
+        //private NeuralNetwork previousNN3;
         private NeuralNetwork playingNN;
         private Node<TicTacToePosition> MCTSRootNode;
         private double totalWins = 0;
@@ -23,7 +23,12 @@ namespace TicTacToe_DL_RL
         private double totalWinsZ = 0;
         private double totalDraws = 0;
         private double totalGames = 0;
-        private double totalMoves = 0;
+
+        private MovingAverage winsAsXMovingAvg = new MovingAverage();
+        private MovingAverage winsAsZMovingAvg = new MovingAverage();
+        private MovingAverage drawsMovingAvg = new MovingAverage();
+        private MovingAverage averageMovesMovingAvg = new MovingAverage();
+
         private String plotFilename = "plotdata.txt";
         private double currentPseudoELO = 0;
 
@@ -32,12 +37,13 @@ namespace TicTacToe_DL_RL
         {
             currentNN = aCurrentNN;
             previousNN1 = new NeuralNetwork();
-            previousNN2 = new NeuralNetwork();
-            previousNN3 = new NeuralNetwork();
+            //previousNN2 = new NeuralNetwork();
+            //previousNN3 = new NeuralNetwork();
 
             previousNN1.weights = new List<float>(currentNN.weights);
-            previousNN2.weights = new List<float>(currentNN.weights);
-            previousNN3.weights = new List<float>(currentNN.weights);
+            previousNN1.untrainable_weights = new List<float>(currentNN.untrainable_weights);
+            //previousNN2.weights = new List<float>(currentNN.weights);
+            //previousNN3.weights = new List<float>(currentNN.weights);
 
             playingNN = new NeuralNetwork();
 
@@ -50,11 +56,12 @@ namespace TicTacToe_DL_RL
         public void Train()
         {
             currentNN.SaveWeightsToFile("weights_start.txt");
+           
             for (int i = 0; i < Params.nofEpochs; ++i)
             {
                 TrainingRun(i);
-                if(i % 100 == 0)
-                    currentNN.SaveWeightsToFile("weights_net_" + ((int)(i/100)).ToString() + ".txt");
+                if(i % Params.SaveWeightsEveryXthTrainingRun == 0)
+                    currentNN.SaveWeightsToFile("weights_net_" + ((int)(i/Params.SaveWeightsEveryXthTrainingRun)).ToString() + ".txt");
             }
         }
         public void TrainingRun(int run)
@@ -64,6 +71,7 @@ namespace TicTacToe_DL_RL
             List<List<float>> noise = new List<List<float>>(Params.populationSize);
 
             playingNN.weights = new List<float>(currentNN.weights);
+            playingNN.untrainable_weights = new List<float>(currentNN.untrainable_weights);
             playingNN.ParseWeights();
 
             /*create noise*/
@@ -163,6 +171,7 @@ namespace TicTacToe_DL_RL
                 }
                 currentNN.weights[j] += Params.alpha / (Params.populationSize * Params.sigma) * offset;
             }
+            currentNN.ApplyWeightDecay();
             currentNN.ParseWeights();
 
             /* check performance vs previous best*/
@@ -179,14 +188,22 @@ namespace TicTacToe_DL_RL
                 //int result2 = PlayOneGame(history, evaluationNetworkPlayer, currentNN, previousNN2);
                 //int result3 = PlayOneGame(history, evaluationNetworkPlayer, currentNN, previousNN3);
 
-                totalMoves += history.Count;
                 if (result1 == 1)
                 {
                     totalWinsX++;
+                    winsAsXMovingAvg.ComputeAverage(1);
+                    winsAsZMovingAvg.ComputeAverage(0);
                 }
                 else if (result1 == -1)
                 {
                     totalWinsZ++;
+                    winsAsXMovingAvg.ComputeAverage(0);
+                    winsAsZMovingAvg.ComputeAverage(1);
+                }
+                else
+                {
+                    winsAsXMovingAvg.ComputeAverage(0);
+                    winsAsZMovingAvg.ComputeAverage(0);
                 }
 
                 totalWins = totalWinsX + totalWinsZ;
@@ -195,30 +212,37 @@ namespace TicTacToe_DL_RL
                     evaluationNetworkPlayer == Player.Z && result1 == -1)
                 {
                     wins++;
+                    drawsMovingAvg.ComputeAverage(0);
                 }
                 else if (result1 == 0)
                 {
                     draws++;
+                    drawsMovingAvg.ComputeAverage(1);
                 }
                 else
                 {
                     losses++;
+                    drawsMovingAvg.ComputeAverage(0);
                 }
                 totalGames += 1;
+                averageMovesMovingAvg.ComputeAverage(history.Count);
             }
 
             totalDraws += draws;
 
             double winrateVsRandom = PlayAgainstRandom(20, currentNN);
-            Console.WriteLine("Score: W/D/L " + wins + "/" + draws + "/" + losses + " Total winrateX/winrateZ/drawrate "+
-                Math.Round(totalWinsX/totalGames,2) + "/" + Math.Round(totalWinsZ / totalGames, 2) + "/" + Math.Round(totalDraws/totalGames,2));
+
+        Console.WriteLine("Score: W/D/L " + wins + "/" + draws + "/" + losses + " winrateX/drawrate/winrateZ " +
+                Math.Round(winsAsXMovingAvg.Average, 2) + "/" + Math.Round(drawsMovingAvg.Average, 2) + "/" + Math.Round(winsAsZMovingAvg.Average, 2));
 
             if (wins < losses)
             {
                 currentPseudoELO += 0;
 
-                // ignore new network, it was badn
+                // ignore new network, it was bad
                 currentNN.weights = new List<float>(previousNN1.weights);
+                currentNN.untrainable_weights = new List<float>(previousNN1.untrainable_weights);
+
                 currentNN.ParseWeights();
             }
             else
@@ -227,14 +251,18 @@ namespace TicTacToe_DL_RL
                 //previousNN3 = previousNN2;
                 //previousNN2 = previousNN1;
                 previousNN1.weights = new List<float>(currentNN.weights);
+                previousNN1.untrainable_weights = new List<float>(currentNN.untrainable_weights);
                 previousNN1.ParseWeights();
+                printPolicy(currentNN);
+                printValue(currentNN);
+
             }
 
             using (System.IO.StreamWriter file = new System.IO.StreamWriter(plotFilename, true))
             {
-                file.WriteLine(currentPseudoELO + " " + Math.Round(totalWinsX / totalGames, 3) + " " +
-                    Math.Round(totalWinsZ / totalGames, 3) + " " + Math.Round(totalDraws / totalGames, 3) + " " +
-                    Math.Round(totalMoves/totalGames,3) + " " + Math.Round(winrateVsRandom,3));
+                file.WriteLine(currentPseudoELO + " " + Math.Round(winsAsXMovingAvg.Average, 2) + " " +
+                    Math.Round(winsAsZMovingAvg.Average, 2) + " " + Math.Round(drawsMovingAvg.Average, 2) + " " +
+                    Math.Round(averageMovesMovingAvg.Average) + " " + Math.Round(winrateVsRandom, 2));
             }
         }
         /// <summary>
@@ -244,6 +272,8 @@ namespace TicTacToe_DL_RL
         /// <returns>Winrate</returns>
         public double PlayAgainstRandom(int nofGames, NeuralNetwork NN)
         {
+            totalWinsAgainstRandom = 0;
+            totalGamesAgainstRandom = 0;
             for (int j = 0; j < nofGames; ++j)
             {
                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
@@ -275,7 +305,8 @@ namespace TicTacToe_DL_RL
                         {
                             SearchUsingNN(MCTSRootNode, NN, NN); 
                         }
-                        best_child_index = findBestChildWinrate(MCTSRootNode);
+                        //best_child_index = findBestChildWinrate(MCTSRootNode);
+                        best_child_index = findBestChildVisitCount(MCTSRootNode);
                     }
                     else
                     {
@@ -330,7 +361,8 @@ namespace TicTacToe_DL_RL
                 DirichletNoise.InitDirichlet(game.GetMoves().Count); // for root node (all root nodes not just the actual game start)
                 // also tree use makes this a bit less effective going down the tree, maybe use temperature later
 
-                if(train)
+                if (train)
+                {
                     for (int simulation = 0; simulation < Params.nofSimsPerPosTrain; ++simulation)
                     {
                         SearchUsingNN(MCTSRootNode, NN1, NN2); // expand tree and improve accuracy at MCTSRootNode
@@ -338,24 +370,25 @@ namespace TicTacToe_DL_RL
                         // show last simulation tree
                         if (simulation == Params.nofSimsPerPosTrain - 1 && curr_ply == 0)
                         {
-                           // DisplayMCTSTree(MCTSRootNode);
+                            // DisplayMCTSTree(MCTSRootNode);
                         }
                     }
+
+                }
                 else
+                {
                     for (int simulation = 0; simulation < Params.nofSimsPerPosTest; ++simulation)
                     {
                         SearchUsingNN(MCTSRootNode, NN1, NN2); // expand tree and improve accuracy at MCTSRootNode
-                                                                                        //RegularMCTSSearch(MCTSRootNode);
-                                                                                        // show last simulation tree
+                                                               //RegularMCTSSearch(MCTSRootNode);
+                                                               // show last simulation tree
                         if (simulation == Params.nofSimsPerPosTest - 1 && curr_ply == 0)
                         {
                             // DisplayMCTSTree(MCTSRootNode);
                         }
                     }
-
-
+                }
                 int best_child_index = findBestChildWinrate(MCTSRootNode);
-                //int best_child_index = findBestChildVisitCount(MCTSRootNode);
 
                 List<Tuple<int, int>> moves = game.GetMoves();
                 Tuple<int, int> move = moves[best_child_index]; // add randomness here
@@ -445,6 +478,58 @@ namespace TicTacToe_DL_RL
             /* update the tree with the new score and visit counts */
             backpropagateScore(currNode, score);
         }
+        private void printPolicy(NeuralNetwork nn)
+        {
+            TicTacToeGame game = new TicTacToeGame();
+
+            MCTSRootNode = new Node<TicTacToePosition>(null);
+            MCTSRootNode.Value = game.pos;
+            Tuple<float[], float> prediction = nn.Predict(MCTSRootNode.Value);
+            MCTSRootNode.nn_policy = new List<float>(prediction.Item1);
+            MCTSRootNode.nn_value = prediction.Item2;
+
+            for (int i = 0; i < 5; ++i)
+            { // could be ^T
+                Console.WriteLine(MCTSRootNode.nn_policy[i * 5 + 0].ToString("00.00") + " "
+                MCTSRootNode.nn_policy[i * 5 + 1].ToString("00.00") + " " + 
+                MCTSRootNode.nn_policy[i * 5 + 2].ToString("00.00") + " " +
+                MCTSRootNode.nn_policy[i * 5 + 3].ToString("00.00") + " " +
+                MCTSRootNode.nn_policy[i * 5 + 4].ToString("00.00"));
+                Console.WriteLine("\n");
+            }
+            Console.WriteLine("\n");
+        }
+        private void printValue(NeuralNetwork nn)
+        {
+            TicTacToeGame game = new TicTacToeGame();
+
+            MCTSRootNode = new Node<TicTacToePosition>(null);
+            MCTSRootNode.Value = game.pos;
+            Tuple<float[], float> prediction = nn.Predict(MCTSRootNode.Value);
+            MCTSRootNode.nn_policy = new List<float>(prediction.Item1);
+            MCTSRootNode.nn_value = prediction.Item2;
+
+            createChildren(MCTSRootNode);
+            for (int i = 0; i < MCTSRootNode.Children.Count; ++i)
+            {
+                prediction = nn.Predict(MCTSRootNode.Children[i].Value);
+                MCTSRootNode.Children[i].nn_policy = new List<float>(prediction.Item1);
+                MCTSRootNode.Children[i].nn_value = prediction.Item2;
+            }
+
+            for (int i = 0; i < 5; ++i)
+            {
+                // could be ^T
+                Console.WriteLine(MCTSRootNode.Children[i*5+0].nn_value.ToString("00.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 1].nn_value.ToString("00.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 2].nn_value.ToString("00.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 3].nn_value.ToString("00.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 4].nn_value.ToString("00.00") + " ");
+
+                Console.WriteLine("\n");
+            }
+            Console.WriteLine("\n");
+        }
         private int findBestChildWinrate(Node<TicTacToePosition> currNode)
         {
             float best_winrate = float.NegativeInfinity;
@@ -504,7 +589,7 @@ namespace TicTacToe_DL_RL
                     game.DoMove(moves[i]);
                     Node<TicTacToePosition> child = new Node<TicTacToePosition>(currNode);
                     child.Value = new TicTacToePosition(game.pos);
-                    child.moveIndex = moves[i].Item1 * 3 + moves[i].Item2;
+                    child.moveIndex = moves[i].Item1 * 5 + moves[i].Item2;
                     currNode.AddChild(child);
                 }
             }
