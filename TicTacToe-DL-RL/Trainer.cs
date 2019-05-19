@@ -490,12 +490,11 @@ namespace TicTacToe_DL_RL
 
             for (int i = 0; i < 5; ++i)
             { // could be ^T
-                Console.WriteLine(MCTSRootNode.nn_policy[i * 5 + 0].ToString("00.00") + " "
-                MCTSRootNode.nn_policy[i * 5 + 1].ToString("00.00") + " " + 
-                MCTSRootNode.nn_policy[i * 5 + 2].ToString("00.00") + " " +
-                MCTSRootNode.nn_policy[i * 5 + 3].ToString("00.00") + " " +
-                MCTSRootNode.nn_policy[i * 5 + 4].ToString("00.00"));
-                Console.WriteLine("\n");
+                Console.WriteLine(MCTSRootNode.nn_policy[i * 5 + 0].ToString("0.00") + " " +
+                MCTSRootNode.nn_policy[i * 5 + 1].ToString("0.00") + " " +
+                MCTSRootNode.nn_policy[i * 5 + 2].ToString("0.00") + " " +
+                MCTSRootNode.nn_policy[i * 5 + 3].ToString("0.00") + " " +
+                MCTSRootNode.nn_policy[i * 5 + 4].ToString("0.00"));
             }
             Console.WriteLine("\n");
         }
@@ -520,13 +519,11 @@ namespace TicTacToe_DL_RL
             for (int i = 0; i < 5; ++i)
             {
                 // could be ^T
-                Console.WriteLine(MCTSRootNode.Children[i*5+0].nn_value.ToString("00.00") + " " +
-                    MCTSRootNode.Children[i * 5 + 1].nn_value.ToString("00.00") + " " +
-                    MCTSRootNode.Children[i * 5 + 2].nn_value.ToString("00.00") + " " +
-                    MCTSRootNode.Children[i * 5 + 3].nn_value.ToString("00.00") + " " +
-                    MCTSRootNode.Children[i * 5 + 4].nn_value.ToString("00.00") + " ");
-
-                Console.WriteLine("\n");
+                Console.WriteLine(MCTSRootNode.Children[i*5+0].nn_value.ToString("0.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 1].nn_value.ToString("0.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 2].nn_value.ToString("0.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 3].nn_value.ToString("0.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 4].nn_value.ToString("0.00") + " ");
             }
             Console.WriteLine("\n");
         }

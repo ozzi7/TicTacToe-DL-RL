@@ -10,12 +10,12 @@ namespace TicTacToe_DL_RL
     { 
         public static int nofEpochs = 10000000;
         public static float c_puct = 1.41f; // roughly sqrt 2 // was 2
-        public static int nofSimsPerPosTest = 10; // could/should be time
-        public static int nofSimsPerPosTrain = 10; // could/should be time
+        public static int nofSimsPerPosTest = 20; // could/should be time
+        public static int nofSimsPerPosTrain = 20; // could/should be time
         public static int populationSize = 20;
 
         public static int nofTrainingGames = 1000000;
-        public static int nofTestGames = 80; // only 2 makes sense without noise
+        public static int nofTestGames = 60; // only 2 makes sense without noise
         public static int maxPlies = 100;
 
         public static int gamesPerIndividuum = 40;

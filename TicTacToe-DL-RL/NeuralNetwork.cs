@@ -172,6 +172,13 @@ namespace TicTacToe_DL_RL
             // residual tower
             for (int index = 0; index < nofResidualLayers; index += 1)
             {
+                float[][] residualSave = new float[BATCHSIZE][];
+                for(int i = 0; i < BATCHSIZE; ++i)
+                {
+                    residualSave[i] = new float[intermediateData[i].Length];
+                    intermediateData[i].CopyTo(residualSave[i], 0);
+                }
+
                 for (int i = 0; i < BATCHSIZE; ++i)
                 {
                     // .. apply the means and stddev..
@@ -196,7 +203,7 @@ namespace TicTacToe_DL_RL
                 for (int i = 0; i < BATCHSIZE; ++i)
                 {
                     Convolution(intermediateData[i], temporary, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index * 2 + 1);
-                    AddResidual(temporary, temporary, inputResidualLayer);
+                    AddResidual(temporary, temporary, residualSave[i]);
 
                     /* copy to intermediate */
                     intermediateData[i] = new float[temporary.Length];
@@ -245,7 +252,7 @@ namespace TicTacToe_DL_RL
             {
                 for (int filter = 0; filter < nofFilters; ++filter)
                 {
-                    for (int k = intermediateData[i].Length/nofFilters * filter; k < intermediateData[i].Length / nofFilters * (filter+1); k++) 
+                    for (int k = (intermediateData[i].Length/nofFilters) * filter; k < (intermediateData[i].Length / nofFilters) * (filter+1); k++) 
                     {
                         // read out correct plane,all planes are sequential in intermediatedata
                         batchnorm_means[index * nofFilters + filter] += intermediateData[i][k];
@@ -254,7 +261,7 @@ namespace TicTacToe_DL_RL
             }
             for (int filter = 0; filter < nofFilters; ++filter)
             {
-                batchnorm_means[index * nofFilters + filter] /= BATCHSIZE* intermediateData[0].Length / nofFilters;
+                batchnorm_means[index * nofFilters + filter] /= BATCHSIZE* (intermediateData[0].Length / nofFilters);
             }
 
             // calc batchnorm stddev
@@ -262,7 +269,7 @@ namespace TicTacToe_DL_RL
             {
                 for (int filter = 0; filter < nofFilters; ++filter)
                 {
-                    for (int k = intermediateData[i].Length / nofFilters*filter; k < intermediateData[i].Length / nofFilters * (filter + 1); k++)
+                    for (int k = (intermediateData[i].Length / nofFilters)*filter; k < (intermediateData[i].Length / nofFilters) * (filter + 1); k++)
                     {
                         batchnorm_stddev[index * nofFilters + filter] += (float)Math.Pow(intermediateData[i][k] - batchnorm_means[index * nofFilters + filter], 2.0);
                     }
@@ -270,7 +277,7 @@ namespace TicTacToe_DL_RL
             }
             for (int filter = 0; filter < nofFilters; ++filter)
             {
-                batchnorm_stddev[index * nofFilters + filter] /= BATCHSIZE * intermediateData[0].Length / nofFilters;
+                batchnorm_stddev[index * nofFilters + filter] /= BATCHSIZE * (intermediateData[0].Length / nofFilters);
             }
         }
         public Tuple<float[], float> ForwardPassCPU(float[] input)
@@ -287,10 +294,7 @@ namespace TicTacToe_DL_RL
                 BatchNormWithResidual(temporary, outputResidualLayer, inputResidualLayer, batchnorm_means, batchnorm_stddev, nofFilters, index*2+2);
                 
                 // temporary holds result
-                float[] swap = new float[inputResidualLayer.Length];
-                Array.Copy(inputResidualLayer, 0, swap, 0, inputResidualLayer.Length);
                 Array.Copy(outputResidualLayer, 0, inputResidualLayer, 0, outputResidualLayer.Length);
-                Array.Copy(swap, 0, outputResidualLayer, 0, swap.Length); // TODO: swap? why?
             }
 
             /*value head*/
@@ -381,7 +385,7 @@ namespace TicTacToe_DL_RL
                     // batch norm/ batch stddev
                     /* see Alg 1: https://arxiv.org/pdf/1502.03167.pdf */
                     float x_til = (float)((input[i * input.Length / nofFilters + j] - batchNormMeans[index * nofFilters + i])/
-                        (Math.Sqrt(batchNormStdDev[index * nofFilters + i]+0.0001f)));
+                        (Math.Sqrt(batchNormStdDev[index * nofFilters + i]+0.01f)));
                     output[i * input.Length / nofFilters + j] = batchnorm_gammas[index * nofFilters + i] *x_til+batchnorm_betas[index * nofFilters + i];
 
                     // relu
@@ -397,8 +401,9 @@ namespace TicTacToe_DL_RL
                 for (int j = 0; j < width * height; ++j)
                 {
                     // batch norm/ batch stddev
-                    float x_til = (float)((input[i * input.Length / nofFilters + j] + residual[i * input.Length / nofFilters + j] - batchNormMeans[index * nofFilters + i]) /
-    (Math.Sqrt(batchNormStdDev[index * nofFilters + i] + 0.0001f)));
+                    float x_til = (float)((input[i * input.Length / nofFilters + j] + 
+                        residual[i * input.Length / nofFilters + j] - batchNormMeans[index * nofFilters + i]) /
+                        (Math.Sqrt(batchNormStdDev[index * nofFilters + i] + 0.01f)));
 
                     output[i * input.Length / nofFilters + j] = batchnorm_gammas[index * nofFilters + i] * x_til + batchnorm_betas[index * nofFilters + i];
 
