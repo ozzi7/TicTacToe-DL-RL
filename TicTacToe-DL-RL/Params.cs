@@ -29,5 +29,7 @@ namespace TicTacToe_DL_RL
         public static float weightDecayFactor = 0.98f;
 
         public static int SaveWeightsEveryXthTrainingRun = 20;
+
+        public static int MAX_GPU_WIDGETS = 1;
     }
 }
