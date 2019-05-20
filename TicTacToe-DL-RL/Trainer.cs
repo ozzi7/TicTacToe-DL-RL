@@ -23,6 +23,7 @@ namespace TicTacToe_DL_RL
         private double totalWinsZ = 0;
         private double totalDraws = 0;
         private double totalGames = 0;
+        private double winrateVsRandom = 0;
 
         private MovingAverage winsAsXMovingAvg = new MovingAverage();
         private MovingAverage winsAsZMovingAvg = new MovingAverage();
@@ -135,12 +136,15 @@ namespace TicTacToe_DL_RL
                     /* to display some games (debugging)*/
                     if (run % 40 == 0)
                     {
-                        TicTacToeGame game = new TicTacToeGame();
-                        game.DisplayWinner(history);
-                        if (i == Params.populationSize - 1)
+                        if (i == Params.populationSize - 1 && j < 2)
                         {
-                            game = new TicTacToeGame();
+                            TicTacToeGame game = new TicTacToeGame();
                             game.DisplayHistory(history);
+                        }
+                        else
+                        {
+                            TicTacToeGame game = new TicTacToeGame();
+                            game.DisplayWinner(history);
                         }
                     }
                 }
@@ -230,9 +234,7 @@ namespace TicTacToe_DL_RL
 
             totalDraws += draws;
 
-            double winrateVsRandom = PlayAgainstRandom(20, currentNN);
-
-        Console.WriteLine("Score: W/D/L " + wins + "/" + draws + "/" + losses + " winrateX/drawrate/winrateZ " +
+            Console.WriteLine("Score: W/D/L " + wins + "/" + draws + "/" + losses + " winrateX/drawrate/winrateZ " +
                 Math.Round(winsAsXMovingAvg.Average, 2) + "/" + Math.Round(drawsMovingAvg.Average, 2) + "/" + Math.Round(winsAsZMovingAvg.Average, 2));
 
             if (wins < losses)
@@ -247,6 +249,7 @@ namespace TicTacToe_DL_RL
             }
             else
             {
+                winrateVsRandom = PlayAgainstRandom(100, currentNN);
                 currentPseudoELO += (float)(wins-losses)/ (float)Params.nofTestGames;
                 //previousNN3 = previousNN2;
                 //previousNN2 = previousNN1;
@@ -262,7 +265,7 @@ namespace TicTacToe_DL_RL
             {
                 file.WriteLine(currentPseudoELO + " " + Math.Round(winsAsXMovingAvg.Average, 2) + " " +
                     Math.Round(winsAsZMovingAvg.Average, 2) + " " + Math.Round(drawsMovingAvg.Average, 2) + " " +
-                    Math.Round(averageMovesMovingAvg.Average) + " " + Math.Round(winrateVsRandom, 2));
+                    Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandom, 2));
             }
         }
         /// <summary>
@@ -519,11 +522,11 @@ namespace TicTacToe_DL_RL
             for (int i = 0; i < 5; ++i)
             {
                 // could be ^T
-                Console.WriteLine(MCTSRootNode.Children[i*5+0].nn_value.ToString("0.00") + " " +
-                    MCTSRootNode.Children[i * 5 + 1].nn_value.ToString("0.00") + " " +
-                    MCTSRootNode.Children[i * 5 + 2].nn_value.ToString("0.00") + " " +
-                    MCTSRootNode.Children[i * 5 + 3].nn_value.ToString("0.00") + " " +
-                    MCTSRootNode.Children[i * 5 + 4].nn_value.ToString("0.00") + " ");
+                Console.WriteLine(MCTSRootNode.Children[i*5+0].nn_value.ToString("+0.00;-0.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 1].nn_value.ToString("+0.00;-0.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 2].nn_value.ToString("+0.00;-0.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 3].nn_value.ToString("+0.00;-0.00") + " " +
+                    MCTSRootNode.Children[i * 5 + 4].nn_value.ToString("+0.00;-0.00") + " ");
             }
             Console.WriteLine("\n");
         }

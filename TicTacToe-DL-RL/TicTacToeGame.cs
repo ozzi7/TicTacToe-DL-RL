@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TicTacToe_DL_RL
 {
-    public enum Player { X, Z }; // X always starts, X leads to winrate 1, Z to winrate -1, draw is 0
+    public enum Player { X, Z }; // X always starts, X leads to winrate 1, Z to winrate -1 win X is 1, draw 0, win Z -1 
 
     class TicTacToeGame
     {

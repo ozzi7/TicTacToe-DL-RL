@@ -184,7 +184,7 @@ namespace TicTacToe_DL_RL
             CB_results = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.CopyHostPointer, results);
 
             // Create and build the opencl program.
-           StreamReader streamReader = new StreamReader("../../NeuralNetwork.cl");
+            StreamReader streamReader = new StreamReader("../../NeuralNetwork.cl");
             string openClCode = streamReader.ReadToEnd();
             streamReader.Close();
             program = new ComputeProgram(context, openClCode);
@@ -264,7 +264,8 @@ namespace TicTacToe_DL_RL
             {   // whose turn it is
                 input[Params.boardSizeX * Params.boardSizeY + i] = pos.sideToMove == Player.X ? 1 : -1;
             }
-            return ForwardPassGPU();
+            //return ForwardPassGPU();
+            return ForwardPassCPU(input);
         }
         private void CalculateVirtualBNs()
         {
@@ -578,7 +579,7 @@ namespace TicTacToe_DL_RL
                     // batch norm/ batch stddev
                     /* see Alg 1: https://arxiv.org/pdf/1502.03167.pdf */
                     float x_til = (float)((input[i * input.Length / nofFilters + j] - BNMeans[index * nofFilters + i])/
-                        (Math.Sqrt(BNStdDev[index * nofFilters + i]+0.01f)));
+                        (Math.Sqrt(BNStdDev[index * nofFilters + i]+0.0001f)));
                     output[i * input.Length / nofFilters + j] = BNGammas[index * nofFilters + i] *x_til+BNBetas[index * nofFilters + i];
 
                     // relu
@@ -596,7 +597,7 @@ namespace TicTacToe_DL_RL
                     // batch norm/ batch stddev
                     float x_til = (float)((input[i * input.Length / nofFilters + j] + 
                         residual[i * input.Length / nofFilters + j] - BNMeans[index * nofFilters + i]) /
-                        (Math.Sqrt(BNStdDev[index * nofFilters + i] + 0.01f)));
+                        (Math.Sqrt(BNStdDev[index * nofFilters + i] + 0.0001f)));
 
                     output[i * input.Length / nofFilters + j] = BNGammas[index * nofFilters + i] * x_til + BNBetas[index * nofFilters + i];
 
