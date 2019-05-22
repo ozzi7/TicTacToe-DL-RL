@@ -4,12 +4,13 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Cloo;
 
 namespace TicTacToe_DL_RL
 {
     class NeuralNetwork
     {
+        public bool GPU_PREDICT = false;
+
         // params
         const int gameboardWidth = 5;
         const int gameboardHeight = 5;
@@ -26,214 +27,68 @@ namespace TicTacToe_DL_RL
         const float softmaxTemperature = 1.0f;
 
         // for input layer
-        float[] input = new float[nofPlanes * gameboardHeight * gameboardWidth]; // input to complete NN
-        float[] outputConvFilter = new float[nofFilters * gameboardHeight * gameboardWidth];
-        float[] firstConvFilterWeights = new float[nofFilters* nofPlanes * filterHeight * filterWidth]; // weights
+        public float[] input = new float[nofPlanes * gameboardHeight * gameboardWidth]; // input to complete NN
+        public float[] outputConvFilter = new float[nofFilters * gameboardHeight * gameboardWidth];
+        public float[] firstConvFilterWeights = new float[nofFilters* nofPlanes * filterHeight * filterWidth]; // weights
 
         // for residual tower
-        float[] inputResidualLayer = new float[nofFilters * gameboardHeight * gameboardWidth]; // input to residual layer
-        float[] outputResidualLayer = new float[nofFilters * gameboardHeight * gameboardWidth];
-        float[] temporary = new float[nofFilters * gameboardHeight * gameboardWidth];
-        float[] convFilterWeights = new float[(nofConvLayers-1) * nofFilters * nofFilters * filterHeight * filterWidth]; // weights
+        public float[] inputResidualLayer = new float[nofFilters * gameboardHeight * gameboardWidth]; // input to residual layer
+        public float[] outputResidualLayer = new float[nofFilters * gameboardHeight * gameboardWidth];
+        public float[] temporary = new float[nofFilters * gameboardHeight * gameboardWidth];
+        public float[] convFilterWeights = new float[(nofConvLayers-1) * nofFilters * nofFilters * filterHeight * filterWidth]; // weights
 
         // for policy layer
-        float[] convWeightsPolicy = new float[nofPolicyPlanes* nofFilters]; // weights 1x1xnofplanes filters
-        float[] convBiasesPolicy = new float[nofPolicyPlanes* nofFilters]; // weights
-        float[] BNMeansPolicy = new float[nofPolicyPlanes]; // weights
-        float[] BNStddevPolicy = new float[nofPolicyPlanes]; // weights
-        float[] BNBetaPolicy = new float[nofPolicyPlanes];
-        float[] BNGammaPolicy = new float[nofPolicyPlanes];
-        float[] policyConnectionWeights = new float[gameboardHeight * gameboardWidth* nofPolicyPlanes * nofOutputPolicies]; // weights
-        float[] policyBiases = new float[nofOutputPolicies]; // weights
-        float[] inputFCLayerPolicy = new float[nofPolicyPlanes * gameboardHeight* gameboardWidth];
-        float[] outputPolicyData = new float[nofOutputPolicies];
+        public float[] convWeightsPolicy = new float[nofPolicyPlanes* nofFilters]; // weights 1x1xnofplanes filters
+        public float[] convBiasesPolicy = new float[nofPolicyPlanes* nofFilters]; // weights
+        public float[] BNMeansPolicy = new float[nofPolicyPlanes]; // weights
+        public float[] BNStddevPolicy = new float[nofPolicyPlanes]; // weights
+        public float[] BNBetaPolicy = new float[nofPolicyPlanes];
+        public float[] BNGammaPolicy = new float[nofPolicyPlanes];
+        public float[] policyConnectionWeights = new float[gameboardHeight * gameboardWidth* nofPolicyPlanes * nofOutputPolicies]; // weights
+        public float[] policyBiases = new float[nofOutputPolicies]; // weights
+        public float[] inputFCLayerPolicy = new float[nofPolicyPlanes * gameboardHeight* gameboardWidth];
+        public float[] outputPolicyData = new float[nofOutputPolicies];
 
         // for value layer
-        float[] convWeightsValue1 = new float[nofFilters* nofValuePlanes]; // 1x1 filters, 32 of them for 64 input planes // weights
-        float[] convWeightsValue2 = new float[128]; // weights
-        float[] BNMeansValue = new float[nofValuePlanes]; // weights
-        float[] BNStddevValue = new float[nofValuePlanes]; // weights
-        float[] BNBetaValue = new float[nofValuePlanes];
-        float[] BNGammaValue = new float[nofValuePlanes];
-        float[] valueConnectionWeights = new float[gameboardHeight * gameboardWidth*nofValuePlanes * 128]; // weights
-        float[] valueBiases = new float[128]; // weights
-        float[] valueBiasLast = new float[1]; // weights
-        float[] inputFCLayerValue = new float[nofValuePlanes *gameboardHeight*gameboardWidth];
-        float[] outputValueData = new float[nofValuePlanes * gameboardHeight * gameboardWidth];
-        float[] temporaryValueData = new float[128];
+        public float[] convWeightsValue1 = new float[nofFilters* nofValuePlanes]; // 1x1 filters, 32 of them for 64 input planes // weights
+        public float[] convWeightsValue2 = new float[128]; // weights
+        public float[] BNMeansValue = new float[nofValuePlanes]; // weights
+        public float[] BNStddevValue = new float[nofValuePlanes]; // weights
+        public float[] BNBetaValue = new float[nofValuePlanes];
+        public float[] BNGammaValue = new float[nofValuePlanes];
+        public float[] valueConnectionWeights = new float[gameboardHeight * gameboardWidth*nofValuePlanes * 128]; // weights
+        public float[] valueBiases = new float[128]; // weights
+        public float[] valueBiasLast = new float[1]; // weights
+        public float[] inputFCLayerValue = new float[nofValuePlanes *gameboardHeight*gameboardWidth];
+        public float[] outputValueData = new float[nofValuePlanes * gameboardHeight * gameboardWidth];
+        public float[] temporaryValueData = new float[128];
 
         // for all layers
-        float[] convBiases = new float[nofConvLayers * nofFilters]; // weights
-        float[] BNMeans = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
-        float[] BNStddev = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
+        public float[] convBiases = new float[nofConvLayers * nofFilters]; // weights
+        public float[] BNMeans = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
+        public float[] BNStddev = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
 
-        float[] BNBetas = new float[nofConvLayers*nofFilters];
-        float[] BNGammas = new float[nofConvLayers* nofFilters];
+        public float[] BNBetas = new float[nofConvLayers*nofFilters];
+        public float[] BNGammas = new float[nofConvLayers* nofFilters];
 
         // output of NN
-        float[] softmaxPolicy = new float[nofOutputPolicies];
-        float[] winrateOut = new float[1];
-
-        // opencl buffers
-        static private ComputeBuffer<float> CB_input;
-        static private ComputeBuffer<float> CB_firstConvFilterWeights;
-        static private ComputeBuffer<float> CB_convBiases;
-        static private ComputeBuffer<float> CB_BNMeans;
-        static private ComputeBuffer<float> CB_BNStddev;
-        static private ComputeBuffer<float> CB_BNBetas;
-        static private ComputeBuffer<float> CB_BNGammas;
-
-        static private ComputeBuffer<float> CB_convWeightsValue1;
-        static private ComputeBuffer<float> CB_convWeightsValue2;
-        static private ComputeBuffer<float> CB_BNMeansValue;
-        static private ComputeBuffer<float> CB_BNStddevValue;
-        static private ComputeBuffer<float> CB_BNBetaValue;
-        static private ComputeBuffer<float> CB_BNGammaValue;
-        static private ComputeBuffer<float> CB_valueConnectionWeights;
-        static private ComputeBuffer<float> CB_valueBiases;
-        static private ComputeBuffer<float> CB_valueBiasLast;
-        static private ComputeBuffer<float> CB_inputFCLayerValue;
-
-        static private ComputeBuffer<float> CB_convWeightsPolicy;
-        static private ComputeBuffer<float> CB_convBiasesPolicy;
-        static private ComputeBuffer<float> CB_BNMeansPolicy;
-        static private ComputeBuffer<float> CB_BNStddevPolicy;
-        static private ComputeBuffer<float> CB_BNBetaPolicy;
-        static private ComputeBuffer<float> CB_BNGammaPolicy;
-        static private ComputeBuffer<float> CB_policyConnectionWeights;
-        static private ComputeBuffer<float> CB_policyBiases;
-
-        static private ComputeBuffer<float> CB_convFilterWeights;
-        static private ComputeBuffer<float> CB_results;
+        public float[] softmaxPolicy = new float[nofOutputPolicies];
+        public float[] winrateOut = new float[1];
 
         // complete weights
         public List<float> weights = new List<float>();
         public List<float> untrainable_weights = new List<float>();
 
-        // opencl stuff
-        static private ComputeProgram program;
-        static private ComputePlatform platform;
-        static private ComputeContext context;
-        static private ComputeContextPropertyList properties;
-        static private ComputeKernel kernel;
-
         public NeuralNetwork()
         {
             InitializeWeights();
-            CalculateVirtualBNs();
-            CompileKernel();
-            //SaveWeightsToFile("weights_best.txt");
-            //ReadWeightsFromFile("weights.txt");
-            //ReadWeightsFromFile("weights.txt");
+
             //for (int i = 0; i < convBiases.Length; ++i) {
             //    BNMeans[i] -= convBiases[i];
             //    convBiases[i] = 0.0f;
             //}
         }
-        private void CompileKernel()
-        {
-            platform = ComputePlatform.Platforms[0]; // todo find amd gpus..
-            IList<ComputeDevice> devices;
-            devices = new List<ComputeDevice>();
-
-            object[] availableDevices = new object[platform.Devices.Count];
-            for (int i = 0; i < availableDevices.Length; i++)
-                availableDevices[i] = platform.Devices[i].Name;
-
-            properties = new ComputeContextPropertyList(platform);
-            devices.Add(platform.Devices[0]);
-            context = new ComputeContext(devices, properties, null, IntPtr.Zero);
-
-            // Create the input buffers and fill them with data from the arrays.
-            // Access modifiers should match those in a kernel.
-            // CopyHostPointer means the buffer should be filled with the data provided in the last argument.
-            // opencl buffers
-            CB_input = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, input);
-            CB_firstConvFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, firstConvFilterWeights);
-
-            CB_convBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convBiases);
-            CB_BNMeans = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNMeans);
-            CB_BNStddev = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNStddev);
-            CB_BNBetas = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNBetas);
-            CB_BNGammas = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNGammas);
-
-            CB_convWeightsValue1 = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convWeightsValue1);
-            CB_convWeightsValue2 = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convWeightsValue2);
-            CB_BNMeansValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNMeansValue);
-            CB_BNStddevValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNStddevValue);
-            CB_BNBetaValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNBetaValue);
-            CB_BNGammaValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNGammaValue);
-            CB_valueConnectionWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueConnectionWeights);
-            CB_valueBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueBiases);
-            CB_valueBiasLast = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueBiasLast);
-            CB_inputFCLayerValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, inputFCLayerValue);
-
-            CB_convWeightsPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convWeightsPolicy);
-            CB_convBiasesPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convBiasesPolicy);
-            CB_BNMeansPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNMeansPolicy);
-            CB_BNStddevPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNStddevPolicy);
-            CB_BNBetaPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNBetaPolicy);
-            CB_BNGammaPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNGammaPolicy);
-            CB_policyConnectionWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, policyConnectionWeights);
-            CB_policyBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, policyBiases);
-            CB_convFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convFilterWeights);
-
-            // The output buffer doesn't need any data from the host. Only its size is specified res.length.
-            float[] results = new float[26];
-
-            CB_results = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.CopyHostPointer, results);
-
-            // Create and build the opencl program.
-            StreamReader streamReader = new StreamReader("../../NeuralNetwork.cl");
-            string openClCode = streamReader.ReadToEnd();
-            streamReader.Close();
-            program = new ComputeProgram(context, openClCode);
-            //string log = program.GetBuildLog(devices[0]);
-            ComputeProgramBuildStatus error = program.GetBuildStatus(context.Devices[0]);
-            try
-            {
-                program.Build(null, null, null, IntPtr.Zero);
-            }
-            catch
-            {
-                Console.WriteLine(program.GetBuildLog(devices[0]));
-                throw;
-            }
-
-            // Create the kernel function and set its arguments.
-            kernel = program.CreateKernel("NN");
-            kernel.SetMemoryArgument(0, CB_input);
-            kernel.SetMemoryArgument(1, CB_firstConvFilterWeights);
-
-            kernel.SetMemoryArgument(2, CB_convBiases);
-            kernel.SetMemoryArgument(3, CB_BNMeans);
-            kernel.SetMemoryArgument(4, CB_BNStddev);
-            kernel.SetMemoryArgument(5, CB_BNBetas);
-            kernel.SetMemoryArgument(6, CB_BNGammas);
-
-            kernel.SetMemoryArgument(7, CB_convWeightsValue1);
-            kernel.SetMemoryArgument(8, CB_convWeightsValue2);
-            kernel.SetMemoryArgument(9, CB_BNMeansValue);
-            kernel.SetMemoryArgument(10, CB_BNStddevValue);
-            kernel.SetMemoryArgument(11, CB_BNBetaValue);
-            kernel.SetMemoryArgument(12, CB_BNGammaValue);
-            kernel.SetMemoryArgument(13, CB_valueConnectionWeights);
-            kernel.SetMemoryArgument(14, CB_valueBiases);
-            kernel.SetMemoryArgument(15, CB_valueBiasLast);
-            kernel.SetMemoryArgument(16, CB_inputFCLayerValue);
-
-            kernel.SetMemoryArgument(17, CB_convWeightsPolicy);
-            kernel.SetMemoryArgument(18, CB_convBiasesPolicy);
-            kernel.SetMemoryArgument(19, CB_BNMeansPolicy);
-            kernel.SetMemoryArgument(20, CB_BNStddevPolicy);
-            kernel.SetMemoryArgument(21, CB_BNBetaPolicy);
-            kernel.SetMemoryArgument(22, CB_BNGammaPolicy);
-            kernel.SetMemoryArgument(23, CB_policyConnectionWeights);
-            kernel.SetMemoryArgument(24, CB_policyBiases);
-            kernel.SetMemoryArgument(25, CB_convFilterWeights);
-
-            kernel.SetMemoryArgument(26, CB_results);
-        }
+       
         public NeuralNetwork(String file)
         {
             ReadWeightsFromFile(file);
@@ -246,8 +101,6 @@ namespace TicTacToe_DL_RL
         }
         public Tuple<float[], float> Predict(TicTacToePosition pos)
         {
-            // temp
-            //return Tuple.Create(softmaxPolicy, 0.0f);
             // returns array of move evals and V
             /*Not using game history, not using caching*/
             int[] tmp = new int[pos.gameBoard.GetLength(0) * pos.gameBoard.GetLength(1)];
@@ -264,10 +117,16 @@ namespace TicTacToe_DL_RL
             {   // whose turn it is
                 input[Params.boardSizeX * Params.boardSizeY + i] = pos.sideToMove == Player.X ? 1 : -1;
             }
-            //return ForwardPassGPU();
-            return ForwardPassCPU(input);
+            if (GPU_PREDICT)
+            {
+                return OpenCL.EnqueueWork(this);
+            }
+            else
+            {
+                return ForwardPassCPU(input);
+            }
         }
-        private void CalculateVirtualBNs()
+        public void CalculateVirtualBNs()
         {
             int BATCHSIZE = 100;
             float[][] intermediateData = new float[BATCHSIZE][];
@@ -457,55 +316,6 @@ namespace TicTacToe_DL_RL
             Softmax(outputPolicyData, softmaxPolicy, softmaxTemperature);
 
             return Tuple.Create(softmaxPolicy, winrateSig);
-        }
-        public Tuple<float[], float> ForwardPassGPU()
-        {
-            float[] output = new float[26];
-            try
-            {
-                CB_input = new ComputeBuffer<float>(context, ComputeMemoryFlags.CopyHostPointer, input);
-                kernel.SetMemoryArgument(0, CB_input);
-
-                // Create the event wait list. An event list is not really needed for this example but it is important to see how it works.
-                // Note that events (like everything else) consume OpenCL resources and creating a lot of them may slow down execution.
-                // For this reason their use should be avoided if possible.
-                ComputeEventList eventList = new ComputeEventList();
-
-                // Create the command queue. This is used to control kernel execution and manage read/write/copy operations.
-                ComputeCommandQueue commands = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
-
-                // Execute the kernel "count" times. After this call returns, "eventList" will contain an event associated with this command.
-                // If eventList == null or typeof(eventList) == ReadOnlyCollection<ComputeEventBase>, a new event will not be created.
-
-                commands.Execute(kernel, null, new long[] { Params.MAX_GPU_WIDGETS }, null, eventList);
-
-                // Read back the results. If the command-queue has out-of-order execution enabled (default is off), ReadFromBuffer 
-                // will not execute until any previous events in eventList (in our case only eventList[0]) are marked as complete 
-                // by OpenCL. By default the command-queue will execute the commands in the same order as they are issued from the host.
-                // eventList will contain two events after this method returns.
-                commands.ReadFromBuffer(CB_results, ref output, false, eventList);
-
-                // A blocking "ReadFromBuffer" (if 3rd argument is true) will wait for itself and any previous commands
-                // in the command queue or eventList to finish execution. Otherwise an explicit wait for all the opencl commands 
-                // to finish has to be issued before "arrC" can be used. 
-                // This explicit synchronization can be achieved in two ways:
-
-                // 1) Wait for the events in the list to finish,
-                //eventList.Wait();
-
-                // 2) Or simply use
-                commands.Finish();
-                CB_input.Dispose();
-                commands.Dispose();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-
-            float[] policy = new float[25];
-            Array.Copy(output, policy, 25);
-            return Tuple.Create(policy, outputConvFilter[25]);
         }
         public void ApplyWeightDecay()
         {

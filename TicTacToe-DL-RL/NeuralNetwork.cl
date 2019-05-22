@@ -1,5 +1,4 @@
-﻿
-static inline void Convolution(float* input, float* output, constant float* convWeights,
+﻿static inline void Convolution(float* input, float* output, constant float* convWeights,
     int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index)
 {
     // convolution on gameboard_width*5*depth
@@ -187,7 +186,7 @@ kernel void NN(
 	private int globId = get_global_id(0);
 	private int inputIndex = globId * 5 * 5 * 2;
 	private int outputIndex = globId * (5 * 5 + 1); // policy for 25 moves + value
-
+	private int 
 	// local variables are shared by all work items of a work group
 	// for now these are hardcoded here.. //
 
@@ -259,3 +258,22 @@ kernel void NN(
 	}
 	results[outputIndex+25] = winrateSig;	
 }
+
+/*	See http://developer.amd.com/wordpress/media/2013/07/AMD_Accelerated_Parallel_Processing_OpenCL_Programming_Guide-rev-2.7.pdf
+		https://cims.nyu.edu/~schlacht/OpenCLModel.pdf
+	And also: https://stackoverflow.com/questions/26804153/opencl-work-group-concept
+	regarding work groups and work-items
+	private		Specific to a work-item; it is not visible to other work-items.
+	local		Specific to a work-group; accessible only by work-items belonging to that
+				work-group.
+	global		Accessible to all work-items executing in a context, as well as to the host
+				(read, write, and map commands).
+	constant	Read-only region for host-allocated and -initialized objects that are not
+				changed during kernel execution.
+	host (CPU)	Host-accessible region for an application’s data structures and program
+	data.
+	PCIe		Part of host (CPU) memory accessible from, and modifiable by, the host
+				program and the GPU compute device. Modifying this memory require
+
+	TODO: copying data to local memory (or even private) could speed up the kernel
+*/

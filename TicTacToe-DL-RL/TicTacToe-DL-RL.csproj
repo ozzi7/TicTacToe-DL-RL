@@ -65,6 +65,7 @@
     <Compile Include="DirichletNoise.cs" />
     <Compile Include="MovingAverage.cs" />
     <Compile Include="NeuralNetwork.cs" />
+    <Compile Include="OpenCL.cs" />
     <Compile Include="Params.cs" />
     <Compile Include="Player.cs" />
     <Compile Include="Program.cs" />

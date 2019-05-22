@@ -23,8 +23,10 @@ namespace TicTacToe_DL_RL
         public int bestChildIndex = -1;
         public List<float> nn_policy = null;
         public float nn_value;
-        public int moveIndex = -1; // from 0 to 8 
-        public float winrate = 0.0f;
+        public int moveIndex = -1; // from 0 to 24 
+        public float winrate = 0.0f; // from 0 to 1, 1 means the current player (of this node) always wins
+        public int virtualLossCount = 0; // a visit which needs a NN eval increases this
+
         public Node<TValue> parent = null;
 
         public TValue Value { get; set; }

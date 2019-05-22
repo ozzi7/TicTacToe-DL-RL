@@ -8,6 +8,7 @@ namespace TicTacToe_DL_RL
 {
     public static class Params
     { 
+        public static bool GPU_ENABLED = true;
         public static int nofEpochs = 10000000;
         public static float c_puct = 1.41f; // roughly sqrt 2 // was 2
         public static int nofSimsPerPosTest = 20; // could/should be time
@@ -29,7 +30,5 @@ namespace TicTacToe_DL_RL
         public static float weightDecayFactor = 0.98f;
 
         public static int SaveWeightsEveryXthTrainingRun = 20;
-
-        public static int MAX_GPU_WIDGETS = 1;
     }
 }
