@@ -39,7 +39,6 @@ namespace TicTacToe_DL_RL
 
         // for policy layer
         public float[] convWeightsPolicy = new float[nofPolicyPlanes* nofFilters]; // weights 1x1xnofplanes filters
-        public float[] convBiasesPolicy = new float[nofPolicyPlanes* nofFilters]; // weights
         public float[] BNMeansPolicy = new float[nofPolicyPlanes]; // weights
         public float[] BNStddevPolicy = new float[nofPolicyPlanes]; // weights
         public float[] BNBetaPolicy = new float[nofPolicyPlanes];
@@ -64,7 +63,6 @@ namespace TicTacToe_DL_RL
         public float[] temporaryValueData = new float[128];
 
         // for all layers
-        public float[] convBiases = new float[nofConvLayers * nofFilters]; // weights
         public float[] BNMeans = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
         public float[] BNStddev = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
 
@@ -83,10 +81,6 @@ namespace TicTacToe_DL_RL
         {
             InitializeWeights();
 
-            //for (int i = 0; i < convBiases.Length; ++i) {
-            //    BNMeans[i] -= convBiases[i];
-            //    convBiases[i] = 0.0f;
-            //}
         }
        
         public NeuralNetwork(String file)
@@ -490,11 +484,6 @@ namespace TicTacToe_DL_RL
                 convFilterWeights[i] = weights[count];
                 count++;
             }
-            for (int i = 0; i < convBiases.Length; ++i)
-            {
-                convBiases[i] = weights[count];
-                count++;
-            }
             for (int i = 0; i < BNMeans.Length; ++i)
             {
                 BNMeans[i] = untrainable_weights[untrainable_count];
@@ -508,11 +497,6 @@ namespace TicTacToe_DL_RL
             for (int i = 0; i < convWeightsPolicy.Length; ++i)
             {
                 convWeightsPolicy[i] = weights[count];
-                count++;
-            }
-            for (int i = 0; i < convBiasesPolicy.Length; ++i)
-            {
-                convBiasesPolicy[i] = weights[count];
                 count++;
             }
             for (int i = 0; i < BNMeansPolicy.Length; ++i)
@@ -646,12 +630,6 @@ namespace TicTacToe_DL_RL
             }
             fileWriter.Write(convFilterWeights[convFilterWeights.Length - 1] + "\n");
 
-            for (int i = 0; i < convBiases.Length-1; ++i)
-            {
-                fileWriter.Write(convBiases[i] + " ");
-            }
-            fileWriter.Write(convBiases[convBiases.Length - 1] + "\n");
-
             for (int i = 0; i < BNMeans.Length-1; ++i)
             {
                 fileWriter2.Write(BNMeans[i] + " ");
@@ -671,12 +649,6 @@ namespace TicTacToe_DL_RL
                 fileWriter.Write(convWeightsPolicy[i] + " ");
             }
             fileWriter.Write(convWeightsPolicy[convWeightsPolicy.Length - 1] + "\n");
-
-            for (int i = 0; i < convBiasesPolicy.Length-1; ++i)
-            {
-                fileWriter.Write(convBiasesPolicy[i] + " ");
-            }
-            fileWriter.Write(convBiasesPolicy[convBiasesPolicy.Length - 1] + "\n");
 
             for (int i = 0; i < BNMeansPolicy.Length-1; ++i)
             {
@@ -792,10 +764,6 @@ namespace TicTacToe_DL_RL
             {
                 convFilterWeights[i] = RandomNr.GetGaussianFloat();
             }
-            for (int i = 0; i < convBiases.Length; ++i)
-            {
-                convBiases[i] = RandomNr.GetGaussianFloat();
-            }
             for (int i = 0; i < BNMeans.Length; ++i)
             {
                 BNMeans[i] = 0.0f;
@@ -807,10 +775,6 @@ namespace TicTacToe_DL_RL
             for (int i = 0; i < convWeightsPolicy.Length; ++i)
             {
                 convWeightsPolicy[i] = RandomNr.GetGaussianFloat();
-            }
-            for (int i = 0; i < convBiasesPolicy.Length; ++i)
-            {
-                convBiasesPolicy[i] = RandomNr.GetGaussianFloat();
             }
             for (int i = 0; i < BNMeansPolicy.Length; ++i)
             {

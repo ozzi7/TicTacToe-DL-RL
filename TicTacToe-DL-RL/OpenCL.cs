@@ -2,6 +2,8 @@
  * Idea: Create buffers for the network weights and keep X different networks in GPU memory
  * For each network we also add Y different inputs and so we run X*Y forward passes in one call
  * The inputs are changed on each call but weights only change after evolution
+ * TODOs: Don't resend untrainable weights, don't resend weights for every input
+ * Copy stuff to local memory
  */
  using System;
 using System.Collections.Generic;
@@ -19,26 +21,19 @@ namespace TicTacToe_DL_RL
 
         // for input layer
         public static List<float> input = new List<float>();
-        public static List<float> outputConvFilter = new List<float>();
         public static List<float> firstConvFilterWeights = new List<float>();
 
         // for residual tower
-        public static List<float> inputResidualLayer = new List<float>();
-        public static List<float> outputResidualLayer = new List<float>();
-        public static List<float> temporary = new List<float>();
         public static List<float> convFilterWeights = new List<float>();
 
         // for policy layer
         public static List<float> convWeightsPolicy = new List<float>();
-        public static List<float> convBiasesPolicy = new List<float>();
         public static List<float> BNMeansPolicy = new List<float>();
         public static List<float> BNStddevPolicy = new List<float>();
         public static List<float> BNBetaPolicy = new List<float>();
         public static List<float> BNGammaPolicy = new List<float>();
         public static List<float> policyConnectionWeights = new List<float>();
         public static List<float> policyBiases = new List<float>();
-        public static List<float> inputFCLayerPolicy = new List<float>();
-        public static List<float> outputPolicyData = new List<float>();
 
         // for value layer
         public static List<float> convWeightsValue1 = new List<float>();
@@ -50,12 +45,8 @@ namespace TicTacToe_DL_RL
         public static List<float> valueConnectionWeights = new List<float>();
         public static List<float> valueBiases = new List<float>();
         public static List<float> valueBiasLast = new List<float>();
-        public static List<float> inputFCLayerValue = new List<float>();
-        public static List<float> outputValueData = new List<float>();
-        public static List<float> temporaryValueData = new List<float>();
 
         // for all layers
-        public static List<float> convBiases = new List<float>();
         public static List<float> BNMeans = new List<float>();
         public static List<float> BNStddev = new List<float>();
 
@@ -69,7 +60,6 @@ namespace TicTacToe_DL_RL
         // opencl buffers
         static private ComputeBuffer<float> CB_input;
         static private ComputeBuffer<float> CB_firstConvFilterWeights;
-        static private ComputeBuffer<float> CB_convBiases;
         static private ComputeBuffer<float> CB_BNMeans;
         static private ComputeBuffer<float> CB_BNStddev;
         static private ComputeBuffer<float> CB_BNBetas;
@@ -84,10 +74,8 @@ namespace TicTacToe_DL_RL
         static private ComputeBuffer<float> CB_valueConnectionWeights;
         static private ComputeBuffer<float> CB_valueBiases;
         static private ComputeBuffer<float> CB_valueBiasLast;
-        static private ComputeBuffer<float> CB_inputFCLayerValue;
 
         static private ComputeBuffer<float> CB_convWeightsPolicy;
-        static private ComputeBuffer<float> CB_convBiasesPolicy;
         static private ComputeBuffer<float> CB_BNMeansPolicy;
         static private ComputeBuffer<float> CB_BNStddevPolicy;
         static private ComputeBuffer<float> CB_BNBetaPolicy;
@@ -144,11 +132,41 @@ namespace TicTacToe_DL_RL
 
         }
         /* resend all weights, later we will re-use the weights (for example keep 10 different neural network weights in GPU and re-use them)*/
-        public static Tuple<float[], float> EnqueueWork(NeuralNetwork nn)
+        public static void EnqueueWork(NeuralNetwork nn)
         {
             input.AddRange(nn.input);
-        
 
+            firstConvFilterWeights.AddRange(nn.firstConvFilterWeights);
+
+            // for residual tower
+            convFilterWeights.AddRange(nn.convFilterWeights);
+
+            // for policy layer
+            convWeightsPolicy.AddRange(nn.convWeightsPolicy);
+            BNMeansPolicy.AddRange(nn.BNMeansPolicy);
+            BNStddevPolicy.AddRange(nn.BNStddevPolicy);
+            BNBetaPolicy.AddRange(nn.BNBetaPolicy);
+            BNGammaPolicy.AddRange(nn.BNGammaPolicy);
+            policyConnectionWeights.AddRange(nn.policyConnectionWeights);
+            policyBiases.AddRange(nn.policyBiases);
+
+            // for value layer
+            convWeightsValue1.AddRange(nn.convWeightsValue1);
+            convWeightsValue2.AddRange(nn.convWeightsValue2);
+            BNMeansValue.AddRange(nn.BNMeansValue);
+            BNStddevValue.AddRange(nn.BNStddevValue);
+            BNBetaValue.AddRange(nn.BNBetaValue);
+            BNGammaValue.AddRange(nn.BNGammaValue);
+            valueConnectionWeights.AddRange(nn.valueConnectionWeights);
+            valueBiases.AddRange(nn.valueBiases);
+            valueBiasLast.AddRange(nn.valueBiasLast);
+
+            // for all layers
+            BNMeans.AddRange(nn.BNMeans);
+            BNStddev.AddRange(nn.BNStddev);
+
+            BNBetas.AddRange(nn.BNBetas);
+            BNGammas.AddRange(nn.BNGammas);
         }
         public static void RunKernels()
         {
@@ -197,7 +215,7 @@ namespace TicTacToe_DL_RL
             float[] policy = new float[25];
             Array.Copy(output, policy, 25);
 
-            return Tuple.Create(policy, output[25]);
+            //return Tuple.Create(policy, output[25]);
         }
         public static void CreateNetworkWeightBuffers()
         {
@@ -207,7 +225,6 @@ namespace TicTacToe_DL_RL
             // opencl buffers
             CB_firstConvFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, firstConvFilterWeights.ToArray());
 
-            CB_convBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convBiases.ToArray());
             CB_BNMeans = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNMeans.ToArray());
             CB_BNStddev = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNStddev.ToArray());
             CB_BNBetas = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNBetas.ToArray());
@@ -222,10 +239,8 @@ namespace TicTacToe_DL_RL
             CB_valueConnectionWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueConnectionWeights.ToArray());
             CB_valueBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueBiases.ToArray());
             CB_valueBiasLast = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueBiasLast.ToArray());
-            CB_inputFCLayerValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, inputFCLayerValue.ToArray());
 
             CB_convWeightsPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convWeightsPolicy.ToArray());
-            CB_convBiasesPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convBiasesPolicy.ToArray());
             CB_BNMeansPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNMeansPolicy.ToArray());
             CB_BNStddevPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNStddevPolicy.ToArray());
             CB_BNBetaPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNBetaPolicy.ToArray());
@@ -239,34 +254,31 @@ namespace TicTacToe_DL_RL
                 kernel.SetMemoryArgument(0, CB_input);
                 kernel.SetMemoryArgument(1, CB_firstConvFilterWeights);
 
-                kernel.SetMemoryArgument(2, CB_convBiases);
-                kernel.SetMemoryArgument(3, CB_BNMeans);
-                kernel.SetMemoryArgument(4, CB_BNStddev);
-                kernel.SetMemoryArgument(5, CB_BNBetas);
-                kernel.SetMemoryArgument(6, CB_BNGammas);
+                kernel.SetMemoryArgument(2, CB_BNMeans);
+                kernel.SetMemoryArgument(3, CB_BNStddev);
+                kernel.SetMemoryArgument(4, CB_BNBetas);
+                kernel.SetMemoryArgument(5, CB_BNGammas);
 
-                kernel.SetMemoryArgument(7, CB_convWeightsValue1);
-                kernel.SetMemoryArgument(8, CB_convWeightsValue2);
-                kernel.SetMemoryArgument(9, CB_BNMeansValue);
-                kernel.SetMemoryArgument(10, CB_BNStddevValue);
-                kernel.SetMemoryArgument(11, CB_BNBetaValue);
-                kernel.SetMemoryArgument(12, CB_BNGammaValue);
-                kernel.SetMemoryArgument(13, CB_valueConnectionWeights);
-                kernel.SetMemoryArgument(14, CB_valueBiases);
-                kernel.SetMemoryArgument(15, CB_valueBiasLast);
-                kernel.SetMemoryArgument(16, CB_inputFCLayerValue);
+                kernel.SetMemoryArgument(6, CB_convWeightsValue1);
+                kernel.SetMemoryArgument(7, CB_convWeightsValue2);
+                kernel.SetMemoryArgument(8, CB_BNMeansValue);
+                kernel.SetMemoryArgument(9, CB_BNStddevValue);
+                kernel.SetMemoryArgument(10, CB_BNBetaValue);
+                kernel.SetMemoryArgument(11, CB_BNGammaValue);
+                kernel.SetMemoryArgument(12, CB_valueConnectionWeights);
+                kernel.SetMemoryArgument(13, CB_valueBiases);
+                kernel.SetMemoryArgument(14, CB_valueBiasLast);
 
-                kernel.SetMemoryArgument(17, CB_convWeightsPolicy);
-                kernel.SetMemoryArgument(18, CB_convBiasesPolicy);
-                kernel.SetMemoryArgument(19, CB_BNMeansPolicy);
-                kernel.SetMemoryArgument(20, CB_BNStddevPolicy);
-                kernel.SetMemoryArgument(21, CB_BNBetaPolicy);
-                kernel.SetMemoryArgument(22, CB_BNGammaPolicy);
-                kernel.SetMemoryArgument(23, CB_policyConnectionWeights);
-                kernel.SetMemoryArgument(24, CB_policyBiases);
-                kernel.SetMemoryArgument(25, CB_convFilterWeights);
+                kernel.SetMemoryArgument(15, CB_convWeightsPolicy);
+                kernel.SetMemoryArgument(16, CB_BNMeansPolicy);
+                kernel.SetMemoryArgument(17, CB_BNStddevPolicy);
+                kernel.SetMemoryArgument(18, CB_BNBetaPolicy);
+                kernel.SetMemoryArgument(19, CB_BNGammaPolicy);
+                kernel.SetMemoryArgument(20, CB_policyConnectionWeights);
+                kernel.SetMemoryArgument(21, CB_policyBiases);
+                kernel.SetMemoryArgument(22, CB_convFilterWeights);
 
-                kernel.SetMemoryArgument(26, CB_results);
+                kernel.SetMemoryArgument(23, CB_results);
             }
             catch (Exception e)
             {

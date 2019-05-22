@@ -153,7 +153,6 @@ kernel void NN(
 	constant float* input,
 	constant float* firstConvFilterWeights,
 // shared among all layers
-	constant float* convBiases,
 	constant float* BNMeans,
 	constant float* BNStddev,
 	constant float* BNBetas,
@@ -171,7 +170,6 @@ kernel void NN(
 	constant float* inputFCLayerValue,
 // for policy layer
 	constant float* convWeightsPolicy,
-	constant float* convBiasesPolicy,
 	constant float* BNMeansPolicy,
 	constant float* BNStddevPolicy,
 	constant float* BNBetaPolicy,
