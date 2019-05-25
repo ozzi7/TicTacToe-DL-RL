@@ -59,7 +59,7 @@ namespace TicTacToe_DL_RL
         public static List<float> BNGammas = new List<float>();
 
         // output of NN
-        public static float[] output = new float[(Params.populationSize) *26];
+        public static float[] output = new float[(Params.MAX_KERNEL_EXECUTIONS) *26];
         public static List<int> networkIndex = new List<int>();
 
         // opencl buffers
@@ -117,16 +117,31 @@ namespace TicTacToe_DL_RL
             {
                 input.Clear();
                 networkIndex.Clear();
-                for (int i = 0; i < Params.MAX_KERNEL_EXECUTIONS; ++i) // Params.NOF_NNs-1
+                for (int i = 0; i < Params.MAX_KERNEL_EXECUTIONS; ++i)
                 {
-
-                    Task t = Consume(InputChannel, i);
-                    t.Wait();
+                    //Task t = Consume(InputChannel);
+                    Task<Job> task = Consume(InputChannel).AsTask();
+                    try
+                    {
+                        Job job = task.Result;
+                        //var result = Task.Run(async () => { return await Consume(InputChannel); }).Wait(100);
+                        if (job != null)
+                        {
+                            for (int j = 0; j < job.input.Count; ++j)
+                            {
+                                input.Add(job.input[j]);
+                            }
+                            networkIndex.Add(job.globalID);
+                        }
+                    }
+                    catch (Exception e) { 
+                        //Console.WriteLine("Timeout on waiting for input to openCL channel (intended behaviour)");
+                    }
                 }
                 RunKernels();
 
                 int outputCount = 0;
-                for (int i = 0; i < Params.MAX_KERNEL_EXECUTIONS; ++i)
+                for(int i = 0; i < networkIndex.Count; ++i)
                 {
                     Job job = new Job();
                     for (int j = 0; j < 26; ++j)
@@ -134,26 +149,26 @@ namespace TicTacToe_DL_RL
                         job.output.Add(output[outputCount]);
                         outputCount++;
                     }
+                    float bla = networkIndex[i];
+                    ChannelWriter<Job> blabla = writers[networkIndex[i]];
                     writers[networkIndex[i]].TryWrite(job);
                 }
             }
         }
-        private static async Task Consume(ChannelReader<Job> c, int i)
+        private static async ValueTask<Job> Consume(ChannelReader<Job> c)
         {
             try
             {
-                //while (true)
-                //{
-                    Job job = await c.ReadAsync();
-                    for (int j = 0; j < job.input.Count; ++j)
-                    {
-                        input.Add(job.input[i]);
-                    }
-                    networkIndex.Add(job.globalID);
-                    return;
-                //}
+                TimeSpan timeout = TimeSpan.FromMilliseconds(1);
+
+                using (var cts = new CancellationTokenSource(timeout))
+                {
+                    return await c.ReadAsync(cts.Token);
+                }
             }
-            catch (ChannelClosedException) { }
+            catch (TaskCanceledException e) {
+                return null;
+            }
         }
         public static void CompileKernel()
         {
@@ -281,7 +296,7 @@ namespace TicTacToe_DL_RL
                 // Execute the kernel "count" times. After this call returns, "eventList" will contain an event associated with this command.
                 // If eventList == null or typeof(eventList) == ReadOnlyCollection<ComputeEventBase>, a new event will not be created.
 
-                commands.Execute(kernel, null, new long[] { Params.MAX_KERNEL_EXECUTIONS }, null, eventList);
+                commands.Execute(kernel, null, new long[] { networkIndex.Count }, null, eventList);
 
                 // Read back the results. If the command-queue has out-of-order execution enabled (default is off), ReadFromBuffer 
                 // will not execute until any previous events in eventList (in our case only eventList[0]) are marked as complete 

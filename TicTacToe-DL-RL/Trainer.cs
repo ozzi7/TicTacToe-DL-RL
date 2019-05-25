@@ -84,6 +84,7 @@ namespace TicTacToe_DL_RL
             }
 
             /* add weights to opencl */
+            Params.ResetGlobalID();
             OpenCL.ClearWeights();
             List<NeuralNetwork> nns = new List<NeuralNetwork>();
             List<NeuralNetwork> currnns = new List<NeuralNetwork>();
@@ -101,7 +102,7 @@ namespace TicTacToe_DL_RL
                     weights[i][j] += Params.sigma * noise[i][j];
                 }
                 NeuralNetwork playingNNlocal = new NeuralNetwork();
-                playingNNlocal.OpenCLInit(Params.getGlobalID());
+                playingNNlocal.OpenCLInit(Params.GetGlobalID());
                 playingNNlocal.untrainable_weights = new List<float>(currentNN.untrainable_weights);
                 playingNNlocal.weights = new List<float>(weights[i]);
                 playingNNlocal.ParseWeights();
@@ -109,7 +110,7 @@ namespace TicTacToe_DL_RL
                 nns.Add(playingNNlocal);
 
                 NeuralNetwork currNNlocal = new NeuralNetwork();
-                currNNlocal.OpenCLInit(Params.getGlobalID());
+                currNNlocal.OpenCLInit(Params.GetGlobalID());
                 currNNlocal.untrainable_weights = new List<float>(currentNN.untrainable_weights);
                 currNNlocal.weights = new List<float>(weights[i]);
                 currNNlocal.ParseWeights();
@@ -182,7 +183,7 @@ namespace TicTacToe_DL_RL
                 threadx.Start();
             }
             WaitHandle.WaitAll(waitHandles);
-
+            thread.Abort();
 
             // debug
             //Console.WriteLine("" + string.Join(",", rewards) + "\n");
