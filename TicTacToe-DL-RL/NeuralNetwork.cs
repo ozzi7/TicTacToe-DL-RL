@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace TicTacToe_DL_RL
@@ -10,6 +11,7 @@ namespace TicTacToe_DL_RL
     class NeuralNetwork
     {
         public bool GPU_PREDICT = false;
+        public int globalID = -1;
 
         // params
         const int gameboardWidth = 5;
@@ -72,20 +74,32 @@ namespace TicTacToe_DL_RL
         // output of NN
         public float[] softmaxPolicy = new float[nofOutputPolicies];
         public float[] winrateOut = new float[1];
+        public float winrateSigOut;
 
         // complete weights
         public List<float> weights = new List<float>();
         public List<float> untrainable_weights = new List<float>();
 
+
+        // reader and writer channel to opencl thread
+        ChannelReader<Job> reader;
+        ChannelWriter<Job> writer;
+
         public NeuralNetwork()
         {
             InitializeWeights();
-
         }
        
         public NeuralNetwork(String file)
         {
             ReadWeightsFromFile(file);
+        }
+        public void OpenCLInit(int aGlobalID)
+        {
+            globalID = aGlobalID;
+            writer = OpenCL.InputChannel.Writer;
+            reader = OpenCL.ResponseChannels[globalID].Reader;
+            OpenCL.EnqueueWeights(this);
         }
         public NeuralNetwork(List<float> aWeights, List<float> aUntrainableWeights)
         {
@@ -113,12 +127,39 @@ namespace TicTacToe_DL_RL
             }
             if (GPU_PREDICT)
             {
-                return OpenCL.EnqueueWork(this);
+                Job job = new Job();
+                job.input = input.ToList();
+                job.globalID = globalID;
+                writer.TryWrite(job);
+
+                Task t = Consume(reader);
+                t.Wait();
+
+                return Tuple.Create(softmaxPolicy, winrateSigOut);
             }
             else
             {
                 return ForwardPassCPU(input);
             }
+        }
+        private async Task Consume(ChannelReader<Job> c)
+        {
+            try
+            {
+                Job job = await c.ReadAsync();
+
+                for (int i = 0; i < 25; ++i)
+                {
+                    softmaxPolicy[i] = job.output[i];
+                }
+                winrateSigOut = job.output[25];
+                return;
+            }
+            catch (ChannelClosedException) { }
+        }
+        public void EnqueueWeights()
+        {
+            OpenCL.EnqueueWeights(this);
         }
         public void CalculateVirtualBNs()
         {

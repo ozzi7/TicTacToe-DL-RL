@@ -7,11 +7,11 @@ using MathNet.Numerics.Distributions;
 
 namespace TicTacToe_DL_RL
 {
-    public static class DirichletNoise
+    public class DirichletNoise
     {
-        private static Dirichlet dirichlet;
-        private static double[] dirichletNoise;
-        public static void InitDirichlet(int nofChildren)
+        private Dirichlet dirichlet;
+        private double[] dirichletNoise;
+        public DirichletNoise(int nofChildren)
         {
             // assume 10 random games, 9 potential moves => 10/9
             float init = 10.0f / nofChildren;
@@ -38,7 +38,7 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
-        public static float GetNoise(int index)
+        public float GetNoise(int index)
         {
             return (float)dirichletNoise[index];
         }
