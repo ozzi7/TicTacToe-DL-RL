@@ -9,7 +9,7 @@ namespace TicTacToe_DL_RL
     public static class Params
     {
         public static int MAX_KERNEL_EXECUTIONS = 40; // opencl waits for x inputs and then executes all kernels = pop size
-        public static bool GPU_ENABLED = true;
+        public static bool GPU_ENABLED = false;
         /* the number of neural networks to keep in GPU memory at the same time */
         public static int NOF_NNs = 80; // populationSize*2(currentNN)
 
