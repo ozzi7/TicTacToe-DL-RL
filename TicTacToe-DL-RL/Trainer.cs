@@ -14,7 +14,7 @@ namespace TicTacToe_DL_RL
         private NeuralNetwork previousNN1;
         //private NeuralNetwork previousNN2;
         //private NeuralNetwork previousNN3;
-        private Node<TicTacToePosition> MCTSRootNode;
+
         private double totalWins = 0;
         private double totalWinsAgainstRandom = 0;
         private double totalGamesAgainstRandom = 0;
@@ -416,7 +416,7 @@ namespace TicTacToe_DL_RL
                 float result = 0.0f;
                 for (int curr_ply = 0; curr_ply < Params.maxPlies; ++curr_ply)  // we always finish the game for tic tac toe
                 {
-                    MCTSRootNode = new Node<TicTacToePosition>(null);
+                    Node<TicTacToePosition> MCTSRootNode; MCTSRootNode = new Node<TicTacToePosition>(null);
                     MCTSRootNode.Value = game.pos;
 
                     if (game.IsOver())
@@ -602,7 +602,7 @@ namespace TicTacToe_DL_RL
         {
             TicTacToeGame game = new TicTacToeGame();
 
-            MCTSRootNode = new Node<TicTacToePosition>(null);
+            Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
             MCTSRootNode.Value = game.pos;
             Tuple<float[], float> prediction = nn.Predict(MCTSRootNode.Value);
             MCTSRootNode.nn_policy = new List<float>(prediction.Item1);
@@ -622,7 +622,7 @@ namespace TicTacToe_DL_RL
         {
             TicTacToeGame game = new TicTacToeGame();
 
-            MCTSRootNode = new Node<TicTacToePosition>(null);
+            Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
             MCTSRootNode.Value = game.pos;
             Tuple<float[], float> prediction = nn.Predict(MCTSRootNode.Value);
             MCTSRootNode.nn_policy = new List<float>(prediction.Item1);

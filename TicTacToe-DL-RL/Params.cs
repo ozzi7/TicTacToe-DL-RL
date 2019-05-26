@@ -17,10 +17,10 @@ namespace TicTacToe_DL_RL
         public static float c_puct = 1.41f; // roughly sqrt 2 // was 2
         public static int nofSimsPerPosTest = 10; // could/should be time
         public static int nofSimsPerPosTrain = 10; // could/should be time
-        public static int populationSize = 20; // must be 2n
+        public static int populationSize = 2; // must be 2n
 
         public static int nofTrainingGames = 1000000;
-        public static int nofTestGames = 100; // only 2 makes sense without noise
+        public static int nofTestGames = 6; // only 2 makes sense without noise
         public static int maxPlies = 100;
 
         public static int gamesPerIndividuum = 40;
