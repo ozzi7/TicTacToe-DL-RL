@@ -196,7 +196,7 @@ namespace TicTacToe_DL_RL
             }
             else
             {
-                Parallel.For(0, Params.populationSize, new ParallelOptions { MaxDegreeOfParallelism = 4 }, i =>
+                Parallel.For(0, Params.populationSize, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
                 {
                     NeuralNetwork playingNNlocal = nns[i];
                     NeuralNetwork currNNlocal = currnns[i];
@@ -303,7 +303,7 @@ namespace TicTacToe_DL_RL
                 newNN.GPU_PREDICT = Params.GPU_ENABLED;
                 currnns.Add(newNN);
             }
-            Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = 4 }, i =>
+            Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
                 NeuralNetwork currentNN = currnns[i];
                 NeuralNetwork previousNN1 = nns[i];
@@ -343,7 +343,7 @@ namespace TicTacToe_DL_RL
             });
 
             Params.noiseWeight = 0.0f;
-            Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = 4 }, i =>
+            Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
                 NeuralNetwork currentNN = currnns[i];
 
