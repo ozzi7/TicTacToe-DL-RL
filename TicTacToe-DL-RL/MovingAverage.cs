@@ -9,7 +9,7 @@ namespace TicTacToe_DL_RL
     public class MovingAverage
     {
         private Queue<Decimal> samples = new Queue<Decimal>();
-        private int windowSize = 20*Params.nofTestGames;
+        private int windowSize = 20;
         private Decimal sampleAccumulator;
         public Decimal Average { get; private set; }
 

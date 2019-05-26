@@ -149,8 +149,6 @@ namespace TicTacToe_DL_RL
                         job.output.Add(output[outputCount]);
                         outputCount++;
                     }
-                    float bla = networkIndex[i];
-                    ChannelWriter<Job> blabla = writers[networkIndex[i]];
                     writers[networkIndex[i]].TryWrite(job);
                 }
             }

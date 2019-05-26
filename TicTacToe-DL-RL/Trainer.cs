@@ -270,66 +270,100 @@ namespace TicTacToe_DL_RL
             currentNN.ApplyWeightDecay();
             currentNN.ParseWeights();
 
-            /* check performance vs previous best*/
-            int wins = 0;
-            int draws = 0;
-            int losses = 0;
-            for (int j = 0; j < Params.nofTestGames; ++j)
+            /////////////////////// check performance vs previous best ////////////////////////////
+            List<int> wins = new List<int>();
+            List<int> draws = new List<int>();
+            List<int> losses = new List<int>();
+            List<int> movecount = new List<int>();
+            List<int> winsAsX = new List<int>();
+            List<int> winsAsZ = new List<int>();
+            List<double> winrateVsRand = new List<double>();
+            nns = new List<NeuralNetwork>();
+            currnns = new List<NeuralNetwork>();
+
+            for (int i = 0; i < Params.populationSize; ++i)
             {
+                wins.Add(0);
+                draws.Add(0);
+                losses.Add(0);
+                movecount.Add(0);
+                winsAsX.Add(0);
+                winsAsZ.Add(0);
+                NeuralNetwork previousNN = new NeuralNetwork();
+                if (Params.GPU_ENABLED)
+                    previousNN.OpenCLInit(Params.GetGlobalID());
+                previousNN.untrainable_weights = new List<float>(previousNN1.untrainable_weights);
+                previousNN.weights = new List<float>(previousNN1.weights);
+                previousNN.ParseWeights();
+                previousNN.GPU_PREDICT = Params.GPU_ENABLED;
+                nns.Add(previousNN);
+
+                NeuralNetwork newNN = new NeuralNetwork();
+                if (Params.GPU_ENABLED)
+                    newNN.OpenCLInit(Params.GetGlobalID());
+                newNN.untrainable_weights = new List<float>(currentNN.untrainable_weights);
+                newNN.weights = new List<float>(currentNN.weights);
+                newNN.ParseWeights();
+                newNN.GPU_PREDICT = Params.GPU_ENABLED;
+                currnns.Add(newNN);
+            }
+            Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = 4 }, i =>
+            {
+                NeuralNetwork currentNN = currnns[i];
+                NeuralNetwork previousNN1 = nns[i];
+
                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
-                Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
+                Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
 
                 Params.noiseWeight = 0.2f;
                 int result1 = PlayOneGame(history, evaluationNetworkPlayer, currentNN, previousNN1, false);
-                //int result2 = PlayOneGame(history, evaluationNetworkPlayer, currentNN, previousNN2);
-                //int result3 = PlayOneGame(history, evaluationNetworkPlayer, currentNN, previousNN3);
 
                 if (result1 == 1)
                 {
-                    totalWinsX++;
-                    winsAsXMovingAvg.ComputeAverage(1);
-                    winsAsZMovingAvg.ComputeAverage(0);
+                    winsAsX[i]++;
                 }
                 else if (result1 == -1)
                 {
-                    totalWinsZ++;
-                    winsAsXMovingAvg.ComputeAverage(0);
-                    winsAsZMovingAvg.ComputeAverage(1);
-                }
-                else
-                {
-                    winsAsXMovingAvg.ComputeAverage(0);
-                    winsAsZMovingAvg.ComputeAverage(0);
+                    winsAsZ[i]++;
                 }
 
-                totalWins = totalWinsX + totalWinsZ;
 
                 if (evaluationNetworkPlayer == Player.X && result1 == 1 ||
                     evaluationNetworkPlayer == Player.Z && result1 == -1)
                 {
-                    wins++;
-                    drawsMovingAvg.ComputeAverage(0);
+                    wins[i]++;
                 }
                 else if (result1 == 0)
                 {
-                    draws++;
-                    drawsMovingAvg.ComputeAverage(1);
+                    losses[i]++;
                 }
                 else
                 {
-                    losses++;
-                    drawsMovingAvg.ComputeAverage(0);
+                    draws[i]++;
                 }
-                totalGames += 1;
-                averageMovesMovingAvg.ComputeAverage(history.Count);
-            }
 
-            totalDraws += draws;
+                movecount[i] += history.Count;
+                // for each test game also play once against random player
+                winrateVsRand[i] += PlayAgainstRandom(1, currentNN);
+            });
+            int winsTotal = wins.Sum();
+            int lossesTotal = losses.Sum();
+            int drawsTotal = draws.Sum();
+            int winsAsXtotal = winsAsX.Sum();
+            int winsAsZtotal = winsAsZ.Sum();
+            int totalMoves = movecount.Sum();
+            float winrateVsRandTotal = (float)winrateVsRand.Sum();
 
-            Console.WriteLine("Score: W/D/L " + wins + "/" + draws + "/" + losses + " winrateX/drawrate/winrateZ " +
+            decimal nofgames = Params.nofTestGames;
+            winsAsXMovingAvg.ComputeAverage(winsAsXtotal / (decimal)nofgames);
+            winsAsZMovingAvg.ComputeAverage(winsAsZtotal / (decimal)nofgames);
+            drawsMovingAvg.ComputeAverage(drawsTotal / (decimal)nofgames);
+            averageMovesMovingAvg.ComputeAverage(totalMoves);
+            
+            Console.WriteLine("Score: W/D/L " + winsTotal + "/" + drawsTotal + "/" + lossesTotal + " winrateX/drawrate/winrateZ " +
                 Math.Round(winsAsXMovingAvg.Average, 2) + "/" + Math.Round(drawsMovingAvg.Average, 2) + "/" + Math.Round(winsAsZMovingAvg.Average, 2));
 
-            if (wins < losses)
+            if (winsTotal < lossesTotal)
             {
                 currentPseudoELO += 0;
 
@@ -341,8 +375,7 @@ namespace TicTacToe_DL_RL
             }
             else
             {
-                winrateVsRandom = PlayAgainstRandom(100, currentNN);
-                currentPseudoELO += (float)(wins - losses) / (float)Params.nofTestGames;
+                currentPseudoELO += (float)(winsTotal - lossesTotal) / (float)Params.nofTestGames;
                 //previousNN3 = previousNN2;
                 //previousNN2 = previousNN1;
                 previousNN1.weights = new List<float>(currentNN.weights);
@@ -350,14 +383,13 @@ namespace TicTacToe_DL_RL
                 previousNN1.ParseWeights();
                 printPolicy(currentNN);
                 printValue(currentNN);
-
             }
 
             using (System.IO.StreamWriter file = new System.IO.StreamWriter(plotFilename, true))
             {
                 file.WriteLine(currentPseudoELO + " " + Math.Round(winsAsXMovingAvg.Average, 2) + " " +
                     Math.Round(winsAsZMovingAvg.Average, 2) + " " + Math.Round(drawsMovingAvg.Average, 2) + " " +
-                    Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandom, 2));
+                    Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandTotal, 2));
             }
         }
         /// <summary>
