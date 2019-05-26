@@ -105,7 +105,8 @@ namespace TicTacToe_DL_RL
                     weights[i][j] += Params.sigma * noise[i][j];
                 }
                 NeuralNetwork playingNNlocal = new NeuralNetwork();
-                playingNNlocal.OpenCLInit(Params.GetGlobalID());
+                if(Params.GPU_ENABLED)
+                    playingNNlocal.OpenCLInit(Params.GetGlobalID());
                 playingNNlocal.untrainable_weights = new List<float>(currentNN.untrainable_weights);
                 playingNNlocal.weights = new List<float>(weights[i]);
                 playingNNlocal.ParseWeights();
@@ -113,7 +114,8 @@ namespace TicTacToe_DL_RL
                 nns.Add(playingNNlocal);
 
                 NeuralNetwork currNNlocal = new NeuralNetwork();
-                currNNlocal.OpenCLInit(Params.GetGlobalID());
+                if (Params.GPU_ENABLED)
+                    currNNlocal.OpenCLInit(Params.GetGlobalID());
                 currNNlocal.untrainable_weights = new List<float>(currentNN.untrainable_weights);
                 currNNlocal.weights = new List<float>(weights[i]);
                 currNNlocal.ParseWeights();
