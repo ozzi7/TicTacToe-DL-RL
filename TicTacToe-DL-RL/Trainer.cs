@@ -357,7 +357,7 @@ namespace TicTacToe_DL_RL
             int winsAsXtotal = winsAsX.Sum();
             int winsAsZtotal = winsAsZ.Sum();
             int totalMoves = movecount.Sum();
-            float winrateVsRandTotal = (float)winrateVsRand.Sum();
+            float winrateVsRandTotal = (float)winrateVsRand.Average();
 
             decimal nofgames = Params.nofTestGames;
             winsAsXMovingAvg.ComputeAverage(winsAsXtotal / (decimal)nofgames);
