@@ -12,22 +12,16 @@ namespace TicTacToe_DL_RL
     {
         private NeuralNetwork currentNN;
         private NeuralNetwork previousNN1;
-        //private NeuralNetwork previousNN2;
-        //private NeuralNetwork previousNN3;
 
-        private double totalWins = 0;
         private double totalWinsAgainstRandom = 0;
         private double totalGamesAgainstRandom = 0;
-        private double totalWinsX = 0;
-        private double totalWinsZ = 0;
-        private double totalDraws = 0;
-        private double totalGames = 0;
-        private double winrateVsRandom = 0;
 
         private MovingAverage winsAsXMovingAvg = new MovingAverage();
         private MovingAverage winsAsZMovingAvg = new MovingAverage();
         private MovingAverage drawsMovingAvg = new MovingAverage();
         private MovingAverage averageMovesMovingAvg = new MovingAverage();
+        private MovingAverage winrateVsRandMovingAvg = new MovingAverage();
+
         private String plotFilename = "plotdata.txt";
         private double currentPseudoELO = 0;
 
@@ -372,7 +366,8 @@ namespace TicTacToe_DL_RL
             winsAsZMovingAvg.ComputeAverage(winsAsZtotal / (decimal)nofgames);
             drawsMovingAvg.ComputeAverage(drawsTotal / (decimal)nofgames);
             averageMovesMovingAvg.ComputeAverage(totalMoves / (decimal)nofgames);
-            
+            winrateVsRandMovingAvg.ComputeAverage((decimal)winrateVsRandTotal);
+
             Console.WriteLine("Score: W/D/L " + winsTotal + "/" + drawsTot + "/" + lossesTotal + " winrateX/drawrate/winrateZ " +
                 Math.Round(winsAsXMovingAvg.Average, 2) + "/" + Math.Round(drawsMovingAvg.Average, 2) + "/" + Math.Round(winsAsZMovingAvg.Average, 2));
 
@@ -402,7 +397,7 @@ namespace TicTacToe_DL_RL
             {
                 file.WriteLine(currentPseudoELO + " " + Math.Round(winsAsXMovingAvg.Average, 2) + " " +
                     Math.Round(winsAsZMovingAvg.Average, 2) + " " + Math.Round(drawsMovingAvg.Average, 2) + " " +
-                    Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandTotal, 2));
+                    Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg.Average, 2));
             }
         }
         /// <summary>
