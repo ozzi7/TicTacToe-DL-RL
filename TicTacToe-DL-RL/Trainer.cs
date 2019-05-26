@@ -108,7 +108,7 @@ namespace TicTacToe_DL_RL
                 if (Params.GPU_ENABLED)
                     currNNlocal.OpenCLInit(Params.GetGlobalID());
                 currNNlocal.untrainable_weights = new List<float>(currentNN.untrainable_weights);
-                currNNlocal.weights = new List<float>(weights[i]);
+                currNNlocal.weights = new List<float>(currentNN.weights);
                 currNNlocal.ParseWeights();
                 currNNlocal.GPU_PREDICT = Params.GPU_ENABLED;
                 currnns.Add(currNNlocal);
