@@ -284,6 +284,7 @@ namespace TicTacToe_DL_RL
                 movecount.Add(0);
                 winsAsX.Add(0);
                 winsAsZ.Add(0);
+                winrateVsRand.Add(0);
                 NeuralNetwork previousNN = new NeuralNetwork();
                 if (Params.GPU_ENABLED)
                     previousNN.OpenCLInit(Params.GetGlobalID());
