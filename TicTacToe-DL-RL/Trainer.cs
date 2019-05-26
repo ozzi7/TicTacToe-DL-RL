@@ -13,9 +13,6 @@ namespace TicTacToe_DL_RL
         private NeuralNetwork currentNN;
         private NeuralNetwork previousNN1;
 
-        private double totalWinsAgainstRandom = 0;
-        private double totalGamesAgainstRandom = 0;
-
         private MovingAverage winsAsXMovingAvg = new MovingAverage();
         private MovingAverage winsAsZMovingAvg = new MovingAverage();
         private MovingAverage drawsMovingAvg = new MovingAverage();
@@ -404,8 +401,8 @@ namespace TicTacToe_DL_RL
         /// <returns>Winrate</returns>
         public double PlayAgainstRandom(int nofGames, NeuralNetwork NN, Player evaluationNetworkPlayer)
         {
-            totalWinsAgainstRandom = 0;
-            totalGamesAgainstRandom = 0;
+            float totalWinsAgainstRandom = 0;
+            float totalGamesAgainstRandom = 0;
             for (int j = 0; j < nofGames; ++j)
             {
                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
