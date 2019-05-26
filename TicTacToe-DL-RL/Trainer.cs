@@ -272,6 +272,7 @@ namespace TicTacToe_DL_RL
             List<int> movecount = new List<int>();
             List<int> winsAsX = new List<int>();
             List<int> winsAsZ = new List<int>();
+            List<int> drawsBla = new List<int>();
             List<double> winrateVsRand = new List<double>();
             nns = new List<NeuralNetwork>();
             currnns = new List<NeuralNetwork>();
@@ -285,6 +286,8 @@ namespace TicTacToe_DL_RL
                 winsAsX.Add(0);
                 winsAsZ.Add(0);
                 winrateVsRand.Add(0);
+                drawsBla.Add(0);
+
                 NeuralNetwork previousNN = new NeuralNetwork();
                 if (Params.GPU_ENABLED)
                     previousNN.OpenCLInit(Params.GetGlobalID());
@@ -322,6 +325,10 @@ namespace TicTacToe_DL_RL
                 {
                     winsAsZ[i]++;
                 }
+                else
+                {
+                    drawsBla[i]++;
+                }
 
 
                 if (evaluationNetworkPlayer == Player.X && result1 == 1 ||
@@ -353,7 +360,8 @@ namespace TicTacToe_DL_RL
 
             int winsTotal = wins.Sum();
             int lossesTotal = losses.Sum();
-            int drawsTotal = draws.Sum();
+            int drawsTotal = drawsBla.Sum();
+            int drawsTot = draws.Sum();
             int winsAsXtotal = winsAsX.Sum();
             int winsAsZtotal = winsAsZ.Sum();
             int totalMoves = movecount.Sum();
@@ -365,7 +373,7 @@ namespace TicTacToe_DL_RL
             drawsMovingAvg.ComputeAverage(drawsTotal / (decimal)nofgames);
             averageMovesMovingAvg.ComputeAverage(totalMoves / (decimal)nofgames);
             
-            Console.WriteLine("Score: W/D/L " + winsTotal + "/" + drawsTotal + "/" + lossesTotal + " winrateX/drawrate/winrateZ " +
+            Console.WriteLine("Score: W/D/L " + winsTotal + "/" + drawsTot + "/" + lossesTotal + " winrateX/drawrate/winrateZ " +
                 Math.Round(winsAsXMovingAvg.Average, 2) + "/" + Math.Round(drawsMovingAvg.Average, 2) + "/" + Math.Round(winsAsZMovingAvg.Average, 2));
 
             if (winsTotal < lossesTotal)
