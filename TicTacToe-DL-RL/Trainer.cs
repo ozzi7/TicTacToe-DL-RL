@@ -122,6 +122,7 @@ namespace TicTacToe_DL_RL
             if (Params.GPU_ENABLED)
                 OpenCL.CreateNetworkWeightBuffers();
 
+            Params.noiseWeight = 0.2f;
             if (Params.GPU_ENABLED)
             {
                 Thread thread = new Thread(OpenCL.Run);
@@ -148,7 +149,7 @@ namespace TicTacToe_DL_RL
                             history.Clear();
                             Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
 
-                            Params.noiseWeight = 0.2f;
+
                             int result = PlayOneGame(history, evaluationNetworkPlayer, playingNNlocal, currNNlocal, true);
 
                             if (evaluationNetworkPlayer == Player.X && result == 1 ||
@@ -169,11 +170,6 @@ namespace TicTacToe_DL_RL
                                 {
                                     TicTacToeGame game = new TicTacToeGame();
                                     game.DisplayHistory(history);
-                                }
-                                else
-                                {
-                                    TicTacToeGame game = new TicTacToeGame();
-                                    game.DisplayWinner(history);
                                 }
                             }
                         }
@@ -203,7 +199,6 @@ namespace TicTacToe_DL_RL
                         history.Clear();
                         Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
 
-                        Params.noiseWeight = 0.2f;
                         int result = PlayOneGame(history, evaluationNetworkPlayer, playingNNlocal, currNNlocal, true);
 
                         if (evaluationNetworkPlayer == Player.X && result == 1 ||
@@ -300,6 +295,7 @@ namespace TicTacToe_DL_RL
                 newNN.GPU_PREDICT = Params.GPU_ENABLED;
                 currnns.Add(newNN);
             }
+            Params.noiseWeight = 0.2f;
             Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
                 NeuralNetwork currentNN = currnns[i];
@@ -349,7 +345,8 @@ namespace TicTacToe_DL_RL
                 NeuralNetwork currentNN = currnns[i];
 
                 // for each test game also play once against random player
-                winrateVsRand[i] += PlayAgainstRandom(1, currentNN);
+                Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
+                winrateVsRand[i] += PlayAgainstRandom(1, currentNN, evaluationNetworkPlayer);
             });
 
             int winsTotal = wins.Sum();
@@ -405,14 +402,13 @@ namespace TicTacToe_DL_RL
         /// </summary>
         /// <param name="nofGames"></param>
         /// <returns>Winrate</returns>
-        public double PlayAgainstRandom(int nofGames, NeuralNetwork NN)
+        public double PlayAgainstRandom(int nofGames, NeuralNetwork NN, Player evaluationNetworkPlayer)
         {
             totalWinsAgainstRandom = 0;
             totalGamesAgainstRandom = 0;
             for (int j = 0; j < nofGames; ++j)
             {
                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
-                Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
 
                 TicTacToeGame game = new TicTacToeGame();
 
