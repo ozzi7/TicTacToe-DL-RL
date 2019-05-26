@@ -231,11 +231,6 @@ namespace TicTacToe_DL_RL
                                 TicTacToeGame game = new TicTacToeGame();
                                 game.DisplayHistory(history);
                             }
-                            else
-                            {
-                                TicTacToeGame game = new TicTacToeGame();
-                                game.DisplayWinner(history);
-                            }
                         }
                     }
 
@@ -281,7 +276,7 @@ namespace TicTacToe_DL_RL
             nns = new List<NeuralNetwork>();
             currnns = new List<NeuralNetwork>();
 
-            for (int i = 0; i < Params.populationSize; ++i)
+            for (int i = 0; i < Params.nofTestGames; ++i)
             {
                 wins.Add(0);
                 draws.Add(0);
@@ -343,9 +338,18 @@ namespace TicTacToe_DL_RL
                 }
 
                 movecount[i] += history.Count;
+
+            });
+
+            Params.noiseWeight = 0.0f;
+            Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = 4 }, i =>
+            {
+                NeuralNetwork currentNN = currnns[i];
+
                 // for each test game also play once against random player
                 winrateVsRand[i] += PlayAgainstRandom(1, currentNN);
             });
+
             int winsTotal = wins.Sum();
             int lossesTotal = losses.Sum();
             int drawsTotal = draws.Sum();
@@ -358,7 +362,7 @@ namespace TicTacToe_DL_RL
             winsAsXMovingAvg.ComputeAverage(winsAsXtotal / (decimal)nofgames);
             winsAsZMovingAvg.ComputeAverage(winsAsZtotal / (decimal)nofgames);
             drawsMovingAvg.ComputeAverage(drawsTotal / (decimal)nofgames);
-            averageMovesMovingAvg.ComputeAverage(totalMoves);
+            averageMovesMovingAvg.ComputeAverage(totalMoves / (decimal)nofgames);
             
             Console.WriteLine("Score: W/D/L " + winsTotal + "/" + drawsTotal + "/" + lossesTotal + " winrateX/drawrate/winrateZ " +
                 Math.Round(winsAsXMovingAvg.Average, 2) + "/" + Math.Round(drawsMovingAvg.Average, 2) + "/" + Math.Round(winsAsZMovingAvg.Average, 2));
@@ -405,8 +409,6 @@ namespace TicTacToe_DL_RL
             {
                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
                 Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
-
-                Params.noiseWeight = 0.0f;
 
                 TicTacToeGame game = new TicTacToeGame();
 
