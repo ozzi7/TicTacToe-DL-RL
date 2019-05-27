@@ -248,7 +248,6 @@ namespace TicTacToe_DL_RL
                 }
                 currentNN.weights[j] += Params.alpha / (Params.populationSize * Params.sigma) * offset;
             }
-            currentNN.ApplyWeightDecay();
             currentNN.ParseWeights();
 
             /////////////////////// check performance vs previous best ////////////////////////////
@@ -370,6 +369,8 @@ namespace TicTacToe_DL_RL
                 currentPseudoELO += 0;
 
                 // ignore new network, it was bad
+                previousNN1.ApplyWeightDecay(); // every time the new network is not better take old one with decayed weights
+                previousNN1.ParseWeights();
                 currentNN.weights = new List<float>(previousNN1.weights);
                 currentNN.untrainable_weights = new List<float>(previousNN1.untrainable_weights);
 
