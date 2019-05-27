@@ -578,7 +578,7 @@ namespace TicTacToe_DL_RL
                 game = new TicTacToeGame(currNode.Value);
                 if (game.IsOver())
                 {
-                    score = game.GetScore();
+                    score = (game.GetScore()+1)/2.0; // [-1, 1] where player X wins at 1 and player Z at -1
                 }
                 else
                 {
@@ -587,7 +587,7 @@ namespace TicTacToe_DL_RL
                         calculateNNOutput(currNode, NN1, NN2, aEvaluationNetworkPlayer);
                     }
 
-                    score = currNode.nn_value; // [-1..1] where player 1 wins at 1 and player 2 wins at -1
+                    score = currNode.nn_value; // [0..1] where player X wins at 1 and player Z wins at 0
                 }
             }
 
@@ -755,16 +755,15 @@ namespace TicTacToe_DL_RL
         private void backpropagateScore(Node<TicTacToePosition> currNode, float score)
         {
             // we store the winrate for the opposite player in the node, during search we look at the next level
-            float tempScore = (score + 1.0f) / 2.0f;
             while (currNode != null)
             {
                 if (currNode.Value.sideToMove == Player.X)
                 {
-                    currNode.winrate = (currNode.visitCount * currNode.winrate + 1.0f - tempScore) / (currNode.visitCount + 1);
+                    currNode.winrate = (currNode.visitCount * currNode.winrate + 1.0f - score) / (currNode.visitCount + 1);
                 }
                 else if (currNode.Value.sideToMove == Player.Z)
                 {
-                    currNode.winrate = (currNode.visitCount * currNode.winrate + tempScore) / (currNode.visitCount + 1);
+                    currNode.winrate = (currNode.visitCount * currNode.winrate + score) / (currNode.visitCount + 1);
                 }
                 currNode.visitCount += 1;
                 currNode = currNode.GetParent();
