@@ -120,7 +120,7 @@ namespace TicTacToe_DL_RL
             if (Params.GPU_ENABLED)
                 OpenCL.CreateNetworkWeightBuffers();
 
-            Params.noiseWeight = 0.5f;
+            Params.noiseWeight = 0.2f;
             if (Params.GPU_ENABLED)
             {
                 Thread thread = new Thread(OpenCL.Run);
@@ -292,7 +292,7 @@ namespace TicTacToe_DL_RL
                 newNN.GPU_PREDICT = Params.GPU_ENABLED;
                 currnns.Add(newNN);
             }
-            Params.noiseWeight = 0.5f;
+            Params.noiseWeight = 0.3f;
             Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
                 NeuralNetwork currentNN = currnns[i];
@@ -357,6 +357,7 @@ namespace TicTacToe_DL_RL
             {
                 if(winrateVsRandTotal < 0.0f)
                 {// if never checked random player then do a test, else use last result
+                    Params.noiseWeight = 0.0f;
                     Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
                     {
                         NeuralNetwork currentNN = currnns[i];
@@ -452,8 +453,8 @@ namespace TicTacToe_DL_RL
                         {
                             SearchUsingNN(MCTSRootNode, NN, NN, evaluationNetworkPlayer);
                         }
-                        //best_child_index = findBestChildWinrate(MCTSRootNode, dn);
-                        best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
+                        best_child_index = findBestChildWinrate(MCTSRootNode, dn);
+                        //best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
                     }
                     else
                     {
@@ -493,10 +494,10 @@ namespace TicTacToe_DL_RL
         public int PlayOneGame(List<Tuple<int, int>> history, Player aEvaluationNetworkPlayer, NeuralNetwork NN1, NeuralNetwork NN2, bool train)
         {
             TicTacToeGame game = new TicTacToeGame();
+            Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
 
             for (int curr_ply = 0; curr_ply < Params.maxPlies; ++curr_ply)  // we always finish the game for tic tac toe
             {
-                Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
                 MCTSRootNode.Value = game.pos;
 
                 if (game.IsOver())
@@ -534,8 +535,8 @@ namespace TicTacToe_DL_RL
                         }
                     }
                 }
-                //int best_child_index = findBestChildWinrate(MCTSRootNode, dn);
-                int best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
+                int best_child_index = findBestChildWinrate(MCTSRootNode, dn);
+                //int best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
 
                 List<Tuple<int, int>> moves = game.GetMoves();
                 Tuple<int, int> move = moves[best_child_index]; // add randomness here
@@ -709,7 +710,7 @@ namespace TicTacToe_DL_RL
                     best_child_index = i;
                 }
             }
-            return best_child_index;
+             return best_child_index;
         }
         private void createChildren(Node<TicTacToePosition> currNode)
         {
