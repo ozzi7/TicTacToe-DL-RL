@@ -547,7 +547,7 @@ namespace TicTacToe_DL_RL
             game = new TicTacToeGame(currNode.Value);
             if (game.IsOver())
             {
-                score = game.GetScore();
+                score = (game.GetScore()+1)/2.0;
             }
             else
             {
