@@ -85,14 +85,14 @@ namespace TicTacToe_DL_RL
             resultString += "Winrate: " + winrate + "\n";
             resultString += "NN Value: " + nn_value + "\n";
 
-            if (Value != null)
-            {
-                resultString += Value.ToString();
-            }
-            else
-            {
-                resultString += "No value set\n";
-            }
+            //if (Value != null)
+            //{
+            //    resultString += Value.ToString();
+            //}
+            //else
+            //{
+            //    resultString += "No value set\n";
+            //}
             resultString += "\n";
 
             return resultString;

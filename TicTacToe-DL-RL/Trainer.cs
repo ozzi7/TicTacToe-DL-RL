@@ -532,7 +532,7 @@ namespace TicTacToe_DL_RL
                                                                                          // show last simulation tree
                         if (simulation == Params.nofSimsPerPosTest - 1 && curr_ply == 0)
                         {
-                            // DisplayMCTSTree(MCTSRootNode);
+                            //DisplayMCTSTree(MCTSRootNode);
                         }
                     }
                 }
@@ -760,8 +760,12 @@ namespace TicTacToe_DL_RL
                 for (int i = 0; i < currNode.Children.Count; ++i)
                 {
                     // get UCT of each child (we never save this for now)
-                    float temp_UCT_score = currNode.Children[i].winrate + Params.c_puct * currNode.nn_policy[currNode.Children[i].moveIndex] *
-                        (float)Math.Sqrt((Math.Log(currNode.visitCount)) / (float)(currNode.Children[i].visitCount + 1));
+                    float secondTerm = Params.c_puct * currNode.nn_policy[currNode.Children[i].moveIndex] *
+    (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
+                    float temp_UCT_score = currNode.Children[i].winrate + secondTerm;
+
+                    //float temp_UCT_score = currNode.Children[i].winrate + Params.c_puct * currNode.nn_policy[currNode.Children[i].moveIndex] *
+                    //    (float)Math.Sqrt((Math.Log(currNode.visitCount)) / (float)(currNode.Children[i].visitCount + 1));
 
                     if (temp_UCT_score > bestUCTScore)
                     {
@@ -784,10 +788,12 @@ namespace TicTacToe_DL_RL
                 if (currNode.Value.sideToMove == Player.X)
                 {
                     currNode.winrate = (currNode.visitCount * currNode.winrate + 1.0f - score) / (currNode.visitCount + 1);
+                    //currNode.winrate = (currNode.visitCount * currNode.winrate + score) / (currNode.visitCount + 1);
                 }
                 else if (currNode.Value.sideToMove == Player.Z)
                 {
                     currNode.winrate = (currNode.visitCount * currNode.winrate + score) / (currNode.visitCount + 1);
+                    //currNode.winrate = (currNode.visitCount * currNode.winrate + 1.0f -score) / (currNode.visitCount + 1);
                 }
                 currNode.visitCount += 1;
                 currNode = currNode.GetParent();

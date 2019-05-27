@@ -16,7 +16,7 @@ namespace TicTacToe_DL_RL
 
         public static int nofEpochs = 10000000;
         public static float c_puct = 1.41f; // roughly sqrt 2 // was 2
-        public static int nofSimsPerPosTest = 8; // could/should be time
+        public static int nofSimsPerPosTest = 10; // could/should be time
         public static int nofSimsPerPosTrain = 4; // could/should be time
         public static int populationSize = 10; // must be 2n
 
