@@ -799,11 +799,11 @@ namespace TicTacToe_DL_RL
         {
             for (int i = 0; i < firstConvFilterWeights.Length; ++i)
             {
-                firstConvFilterWeights[i] = RandomNr.GetGaussianFloat();
+                firstConvFilterWeights[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
             for (int i = 0; i < convFilterWeights.Length; ++i)
             {
-                convFilterWeights[i] = RandomNr.GetGaussianFloat();
+                convFilterWeights[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
             for (int i = 0; i < BNMeans.Length; ++i)
             {
@@ -815,7 +815,7 @@ namespace TicTacToe_DL_RL
             }
             for (int i = 0; i < convWeightsPolicy.Length; ++i)
             {
-                convWeightsPolicy[i] = RandomNr.GetGaussianFloat();
+                convWeightsPolicy[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
             for (int i = 0; i < BNMeansPolicy.Length; ++i)
             {
@@ -827,19 +827,19 @@ namespace TicTacToe_DL_RL
             }
             for (int i = 0; i < policyConnectionWeights.Length; ++i)
             {
-                policyConnectionWeights[i] = RandomNr.GetGaussianFloat();
+                policyConnectionWeights[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
             for (int i = 0; i < policyBiases.Length; ++i)
             {
-                policyBiases[i] = RandomNr.GetGaussianFloat();
+                policyBiases[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
             for (int i = 0; i < convWeightsValue1.Length; ++i)
             {
-                convWeightsValue1[i] = RandomNr.GetGaussianFloat();
+                convWeightsValue1[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
             for (int i = 0; i < convWeightsValue2.Length; ++i)
             {
-                convWeightsValue2[i] = RandomNr.GetGaussianFloat();
+                convWeightsValue2[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
             for (int i = 0; i < BNMeansValue.Length; ++i)
             {
@@ -851,15 +851,15 @@ namespace TicTacToe_DL_RL
             }
             for (int i = 0; i < valueConnectionWeights.Length; ++i)
             {
-                valueConnectionWeights[i] = RandomNr.GetGaussianFloat();
+                valueConnectionWeights[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
             for (int i = 0; i < valueBiases.Length; ++i)
             {
-                valueBiases[i] = RandomNr.GetGaussianFloat();
+                valueBiases[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
             for (int i = 0; i < valueBiasLast.Length; ++i)
             {
-                valueBiasLast[i] = RandomNr.GetGaussianFloat();
+                valueBiasLast[i] = RandomNr.GetGaussianFloatCloseTo0();
             }
 
             for (int i = 0; i < BNBetaPolicy.Length; ++i)
