@@ -431,9 +431,10 @@ namespace TicTacToe_DL_RL
                 TicTacToeGame game = new TicTacToeGame();
 
                 float result = 0.0f;
+                Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
+
                 for (int curr_ply = 0; curr_ply < Params.maxPlies; ++curr_ply)  // we always finish the game for tic tac toe
                 {
-                    Node<TicTacToePosition> MCTSRootNode; MCTSRootNode = new Node<TicTacToePosition>(null);
                     MCTSRootNode.Value = game.pos;
 
                     if (game.IsOver())

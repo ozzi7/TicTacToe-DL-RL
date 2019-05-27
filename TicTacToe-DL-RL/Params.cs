@@ -21,10 +21,10 @@ namespace TicTacToe_DL_RL
         public static int populationSize = 10; // must be 2n
 
         public static int nofTrainingGames = 1000000;
-        public static int nofTestGames = 40; // only 2 makes sense without noise
+        public static int nofTestGames = 80; // only 2 makes sense without noise
         public static int maxPlies = 100;
 
-        public static int gamesPerIndividuum = 10;
+        public static int gamesPerIndividuum = 20;
         public static float sigma = 0.1f;  // noise standard deviation 0.1, 0.01, 2 sims, 1.4puct
         public static float alpha = 0.002f;// learning rate
 
