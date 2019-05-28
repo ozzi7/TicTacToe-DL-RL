@@ -292,7 +292,7 @@ namespace TicTacToe_DL_RL
                 newNN.GPU_PREDICT = Params.GPU_ENABLED;
                 currnns.Add(newNN);
             }
-            Params.noiseWeight = 0.3f;
+            Params.noiseWeight = 0.4f;
             Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
                 NeuralNetwork currentNN = currnns[i];
@@ -454,7 +454,7 @@ namespace TicTacToe_DL_RL
                         {
                             SearchUsingNN(MCTSRootNode, NN, NN, evaluationNetworkPlayer);
                         }
-                        best_child_index = findBestChildWinrate(MCTSRootNode, dn);
+                        best_child_index = findBestChildWinrate(MCTSRootNode, dn, curr_ply);
                         //best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
                     }
                     else
@@ -536,7 +536,7 @@ namespace TicTacToe_DL_RL
                         }
                     }
                 }
-                int best_child_index = findBestChildWinrate(MCTSRootNode, dn);
+                int best_child_index = findBestChildWinrate(MCTSRootNode, dn, curr_ply);
                 //int best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
 
                 List<Tuple<int, int>> moves = game.GetMoves();
@@ -666,7 +666,7 @@ namespace TicTacToe_DL_RL
             }
             Console.WriteLine("\n");
         }
-        private int findBestChildWinrate(Node<TicTacToePosition> currNode, DirichletNoise dn)
+        private int findBestChildWinrate(Node<TicTacToePosition> currNode, DirichletNoise dn, int depth)
         {
             float best_winrate = float.NegativeInfinity;
             int best_child_index = -1;
@@ -676,7 +676,8 @@ namespace TicTacToe_DL_RL
             {
                 for (int i = 0; i < currNode.Children.Count; ++i)
                 {
-                    float winrate_temp = currNode.Children[i].winrate * (1 - Params.noiseWeight) + Params.noiseWeight * dn.GetNoise(i);
+                    float noiseWeight = ((25-depth) / 25.0f) * Params.noiseWeight;
+                    float winrate_temp = currNode.Children[i].winrate * (1 - noiseWeight) + noiseWeight * dn.GetNoise(i);
                     if (winrate_temp > best_winrate)
                     {
                         best_winrate = winrate_temp;

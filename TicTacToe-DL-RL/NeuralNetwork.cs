@@ -18,8 +18,8 @@ namespace TicTacToe_DL_RL
         const int gameboardHeight = 5;
         const int filterWidth = 3;
         const int filterHeight = 3;
-        const int nofPlanes = 2; // = input channels, 1 plane is board 3x3 + 1 plane color 3x3
-        const int nofOutputPolicies = 25; // policy net has 9 outputs (1 per potential move)
+        const int nofPlanes = 2; // = input channels, 1 plane is board 5x5 + 1 plane color 5x5
+        const int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
         const int nofOutputValues = 1; // value head has 1 output
         const int nofFilters = 6; //64- the convolution layer has 64 filters
         const int nofConvLayers = 9; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
