@@ -26,7 +26,7 @@ namespace TicTacToe_DL_RL
 
         public static int gamesPerIndividuum = 20;
         public static float sigma = 0.1f;  // noise standard deviation 0.1, 0.01, 2 sims, 1.4puct
-        public static float alpha = 0.001f;// learning rate
+        public static float alpha = 0.01f;// learning rate
 
         public static int boardSizeX = 5;
         public static int boardSizeY = 5;

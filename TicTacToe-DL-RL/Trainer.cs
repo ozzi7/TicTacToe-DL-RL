@@ -256,8 +256,8 @@ namespace TicTacToe_DL_RL
             List<int> draws = new List<int>();
             List<int> losses = new List<int>();
             List<int> movecount = new List<int>();
-            List<int> winsAsX = new List<int>();
-            List<int> winsAsZ = new List<int>();
+            List<int> winsX = new List<int>();
+            List<int> winsZ = new List<int>();
             List<int> drawsBla = new List<int>();
             List<double> winrateVsRand = new List<double>();
             nns = new List<NeuralNetwork>();
@@ -269,8 +269,8 @@ namespace TicTacToe_DL_RL
                 draws.Add(0);
                 losses.Add(0);
                 movecount.Add(0);
-                winsAsX.Add(0);
-                winsAsZ.Add(0);
+                winsX.Add(0);
+                winsZ.Add(0);
                 winrateVsRand.Add(0);
                 drawsBla.Add(0);
 
@@ -292,7 +292,7 @@ namespace TicTacToe_DL_RL
                 newNN.GPU_PREDICT = Params.GPU_ENABLED;
                 currnns.Add(newNN);
             }
-            Params.noiseWeight = 0.4f;
+            Params.noiseWeight = 0.2f;
             Parallel.For(0, Params.nofTestGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
                 NeuralNetwork currentNN = currnns[i];
@@ -305,11 +305,11 @@ namespace TicTacToe_DL_RL
 
                 if (result1 == 1)
                 {
-                    winsAsX[i]++;
+                    winsX[i]++;
                 }
                 else if (result1 == -1)
                 {
-                    winsAsZ[i]++;
+                    winsZ[i]++;
                 }
                 else
                 {
@@ -324,11 +324,11 @@ namespace TicTacToe_DL_RL
                 }
                 else if (result1 == 0)
                 {
-                    losses[i]++;
+                    draws[i]++;
                 }
                 else
                 {
-                    draws[i]++;
+                    losses[i]++;
                 }
 
                 movecount[i] += history.Count;
@@ -340,8 +340,8 @@ namespace TicTacToe_DL_RL
             int lossesTotal = losses.Sum();
             int drawsTotal = drawsBla.Sum();
             int drawsTot = draws.Sum();
-            int winsAsXtotal = winsAsX.Sum();
-            int winsAsZtotal = winsAsZ.Sum();
+            int winsAsXtotal = winsX.Sum();
+            int winsAsZtotal = winsZ.Sum();
             int totalMoves = movecount.Sum();
 
             decimal nofgames = Params.nofTestGames;
