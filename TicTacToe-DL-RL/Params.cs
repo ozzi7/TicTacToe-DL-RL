@@ -16,15 +16,15 @@ namespace TicTacToe_DL_RL
 
         public static int nofEpochs = 10000000;
         public static float c_puct = 2.0f; // roughly sqrt 2 // was 2
-        public static int nofSimsPerPosTest = 20; // could/should be time
-        public static int nofSimsPerPosTrain = 20; // could/should be time
-        public static int populationSize = 12; // must be 2n
+        public static int nofSimsPerPosTest = 6; // could/should be time
+        public static int nofSimsPerPosTrain = 6; // could/should be time
+        public static int populationSize = 12; // must be 2n because half of popsize share same weight mutation but in opposite direction
 
         public static int nofTrainingGames = 1000000;
-        public static int nofTestGames = 60; // only 2 makes sense without noise
+        public static int nofTestGames = 40; // only 2 makes sense without noise, must be 2n for equal tests of player X and player Z
         public static int maxPlies = 100;
 
-        public static int gamesPerIndividuum = 20;
+        public static int gamesPerIndividuum = 16;
         public static float sigma = 0.1f;  // noise standard deviation 0.1, 0.01, 2 sims, 1.4puct
         public static float alpha = 0.01f;// learning rate
 

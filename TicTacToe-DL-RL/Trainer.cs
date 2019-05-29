@@ -452,14 +452,14 @@ namespace TicTacToe_DL_RL
                     {
                         for (int simulation = 0; simulation < Params.nofSimsPerPosTest; ++simulation)
                         {
-                            SearchUsingNN(MCTSRootNode, NN, NN, evaluationNetworkPlayer);
+                            SearchUsingNN(MCTSRootNode, NN);
                         }
                         best_child_index = findBestChildWinrate(MCTSRootNode, dn, curr_ply);
                         //best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
                     }
                     else
                     {
-                        SearchUsingNN(MCTSRootNode, NN, NN, evaluationNetworkPlayer); // just in case we dont create the children properly for random player
+                        SearchUsingNN(MCTSRootNode, NN); // just in case we dont create the children properly for random player
                         best_child_index = RandomNr.GetInt(0, MCTSRootNode.Children.Count);
                     }
 
@@ -495,11 +495,13 @@ namespace TicTacToe_DL_RL
         public int PlayOneGame(List<Tuple<int, int>> history, Player aEvaluationNetworkPlayer, NeuralNetwork NN1, NeuralNetwork NN2, bool train)
         {
             TicTacToeGame game = new TicTacToeGame();
-            Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
+            Node<TicTacToePosition> MCTSRootNodeNN1 = new Node<TicTacToePosition>(null);
+            Node<TicTacToePosition> MCTSRootNodeNN2 = new Node<TicTacToePosition>(null);
 
             for (int curr_ply = 0; curr_ply < Params.maxPlies; ++curr_ply)  // we always finish the game for tic tac toe
             {
-                MCTSRootNode.Value = game.pos;
+                MCTSRootNodeNN1.Value = game.pos;
+                MCTSRootNodeNN2.Value = game.pos;
 
                 if (game.IsOver())
                 {
@@ -507,13 +509,27 @@ namespace TicTacToe_DL_RL
                 }
 
                 DirichletNoise dn = new DirichletNoise(game.GetMoves().Count); // for root node (all root nodes not just the actual game start)
-                // also tree use makes this a bit less effective going down the tree, maybe use temperature later
+                                                                               // also tree use makes this a bit less effective going down the tree, maybe use temperature later
 
+                createChildren(MCTSRootNodeNN1);
+                /* find value, policy */
+                if (MCTSRootNodeNN1.nn_policy == null)
+                {
+                    calculateNNOutput(MCTSRootNodeNN1, NN1);
+                }
+                createChildren(MCTSRootNodeNN2);
+                if (MCTSRootNodeNN2.nn_policy == null)
+                {
+                    calculateNNOutput(MCTSRootNodeNN2, NN2);
+                }
                 if (train)
                 {
                     for (int simulation = 0; simulation < Params.nofSimsPerPosTrain; ++simulation)
                     {
-                        SearchUsingNN(MCTSRootNode, NN1, NN2, aEvaluationNetworkPlayer); // expand tree and improve accuracy at MCTSRootNode
+                        if(curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
+                            SearchUsingNN(MCTSRootNodeNN1, NN1); // expand tree and improve accuracy at MCTSRootNode
+                        else
+                            SearchUsingNN(MCTSRootNodeNN2, NN2); // expand tree and improve accuracy at MCTSRootNode
                         //RegularMCTSSearch(MCTSRootNode);
                         // show last simulation tree
                         if (simulation == Params.nofSimsPerPosTrain - 1 && curr_ply == 0)
@@ -527,16 +543,23 @@ namespace TicTacToe_DL_RL
                 {
                     for (int simulation = 0; simulation < Params.nofSimsPerPosTest; ++simulation)
                     {
-                        SearchUsingNN(MCTSRootNode, NN1, NN2, aEvaluationNetworkPlayer); // expand tree and improve accuracy at MCTSRootNode
-                                                                                         //RegularMCTSSearch(MCTSRootNode);
-                                                                                         // show last simulation tree
+                        if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
+                            SearchUsingNN(MCTSRootNodeNN1, NN1); // expand tree and improve accuracy at MCTSRootNode
+                        else
+                            SearchUsingNN(MCTSRootNodeNN2, NN2); // expand tree and improve accuracy at MCTSRootNode
+
                         if (simulation == Params.nofSimsPerPosTest - 1 && curr_ply == 0)
                         {
                             //DisplayMCTSTree(MCTSRootNode);
                         }
                     }
                 }
-                int best_child_index = findBestChildWinrate(MCTSRootNode, dn, curr_ply);
+                int best_child_index = -1;
+                if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
+                    best_child_index = findBestChildWinrate(MCTSRootNodeNN1, dn, curr_ply);
+                else
+                    best_child_index = findBestChildWinrate(MCTSRootNodeNN2, dn, curr_ply);
+
                 //int best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
 
                 List<Tuple<int, int>> moves = game.GetMoves();
@@ -545,8 +568,10 @@ namespace TicTacToe_DL_RL
                 history.Add(move);
 
                 /* tree re-use */
-                MCTSRootNode = MCTSRootNode.Children[best_child_index];
-                MCTSRootNode.parent = null;
+                MCTSRootNodeNN1 = MCTSRootNodeNN1.Children[best_child_index];
+                MCTSRootNodeNN2 = MCTSRootNodeNN2.Children[best_child_index];
+                MCTSRootNodeNN1.parent = null;
+                MCTSRootNodeNN2.parent = null;
             }
 
             return game.pos.score;
@@ -557,7 +582,7 @@ namespace TicTacToe_DL_RL
         /// </summary>
         /// <param name="currNode"></param>
         /// <returns>Eval</returns>
-        private void SearchUsingNN(Node<TicTacToePosition> currNode, NeuralNetwork NN1, NeuralNetwork NN2, Player aEvaluationNetworkPlayer)
+        private void SearchUsingNN(Node<TicTacToePosition> currNode, NeuralNetwork NN)
         {
             TicTacToeGame game = new TicTacToeGame(currNode.Value);
             List<Tuple<int, int>> moves = game.GetMoves();
@@ -577,7 +602,7 @@ namespace TicTacToe_DL_RL
                 /* find value, policy */
                 if (currNode.nn_policy == null)
                 {
-                    calculateNNOutput(currNode, NN1, NN2, aEvaluationNetworkPlayer);
+                    calculateNNOutput(currNode, NN);
                 }
 
                 /* create children of normal leaf */
@@ -607,7 +632,7 @@ namespace TicTacToe_DL_RL
                 {
                     if (currNode.nn_policy == null)
                     {
-                        calculateNNOutput(currNode, NN1, NN2, aEvaluationNetworkPlayer);
+                        calculateNNOutput(currNode, NN);
                     }
 
                     score = currNode.nn_value; // [0..1] where player X wins at 1 and player Z wins at 0
@@ -676,7 +701,7 @@ namespace TicTacToe_DL_RL
             {
                 for (int i = 0; i < currNode.Children.Count; ++i)
                 {
-                    float noiseWeight = ((25-depth) / 25.0f) * Params.noiseWeight;
+                    float noiseWeight = ((25-depth) / 25.0f)* ((25 - depth) / 25.0f) * Params.noiseWeight;
                     float winrate_temp = currNode.Children[i].winrate * (1 - noiseWeight) + noiseWeight * dn.GetNoise(i);
                     if (winrate_temp > best_winrate)
                     {
@@ -732,20 +757,11 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
-        private void calculateNNOutput(Node<TicTacToePosition> currNode, NeuralNetwork NN1, NeuralNetwork NN2, Player evaluationNetworkPlayer)
+        private void calculateNNOutput(Node<TicTacToePosition> currNode, NeuralNetwork NN)
         {
-            if (currNode.Value.sideToMove == evaluationNetworkPlayer)
-            {
-                Tuple<float[], float> prediction = NN1.Predict(currNode.Value);
-                currNode.nn_policy = new List<float>(prediction.Item1);
-                currNode.nn_value = prediction.Item2;
-            }
-            else
-            {
-                Tuple<float[], float> prediction = NN2.Predict(currNode.Value);
-                currNode.nn_policy = new List<float>(prediction.Item1);
-                currNode.nn_value = prediction.Item2;
-            }
+            Tuple<float[], float> prediction = NN.Predict(currNode.Value);
+            currNode.nn_policy = new List<float>(prediction.Item1);
+            currNode.nn_value = prediction.Item2;
         }
         private Node<TicTacToePosition> findMostPromisingLeafNode(Node<TicTacToePosition> currNode)
         {
