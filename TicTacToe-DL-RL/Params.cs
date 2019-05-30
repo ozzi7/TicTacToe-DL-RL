@@ -8,8 +8,9 @@ namespace TicTacToe_DL_RL
 {
     public static class Params
     {
+        // HARDWARE SETTINGS
         public static bool GPU_ENABLED = false;
-        public static int NOF_NNs = 80; // populationSize*2(currentNN), number of NNs to keep in GPU memory
+        public static int NOF_NNs = 80; // number of NNs to keep in GPU memory, currently this must be populationSize*2 (= keep all networks in memory) 
         public static int MAX_KERNEL_EXECUTIONS = 40; // opencl waits for x inputs and then executes all kernels = pop size
 
         public static int MAX_THREADS_CPU = 1;
