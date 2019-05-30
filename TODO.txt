@@ -12,3 +12,5 @@ virtual batchnorm, DONE
 -> prevent local minimum
 virtual visits for MCTS to OpenCL port
 what about loops in MCTS tree?
+change cpuct value (its not a constant)
+http://blog.lczero.org/2018/12/alphazero-paper-and-lc0-v0191.html

@@ -9,7 +9,6 @@ while (1) {
 	set size 1.0,0.5
 	set origin 0,0.5
 	set yrange [0:1]
-	set xtics 50
 	set ytics 0.1
 	set y2tics 0.1
 	set grid ytics
@@ -21,7 +20,6 @@ while (1) {
 
 	set ytics auto
 	set y2tics auto
-	set xtics auto
 	set size 0.5,0.5
 	set origin 0,0.0
 	set key left top
