@@ -27,10 +27,11 @@ namespace TicTacToe_DL_RL
         public static float NOISE_SIGMA = 0.1f;  // noise standard deviation 0.1 (default), 0.01 ok
         public static float LEARNING_RATE = 0.01f;
         public static float WEIGHT_DECAY_FACTOR = 0.99f;
+        public static float DIRICHLET_NOISE_WEIGHT;
 
+        public static int SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH = 20;
         public static int SAVE_WEIGHT_EVERY_Xth_EPOCH = 20;
         public static String PLOT_FILENAME = "plotdata.txt";
-        public static float DIRICHLET_NOISE_WEIGHT;
 
         // GAME SPECIFIC 
         public static int MAXIMUM_PLYS = 100; // when to stop playing a game completely and declare draw (in tic tac toe game is always finished in 100 moves)

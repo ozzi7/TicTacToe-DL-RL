@@ -8,7 +8,6 @@ while (1) {
 
 	set size 1.0,0.5
 	set origin 0,0.5
-	set yrange [0:1]
 	set ytics 0.1
 	set y2tics 0.1
 	set grid ytics

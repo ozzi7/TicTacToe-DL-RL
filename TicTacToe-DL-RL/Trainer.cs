@@ -200,16 +200,6 @@ namespace TicTacToe_DL_RL
                             totalReward--;
                         }
                         // draw is +0
-
-                        /* to display some games (debugging)*/
-                        if (run % 40 == 0)
-                        {
-                            if (i == Params.NOF_OFFSPRING - 1 && j < 2)
-                            {
-                                TicTacToeGame game = new TicTacToeGame();
-                                game.DisplayHistory(history);
-                            }
-                        }
                     }
 
                     rewards[i] = totalReward;
@@ -323,6 +313,13 @@ namespace TicTacToe_DL_RL
                         draws[i]++;
                     else
                         losses[i]++;
+
+                    /* to display some games (debugging)*/
+                    if (run % Params.SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH == 0 && i == Params.NOF_GAMES_TEST - 1)
+                    {
+                        TicTacToeGame game = new TicTacToeGame();
+                        game.DisplayHistory(history);
+                    }
                 });
                 thread.Abort();
             }
@@ -352,6 +349,13 @@ namespace TicTacToe_DL_RL
                         losses[i]++;
 
                     movecount[i] += history.Count;
+
+                    /* to display some games (debugging)*/
+                    if (run % Params.SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH == 0 && i == Params.NOF_GAMES_TEST - 1)
+                    {
+                        TicTacToeGame game = new TicTacToeGame();
+                        game.DisplayHistory(history);
+                    }
                 });
             }
 
@@ -396,8 +400,8 @@ namespace TicTacToe_DL_RL
                 bestNN.untrainable_weights = new List<float>(currentNN.untrainable_weights);
                 bestNN.ParseWeights();
 
-                printPolicy(currentNN);
-                printValue(currentNN);
+                printPolicy(bestNN);
+                printValue(bestNN);
             }
 
 
