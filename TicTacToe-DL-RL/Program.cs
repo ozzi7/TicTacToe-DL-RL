@@ -17,9 +17,10 @@ namespace TicTacToe_DL_RL
             NeuralNetwork NN = new NeuralNetwork();
 
             /* to create a new network */
+            NN.CalculateVirtualBNs();
             NN.SaveWeightsToFile("weights_start.txt");
             NN.ReadWeightsFromFile("weights_start.txt");
-            NN.CalculateVirtualBNs();
+
 
             /* to load from file */
             //NN.ReadWeightsFromFile("whatever.txt");
