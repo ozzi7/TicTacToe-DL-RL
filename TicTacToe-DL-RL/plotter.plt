@@ -25,7 +25,7 @@ while (1) {
 	set origin 0,0.0
 	set key left top
 	unset yrange
-	plot ".\\bin\\Release\\plotdata.txt" using 1 with lines title "Selfplay ELO" lw 3
+	plot ".\\bin\\Release\\plotdata.txt" using 1 with lines title "Self-play ELO" lw 3
 
 
 	set size 0.5,0.5

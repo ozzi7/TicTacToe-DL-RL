@@ -6,32 +6,34 @@ using System.Threading.Tasks;
 
 namespace TicTacToe_DL_RL
 {
-    public enum Player { X, Z }; // X always starts, X leads to winrate 1, Z to winrate -1 win X is 1, draw 0, win Z -1 
+    // X always starts, X leads to winrate 1, Z to winrate -1 win X is 1, draw 0, win Z -1 
+    // Value head in NN is 0 for win Z, 0.5 for draw and 1 for win X
+    public enum Player { X, Z };
 
     class TicTacToeGame
     {
-        public TicTacToePosition pos;
+        public TicTacToePosition position;
 
         public TicTacToeGame()
         {
-            pos = new TicTacToePosition();
+            position = new TicTacToePosition();
         }
         public TicTacToeGame(TicTacToePosition aPos)
         {
-            pos = new TicTacToePosition(aPos);
+            position = new TicTacToePosition(aPos);
         }
         public List<Tuple<int, int>> GetMoves()
         {
             List<Tuple<int, int>> moves = new List<Tuple<int, int>>();
             for (int i = 0; i < 5; ++i)
                 for (int j = 0; j < 5; ++j)
-                    if (pos.gameBoard[i, j] == 0)
+                    if (position.gameBoard[i, j] == 0)
                         moves.Add(Tuple.Create(i, j));
             return moves;
         }
         public int GetScore()
         {
-            return pos.score;
+            return position.score;
         }
         /// <summary>
         /// Check if the game is in a finished TicTacToePosition (draw or win)
@@ -43,16 +45,16 @@ namespace TicTacToe_DL_RL
         }
         public void DoMove(Tuple<int, int> move)
         {
-            pos.gameBoard[move.Item1, move.Item2] = pos.sideToMove == Player.X ? 1 : -1;
-            pos.sideToMove = pos.sideToMove == Player.X ? Player.Z : Player.X;
+            position.gameBoard[move.Item1, move.Item2] = position.sideToMove == Player.X ? 1 : -1;
+            position.sideToMove = position.sideToMove == Player.X ? Player.Z : Player.X;
 
             if (HasWinner())
             {
-                pos.score = pos.sideToMove == Player.X ? -1 : 1;
+                position.score = position.sideToMove == Player.X ? -1 : 1;
             }
-            if (IsDrawn())
+            else if (IsDrawn())
             {
-                pos.score = 0;
+                position.score = 0;
             }
         }
 
@@ -62,56 +64,55 @@ namespace TicTacToe_DL_RL
         /// <returns></returns>
         public bool HasWinner()
         {
+            // check rows
             for (int row = 0; row < 5; ++row)
             {
-                if ((pos.gameBoard[row, 0] == pos.gameBoard[row, 1]) && (pos.gameBoard[row, 1] == pos.gameBoard[row, 2]) &&
-                    (pos.gameBoard[row, 2] == pos.gameBoard[row, 3]) && pos.gameBoard[row, 0] != 0)
+                if ((position.gameBoard[row, 0] == position.gameBoard[row, 1]) && (position.gameBoard[row, 1] == position.gameBoard[row, 2]) &&
+                    (position.gameBoard[row, 2] == position.gameBoard[row, 3]) && position.gameBoard[row, 0] != 0)
                     return true;
             
-                if ((pos.gameBoard[row, 1] == pos.gameBoard[row, 2]) && (pos.gameBoard[row, 2] == pos.gameBoard[row, 3]) &&
-                    (pos.gameBoard[row, 3] == pos.gameBoard[row, 4]) && pos.gameBoard[row, 1] != 0)
+                if ((position.gameBoard[row, 1] == position.gameBoard[row, 2]) && (position.gameBoard[row, 2] == position.gameBoard[row, 3]) &&
+                    (position.gameBoard[row, 3] == position.gameBoard[row, 4]) && position.gameBoard[row, 1] != 0)
                     return true;
             }
+            // check cols
             for (int col = 0; col < 5; ++col)
             {
-                if ((pos.gameBoard[0, col] == pos.gameBoard[1, col]) && (pos.gameBoard[1,col] == pos.gameBoard[2, col]) &&
-                    (pos.gameBoard[2, col] == pos.gameBoard[3, col]) && pos.gameBoard[0,col] != 0)
+                if ((position.gameBoard[0, col] == position.gameBoard[1, col]) && (position.gameBoard[1,col] == position.gameBoard[2, col]) &&
+                    (position.gameBoard[2, col] == position.gameBoard[3, col]) && position.gameBoard[0,col] != 0)
                     return true;
 
-                if ((pos.gameBoard[1, col] == pos.gameBoard[2, col]) && (pos.gameBoard[2, col] == pos.gameBoard[3, col]) &&
-                    (pos.gameBoard[3, col] == pos.gameBoard[4, col]) && pos.gameBoard[1, col] != 0)
+                if ((position.gameBoard[1, col] == position.gameBoard[2, col]) && (position.gameBoard[2, col] == position.gameBoard[3, col]) &&
+                    (position.gameBoard[3, col] == position.gameBoard[4, col]) && position.gameBoard[1, col] != 0)
                     return true;
             }
-            if ((pos.gameBoard[0, 0] == pos.gameBoard[1, 1]) && (pos.gameBoard[1, 1] == pos.gameBoard[2, 2]) &&
-                (pos.gameBoard[2, 2] == pos.gameBoard[3, 3]) && pos.gameBoard[0, 0] != 0)
+            // check diags
+            if ((position.gameBoard[0, 0] == position.gameBoard[1, 1]) && (position.gameBoard[1, 1] == position.gameBoard[2, 2]) &&
+                (position.gameBoard[2, 2] == position.gameBoard[3, 3]) && position.gameBoard[0, 0] != 0)
                 return true;
-            if ((pos.gameBoard[1, 1] == pos.gameBoard[2, 2]) && (pos.gameBoard[2, 2] == pos.gameBoard[3, 3]) &&
-                (pos.gameBoard[3, 3] == pos.gameBoard[4, 4]) && pos.gameBoard[1, 1] != 0)
+            if ((position.gameBoard[1, 1] == position.gameBoard[2, 2]) && (position.gameBoard[2, 2] == position.gameBoard[3, 3]) &&
+                (position.gameBoard[3, 3] == position.gameBoard[4, 4]) && position.gameBoard[1, 1] != 0)
                 return true;
-            if ((pos.gameBoard[0, 4] == pos.gameBoard[1, 3]) && (pos.gameBoard[1, 3] == pos.gameBoard[2, 2]) &&
-                (pos.gameBoard[2, 2] == pos.gameBoard[3, 1]) && pos.gameBoard[0, 4] != 0)
+            if ((position.gameBoard[0, 4] == position.gameBoard[1, 3]) && (position.gameBoard[1, 3] == position.gameBoard[2, 2]) &&
+                (position.gameBoard[2, 2] == position.gameBoard[3, 1]) && position.gameBoard[0, 4] != 0)
                 return true;
-            if ((pos.gameBoard[1, 3] == pos.gameBoard[2, 2]) && (pos.gameBoard[2, 2] == pos.gameBoard[3, 1]) &&
-                (pos.gameBoard[3, 1] == pos.gameBoard[4, 0]) && pos.gameBoard[1, 3] != 0)
+            if ((position.gameBoard[1, 3] == position.gameBoard[2, 2]) && (position.gameBoard[2, 2] == position.gameBoard[3, 1]) &&
+                (position.gameBoard[3, 1] == position.gameBoard[4, 0]) && position.gameBoard[1, 3] != 0)
                 return true;
-            if ((pos.gameBoard[0, 1] == pos.gameBoard[1, 2]) && (pos.gameBoard[1, 2] == pos.gameBoard[2, 3]) &&
-                (pos.gameBoard[2, 3] == pos.gameBoard[3, 4]) && pos.gameBoard[0, 1] != 0)
+            if ((position.gameBoard[0, 1] == position.gameBoard[1, 2]) && (position.gameBoard[1, 2] == position.gameBoard[2, 3]) &&
+                (position.gameBoard[2, 3] == position.gameBoard[3, 4]) && position.gameBoard[0, 1] != 0)
                 return true;
-            if ((pos.gameBoard[1, 0] == pos.gameBoard[2, 1]) && (pos.gameBoard[2, 1] == pos.gameBoard[3, 2]) &&
-                (pos.gameBoard[3, 2] == pos.gameBoard[4, 3]) && pos.gameBoard[1, 0] != 0)
+            if ((position.gameBoard[1, 0] == position.gameBoard[2, 1]) && (position.gameBoard[2, 1] == position.gameBoard[3, 2]) &&
+                (position.gameBoard[3, 2] == position.gameBoard[4, 3]) && position.gameBoard[1, 0] != 0)
                 return true;
-            if ((pos.gameBoard[0, 3] == pos.gameBoard[1, 2]) && (pos.gameBoard[1, 2] == pos.gameBoard[2, 1]) &&
-                (pos.gameBoard[2, 1] == pos.gameBoard[3, 0]) && pos.gameBoard[0, 3] != 0)
+            if ((position.gameBoard[0, 3] == position.gameBoard[1, 2]) && (position.gameBoard[1, 2] == position.gameBoard[2, 1]) &&
+                (position.gameBoard[2, 1] == position.gameBoard[3, 0]) && position.gameBoard[0, 3] != 0)
                 return true;
-            if ((pos.gameBoard[1, 4] == pos.gameBoard[2, 3]) && (pos.gameBoard[2, 3] == pos.gameBoard[3, 2]) &&
-                (pos.gameBoard[3, 2] == pos.gameBoard[4, 1]) && pos.gameBoard[1, 4] != 0)
+            if ((position.gameBoard[1, 4] == position.gameBoard[2, 3]) && (position.gameBoard[2, 3] == position.gameBoard[3, 2]) &&
+                (position.gameBoard[3, 2] == position.gameBoard[4, 1]) && position.gameBoard[1, 4] != 0)
                 return true;
             return false;
         }
-        /// <summary>
-        /// Check if the game is drawn
-        /// </summary>
-        /// <returns></returns>
         public bool IsDrawn()
         {
             return IsOver() && !HasWinner();
@@ -122,14 +123,16 @@ namespace TicTacToe_DL_RL
         /// <param name="history"></param>
         public void DisplayHistory(List<Tuple<int, int>> history)
         {
-            Console.WriteLine("\nPlayed game:");
+            Console.WriteLine("Played game:");
 
             foreach (var move in history)
             {
                 DoMove(move);
-                Console.WriteLine(pos.ToString());
+                Console.WriteLine(position.ToString());
+                Console.WriteLine("################################################################################\n");
             }
-            Console.WriteLine("Winner: " + pos.score.ToString().Replace("-1", "Z").Replace("1", "X").Replace("0","Draw") + "\n");
+            
+            Console.WriteLine("Winner: " + position.score.ToString().Replace("-1", "Z").Replace("1", "X").Replace("0","Draw") + "\n");
         }
         /// <summary>
         /// Show the winner of the game given a complete history of the moves
@@ -141,7 +144,7 @@ namespace TicTacToe_DL_RL
             {
                 DoMove(move);
             }
-            Console.WriteLine("Winner: " + pos.score.ToString().Replace("-1", "Z").Replace("1", "X").Replace("0", "Draw"));
+            Console.WriteLine("Winner: " + position.score.ToString().Replace("-1", "Z").Replace("1", "X").Replace("0", "Draw"));
         }
     }
     /// <summary>
@@ -149,18 +152,26 @@ namespace TicTacToe_DL_RL
     /// </summary>
     class TicTacToePosition
     {
-        public int[,] gameBoard = new int[5, 5] { { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 },
-        { 0, 0, 0, 0, 0 }, { 0, 0, 0, 0, 0 }};
+        public int[,] gameBoard = new int[5, 5] { { 0, 0, 0, 0, 0 }, 
+                                                  { 0, 0, 0, 0, 0 }, 
+                                                  { 0, 0, 0, 0, 0 },
+                                                  { 0, 0, 0, 0, 0 },
+                                                  { 0, 0, 0, 0, 0 }};
         public Player sideToMove = Player.X;
-        public int score = 0; // 0 is none/draw, 1 player X, -1 player Z
+
+        // 0 is none/draw, 1 player X (always starts), -1 player Z
+        public int score = 0;
 
         public TicTacToePosition() {}
-        public TicTacToePosition(TicTacToePosition aPos)
+        /// <summary>
+        /// Create a copy of a position
+        /// </summary>
+        /// <param name="aPosition"></param>
+        public TicTacToePosition(TicTacToePosition aPosition)
         {
-            // create copy of other TicTacToePosition
-            gameBoard = aPos.gameBoard.Clone() as int[,];
-            sideToMove = aPos.sideToMove;
-            score = aPos.score;
+            gameBoard = aPosition.gameBoard.Clone() as int[,];
+            sideToMove = aPosition.sideToMove;
+            score = aPosition.score;
         }
         public override string ToString() {
             String returnString = "Side to move: " + sideToMove + "\n";
@@ -174,6 +185,7 @@ namespace TicTacToe_DL_RL
                 gameBoard[0, 4] + " " + gameBoard[1, 4] + " " + gameBoard[2, 4] + " " + gameBoard[3, 4] + " " + gameBoard[4, 4] + "\n";
             boardString = boardString.Replace("-1", "Z");
             boardString = boardString.Replace("1", "X");
+            boardString = boardString.Replace("0", ".");
 
             return returnString + boardString + "\n";
         }

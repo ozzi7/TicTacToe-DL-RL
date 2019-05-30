@@ -24,7 +24,7 @@ namespace TicTacToe_DL_RL
         public List<float> nn_policy = null;
         public float nn_value;
         public int moveIndex = -1; // from 0 to 24 
-        public float winrate = 0.0f; // from 0 to 1, 1 means the current player (of this node) always wins
+        public float winrate = 0.5f; // from 0 to 1, 1 means the current player (of this node) always wins
         public int virtualLossCount = 0; // a visit which needs a NN eval increases this
 
         public Node<TValue> parent = null;
@@ -45,38 +45,6 @@ namespace TicTacToe_DL_RL
         {
             return parent;
         }
-
-    public void dirichletNoise(float epsilon, float alpha)
-        {
-            /*
-             *     auto child_cnt = m_children.size();
-                auto dirichlet_vector = std::vector<float>{};
-
-                std::gamma_distribution<float> gamma(alpha, 1.0f);
-                for (size_t i = 0; i < child_cnt; i++) {
-                    dirichlet_vector.emplace_back(gamma(Random::GetRng()));
-                }
-
-                auto sample_sum = std::accumulate(begin(dirichlet_vector), end(dirichlet_vector), 0.0f);
-
-                // If the noise vector sums to 0 or a denormal, then don't try to
-                // normalize.
-                if (sample_sum < std::numeric_limits<float>::min()) {
-                    return;
-                }
-
-                for (auto& v: dirichlet_vector) {
-                    v /= sample_sum;
-                }
-
-                child_cnt = 0;
-                for (auto& child : m_children) {
-                    auto winrate = child->get_score();
-                    auto eta_a = dirichlet_vector[child_cnt++];
-                    winrate = winrate * (1 - epsilon) + epsilon * eta_a;
-                    child->set_score(winrate);
-                }*/
-        }
         public override string ToString()
         {
             string resultString = "Node in MCTS Tree\n\n";
@@ -85,14 +53,14 @@ namespace TicTacToe_DL_RL
             resultString += "Winrate: " + winrate + "\n";
             resultString += "NN Value: " + nn_value + "\n";
 
-            //if (Value != null)
-            //{
-            //    resultString += Value.ToString();
-            //}
-            //else
-            //{
-            //    resultString += "No value set\n";
-            //}
+            if (Value != null)
+            {
+                resultString += Value.ToString();
+            }
+            else
+            {
+                resultString += "No value set\n";
+            }
             resultString += "\n";
 
             return resultString;

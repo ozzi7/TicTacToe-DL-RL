@@ -21,11 +21,11 @@ namespace TicTacToe_DL_RL
         const int nofPlanes = 2; // = input channels, 1 plane is board 5x5 + 1 plane color 5x5
         const int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
         const int nofOutputValues = 1; // value head has 1 output
-        const int nofFilters = 12; //64- the convolution layer has 64 filters
+        const int nofFilters = 6; //64- the convolution layer has 64 filters
         const int nofConvLayers = 11; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
         const int nofResidualLayers = 5; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
-        const int nofPolicyPlanes = 12; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
-        const int nofValuePlanes = 12; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
+        const int nofPolicyPlanes = 8; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
+        const int nofValuePlanes = 8; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
         const float softmaxTemperature = 1.0f;
 
         // for input layer
@@ -356,7 +356,7 @@ namespace TicTacToe_DL_RL
         {
             for(int i = 0; i < weights.Count; ++i)
             {
-                weights[i] *= Params.weightDecayFactor;
+                weights[i] *= Params.WEIGHT_DECAY_FACTOR;
             }
         }
         private void Convolution(float[] input, float[] output, float[] convWeights,
