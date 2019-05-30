@@ -204,6 +204,7 @@ kernel void NN(
 	private int nofResidualLayers = 4; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
 	private int nofPolicyPlanes = 4; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
 	private int nofValuePlanes = 4; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
+	private int valueHiddenLayerSize = 16; // was 128
 	private float softmaxTemperature = 1.0f;
 
 	// private array to work on, could re-use some later
@@ -215,7 +216,7 @@ kernel void NN(
 	private float outputValueData[4 * 5 * 5]; // nofvalueplanes* ..
 	private float outputPolicyData[4 * 5 * 5]; // nofvalueplanes* ..
 	private float localInput[2*5*5];
-	private float temporaryValueData[128];
+	private float temporaryValueData[valueHiddenLayerSize];
 
     float softmaxPolicy[25]; // nofoutputpolicies
     float winrateOut[1];

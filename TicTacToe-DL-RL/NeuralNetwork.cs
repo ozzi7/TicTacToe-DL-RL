@@ -26,6 +26,7 @@ namespace TicTacToe_DL_RL
         const int nofResidualLayers = 5; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
         const int nofPolicyPlanes = 8; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
         const int nofValuePlanes = 8; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
+        const int valueHiddenLayerSize = 16; // was 128
         const float softmaxTemperature = 1.0f;
 
         // for input layer
@@ -52,17 +53,17 @@ namespace TicTacToe_DL_RL
 
         // for value layer
         public float[] convWeightsValue1 = new float[nofFilters* nofValuePlanes]; // 1x1 filters, 32 of them for 64 input planes // weights
-        public float[] convWeightsValue2 = new float[128]; // weights
+        public float[] convWeightsValue2 = new float[valueHiddenLayerSize]; // weights
         public float[] BNMeansValue = new float[nofValuePlanes]; // weights
         public float[] BNStddevValue = new float[nofValuePlanes]; // weights
         public float[] BNBetaValue = new float[nofValuePlanes];
         public float[] BNGammaValue = new float[nofValuePlanes];
-        public float[] valueConnectionWeights = new float[gameboardHeight * gameboardWidth*nofValuePlanes * 128]; // weights
-        public float[] valueBiases = new float[128]; // weights
+        public float[] valueConnectionWeights = new float[gameboardHeight * gameboardWidth*nofValuePlanes * valueHiddenLayerSize]; // weights
+        public float[] valueBiases = new float[valueHiddenLayerSize]; // weights
         public float[] valueBiasLast = new float[1]; // weights
         public float[] inputFCLayerValue = new float[nofValuePlanes *gameboardHeight*gameboardWidth];
         public float[] outputValueData = new float[nofValuePlanes * gameboardHeight * gameboardWidth];
-        public float[] temporaryValueData = new float[128];
+        public float[] temporaryValueData = new float[valueHiddenLayerSize];
 
         // for all layers
         public float[] BNMeans = new float[nofConvLayers * nofFilters]; // UNTRAINABLE

@@ -41,8 +41,8 @@ namespace TicTacToe_DL_RL
             for (int i = 0; i < Params.NOF_EPOCHS; ++i)
             {
                 TrainingRun(i);
-                if (i % Params.SAVE_WEIGHT_EVERY_Xth_EPOCH == 0)
-                    currentNN.SaveWeightsToFile("weights_net_" + ((int)(i / Params.SAVE_WEIGHT_EVERY_Xth_EPOCH)).ToString() + ".txt");
+                if (i % Params.SAVE_WEIGHT_EVERY_XTH_EPOCH == 0)
+                    currentNN.SaveWeightsToFile("weights_net_" + ((int)(i / Params.SAVE_WEIGHT_EVERY_XTH_EPOCH)).ToString() + ".txt");
             }
         }
         public void TrainingRun(int run)
@@ -145,16 +145,6 @@ namespace TicTacToe_DL_RL
                             totalReward--;
                         }
                         // draw is +0
-
-                        /* to display some games (debugging)*/
-                        if (run % 40 == 0)
-                        {
-                            if (i == Params.NOF_OFFSPRING - 1 && j < 2)
-                            {
-                                TicTacToeGame game = new TicTacToeGame();
-                                game.DisplayHistory(history);
-                            }
-                        }
                     }
 
                     rewards[i] = totalReward;
@@ -533,7 +523,7 @@ namespace TicTacToe_DL_RL
                             SearchUsingNN(MCTSRootNodeNN1, NN1); // expand tree and improve accuracy at MCTSRootNode
                         else
                             SearchUsingNN(MCTSRootNodeNN2, NN2); // expand tree and improve accuracy at MCTSRootNode
-                        //RegularMCTSSearch(MCTSRootNode);
+
                         // show last simulation tree
                         if (simulation == Params.NOF_SIMS_PER_MOVE_TESTING - 1 && curr_ply == 0)
                         {
@@ -698,9 +688,20 @@ namespace TicTacToe_DL_RL
             /* add dirichlet noise to root */
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
-                //float noiseWeight = ((25-depth) / 25.0f)* ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT; // quadratic
-                //float noiseWeight = ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT; // linear
-                float noiseWeight = Params.DIRICHLET_NOISE_WEIGHT; // constant
+                float noiseWeight = 0;
+                if (Params.DN_SCALING == DIRICHLET_NOISE_SCALING.CONSTANT)
+                {
+                    noiseWeight = Params.DIRICHLET_NOISE_WEIGHT; // constant
+                }
+                else if (Params.DN_SCALING == DIRICHLET_NOISE_SCALING.LINEAR)
+                {
+                    noiseWeight = ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT;
+                }
+                else if(Params.DN_SCALING == DIRICHLET_NOISE_SCALING.QUADRATIC)
+                {
+                    noiseWeight = ((25 - depth) / 25.0f) * ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT;
+                }
+
                 float winrate_temp = currNode.Children[i].winrate * (1 - noiseWeight) + noiseWeight * dn.GetNoise(i);
                 if (winrate_temp > best_winrate)
                 {
@@ -770,7 +771,7 @@ namespace TicTacToe_DL_RL
                     //                float temp_UCT_score = currNode.Children[i].winrate + secondTerm;
 
                     float temp_UCT_score = currNode.Children[i].winrate + Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *
-                        (float)Math.Sqrt((Math.Log(currNode.visitCount+1)) / (float)(currNode.Children[i].visitCount + 1));
+                        (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
 
                     if (temp_UCT_score > bestUCTScore)
                     {
@@ -793,12 +794,10 @@ namespace TicTacToe_DL_RL
                 if (currNode.Value.sideToMove == Player.X)
                 {
                     currNode.winrate = (currNode.visitCount * currNode.winrate + 1.0f - score) / (currNode.visitCount + 1);
-                    //currNode.winrate = (currNode.visitCount * currNode.winrate + score) / (currNode.visitCount + 1);
                 }
                 else if (currNode.Value.sideToMove == Player.Z)
                 {
                     currNode.winrate = (currNode.visitCount * currNode.winrate + score) / (currNode.visitCount + 1);
-                    //currNode.winrate = (currNode.visitCount * currNode.winrate + 1.0f -score) / (currNode.visitCount + 1);
                 }
                 currNode.visitCount += 1;
                 currNode = currNode.GetParent();
