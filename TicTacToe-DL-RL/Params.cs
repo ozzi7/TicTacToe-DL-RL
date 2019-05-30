@@ -23,7 +23,7 @@ namespace TicTacToe_DL_RL
         public static int NOF_SIMS_PER_MOVE_TRAINING = 8; // could/should be time
         public static int NOF_SIMS_PER_MOVE_TESTING = 8; // could/should be time
 
-        public static float C_PUCT = 2.0f; // roughly sqrt 2 // was 2
+        public static float C_PUCT = 3.0f; // roughly sqrt 2 // was 2
         public static float NOISE_SIGMA = 0.1f;  // noise standard deviation 0.1 (default), 0.01 ok
         public static float LEARNING_RATE = 0.01f;
         public static float WEIGHT_DECAY_FACTOR = 0.99f;

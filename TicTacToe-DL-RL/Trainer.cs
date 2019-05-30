@@ -25,9 +25,7 @@ namespace TicTacToe_DL_RL
         public Trainer(NeuralNetwork aCurrentNN)
         {
             currentNN = aCurrentNN;
-            bestNN = new NeuralNetwork();
-            bestNN.weights = new List<float>(currentNN.weights);
-            bestNN.untrainable_weights = new List<float>(currentNN.untrainable_weights);
+            bestNN = new NeuralNetwork(currentNN.weights, currentNN.untrainable_weights);
 
             if (File.Exists(Params.PLOT_FILENAME))
                 File.Delete(Params.PLOT_FILENAME);
@@ -91,16 +89,10 @@ namespace TicTacToe_DL_RL
                 for (int j = 0; j < weights[i].Count; ++j) {
                     weights[i][j] += Params.NOISE_SIGMA * noise[i][j];
                 }
-                NeuralNetwork playingNNlocal = new NeuralNetwork();
-                playingNNlocal.untrainable_weights = new List<float>(currentNN.untrainable_weights);
-                playingNNlocal.weights = new List<float>(weights[i]);
-                playingNNlocal.ParseWeights();
+                NeuralNetwork playingNNlocal = new NeuralNetwork(weights[i], currentNN.untrainable_weights);
                 nns.Add(playingNNlocal);
 
-                NeuralNetwork currNNlocal = new NeuralNetwork();
-                currNNlocal.untrainable_weights = new List<float>(currentNN.untrainable_weights);
-                currNNlocal.weights = new List<float>(currentNN.weights);
-                currNNlocal.ParseWeights();
+                NeuralNetwork currNNlocal = new NeuralNetwork(currentNN.weights, currentNN.untrainable_weights);
                 currnns.Add(currNNlocal);
             }
 
@@ -255,16 +247,10 @@ namespace TicTacToe_DL_RL
                 winsZ.Add(0);
                 winrateVsRand.Add(0);
 
-                NeuralNetwork previousNN = new NeuralNetwork();
-                previousNN.untrainable_weights = new List<float>(bestNN.untrainable_weights);
-                previousNN.weights = new List<float>(bestNN.weights);
-                previousNN.ParseWeights();
+                NeuralNetwork previousNN = new NeuralNetwork(bestNN.weights, bestNN.untrainable_weights);
                 nns.Add(previousNN);
 
-                NeuralNetwork newNN = new NeuralNetwork();
-                newNN.untrainable_weights = new List<float>(currentNN.untrainable_weights);
-                newNN.weights = new List<float>(currentNN.weights);
-                newNN.ParseWeights();
+                NeuralNetwork newNN = new NeuralNetwork(currentNN.weights, currentNN.untrainable_weights);
                 currnns.Add(newNN);
             }
 
@@ -713,7 +699,8 @@ namespace TicTacToe_DL_RL
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
                 //float noiseWeight = ((25-depth) / 25.0f)* ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT; // quadratic
-                float noiseWeight = ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT; // linear
+                //float noiseWeight = ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT; // linear
+                float noiseWeight = Params.DIRICHLET_NOISE_WEIGHT; // constant
                 float winrate_temp = currNode.Children[i].winrate * (1 - noiseWeight) + noiseWeight * dn.GetNoise(i);
                 if (winrate_temp > best_winrate)
                 {

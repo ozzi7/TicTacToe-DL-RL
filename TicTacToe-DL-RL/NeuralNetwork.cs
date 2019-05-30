@@ -103,8 +103,8 @@ namespace TicTacToe_DL_RL
         }
         public NeuralNetwork(List<float> aWeights, List<float> aUntrainableWeights)
         {
-            weights = aWeights;
-            untrainable_weights = aUntrainableWeights;
+            weights = new List<float>(aWeights);
+            untrainable_weights = new List<float>(aUntrainableWeights);
             ParseWeights();
         }
         public Tuple<float[], float> Predict(TicTacToePosition pos)
