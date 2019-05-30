@@ -266,8 +266,7 @@ namespace TicTacToe_DL_RL
             List<int> movecount = new List<int>();
             List<int> winsX = new List<int>();
             List<int> winsZ = new List<int>();
-            List<int> drawsBla = new List<int>();
-            List<double> winrateVsRand = new List<double>();
+            List<float> winrateVsRand = new List<float>();
             nns = new List<NeuralNetwork>();
             currnns = new List<NeuralNetwork>();
 
@@ -280,7 +279,6 @@ namespace TicTacToe_DL_RL
                 winsX.Add(0);
                 winsZ.Add(0);
                 winrateVsRand.Add(0);
-                drawsBla.Add(0);
 
                 NeuralNetwork previousNN = new NeuralNetwork();
                 if (Params.GPU_ENABLED)
@@ -306,19 +304,17 @@ namespace TicTacToe_DL_RL
                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
                 Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
 
-                int result1 = PlayOneGame(history, evaluationNetworkPlayer, currnns[i], nns[i], false);
+                int result = PlayOneGame(history, evaluationNetworkPlayer, currnns[i], nns[i], false);
 
-                if (result1 == 1)
+                if (result == 1)
                     winsX[i]++;
-                else if (result1 == -1)
+                else if (result == -1)
                     winsZ[i]++;
-                else
-                    drawsBla[i]++;
 
-                if (evaluationNetworkPlayer == Player.X && result1 == 1 ||
-                    evaluationNetworkPlayer == Player.Z && result1 == -1)
+                if (evaluationNetworkPlayer == Player.X && result == 1 ||
+                    evaluationNetworkPlayer == Player.Z && result == -1)
                     wins[i]++;
-                else if (result1 == 0)
+                else if (result == 0)
                     draws[i]++;
                 else
                     losses[i]++;
@@ -330,8 +326,7 @@ namespace TicTacToe_DL_RL
 
             int winsTotal = wins.Sum();
             int lossesTotal = losses.Sum();
-            int drawsTotal = drawsBla.Sum();
-            int drawsTot = draws.Sum();
+            int drawsTotal = draws.Sum();
             int winsAsXtotal = winsX.Sum();
             int winsAsZtotal = winsZ.Sum();
             int totalMoves = movecount.Sum();
@@ -342,7 +337,7 @@ namespace TicTacToe_DL_RL
             drawsMovingAvg.ComputeAverage(drawsTotal / (decimal)nofgames);
             averageMovesMovingAvg.ComputeAverage(totalMoves / (decimal)nofgames);
 
-            Console.WriteLine("Score: W/D/L " + winsTotal + "/" + drawsTot + "/" + lossesTotal + "  WinrateX/Drawrate/WinrateZ " +
+            Console.WriteLine("Score: W/D/L " + winsTotal + "/" + drawsTotal + "/" + lossesTotal + "  WinrateX/Drawrate/WinrateZ " +
                 Math.Round(winsAsXMovingAvg.Average, 2) + "/" + Math.Round(drawsMovingAvg.Average, 2) + "/" + Math.Round(winsAsZMovingAvg.Average, 2));
 
 
@@ -406,7 +401,7 @@ namespace TicTacToe_DL_RL
         /// </summary>
         /// <param name="nofGames"></param>
         /// <returns>Winrate</returns>
-        public double PlayAgainstRandom(int nofGames, NeuralNetwork NN, Player evaluationNetworkPlayer)
+        public float PlayAgainstRandom(int nofGames, NeuralNetwork NN, Player evaluationNetworkPlayer)
         {
             float totalWinsAgainstRandom = 0;
             float totalGamesAgainstRandom = 0;
