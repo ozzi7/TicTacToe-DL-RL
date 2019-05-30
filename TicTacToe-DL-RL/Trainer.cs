@@ -49,6 +49,8 @@ namespace TicTacToe_DL_RL
         }
         public void TrainingRun(int run)
         {
+            //################################# GENERATE NEW WEIGHTS ###########################################
+
             List<float> rewards = new List<float>(Params.NOF_OFFSPRING);
             List<List<float>> weights = new List<List<float>>(Params.NOF_OFFSPRING);
             List<List<float>> noise = new List<List<float>>(Params.NOF_OFFSPRING);
@@ -73,12 +75,8 @@ namespace TicTacToe_DL_RL
                 noise.Add(temp2);
             }
 
-            /* add weights to opencl */
-            if (Params.GPU_ENABLED)
-            {
-                ID.ResetGlobalID();
-                OpenCL.ClearWeights();
-            }
+            //########################## GENERATE NEURAL NETWORKS FOR TRAINING ##################################
+
             List<NeuralNetwork> nns = new List<NeuralNetwork>();
             List<NeuralNetwork> currnns = new List<NeuralNetwork>();
 
@@ -90,33 +88,41 @@ namespace TicTacToe_DL_RL
                 /* create new weights for this network */
                 weights[i] = new List<float>(currentNN.weights);
 
-                for (int j = 0; j < weights[i].Count; ++j)
-                {
+                for (int j = 0; j < weights[i].Count; ++j) {
                     weights[i][j] += Params.NOISE_SIGMA * noise[i][j];
                 }
                 NeuralNetwork playingNNlocal = new NeuralNetwork();
-                if(Params.GPU_ENABLED)
-                    playingNNlocal.OpenCLInit(ID.GetGlobalID());
                 playingNNlocal.untrainable_weights = new List<float>(currentNN.untrainable_weights);
                 playingNNlocal.weights = new List<float>(weights[i]);
                 playingNNlocal.ParseWeights();
-                playingNNlocal.GPU_PREDICT = Params.GPU_ENABLED;
                 nns.Add(playingNNlocal);
 
                 NeuralNetwork currNNlocal = new NeuralNetwork();
-                if (Params.GPU_ENABLED)
-                    currNNlocal.OpenCLInit(ID.GetGlobalID());
                 currNNlocal.untrainable_weights = new List<float>(currentNN.untrainable_weights);
                 currNNlocal.weights = new List<float>(currentNN.weights);
                 currNNlocal.ParseWeights();
-                currNNlocal.GPU_PREDICT = Params.GPU_ENABLED;
                 currnns.Add(currNNlocal);
             }
 
+            // ################################# COPY WEIGHTS TO GPU MEMORY ###########################################
 
-            // create the buffers
             if (Params.GPU_ENABLED)
+            {
+                ID.ResetGlobalID();
+                OpenCL.ClearWeights();
+
+                for (int i = 0; i < Params.NOF_OFFSPRING; ++i)
+                {
+                    nns[i].GPU_PREDICT = true;
+                    currnns[i].GPU_PREDICT = true;
+
+                    nns[i].OpenCLInit(ID.GetGlobalID());
+                    currnns[i].OpenCLInit(ID.GetGlobalID());
+                }
                 OpenCL.CreateNetworkWeightBuffers();
+            }
+
+            // ###################################### GPU TRAINING LOOP ##############################################
 
             Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
             if (Params.GPU_ENABLED)
@@ -180,6 +186,9 @@ namespace TicTacToe_DL_RL
                 WaitHandle.WaitAll(waitHandles);
                 thread.Abort();
             }
+
+            // ###################################### CPU TRAINING LOOP ##############################################
+
             else
             {
                 Parallel.For(0, Params.NOF_OFFSPRING, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
@@ -223,8 +232,8 @@ namespace TicTacToe_DL_RL
                 });
             }
 
-            // debug
-            //Console.WriteLine("" + string.Join(",", rewards) + "\n");
+            // ########################## CREATE NEW NETWORK GIVEN REWARDS FROM TRAINING LOOP ###########################
+
             // rewards[i] is total reward for the games of player i
             for (int i = 0; i < rewards.Count; ++i)
             {
@@ -249,7 +258,8 @@ namespace TicTacToe_DL_RL
             }
             currentNN.ParseWeights();
 
-            /////////////////////// check performance vs previous best ////////////////////////////
+            // ######################## RUN TEST GAMES TO CHECK IF NEW NETWORK IS BETTER ###############################
+
             List<int> wins = new List<int>();
             List<int> draws = new List<int>();
             List<int> losses = new List<int>();
@@ -293,46 +303,30 @@ namespace TicTacToe_DL_RL
             Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
             Parallel.For(0, Params.NOF_GAMES_TEST, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
-                NeuralNetwork currentNN = currnns[i];
-                NeuralNetwork previousNN1 = nns[i];
-
                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
                 Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
 
-                int result1 = PlayOneGame(history, evaluationNetworkPlayer, currentNN, previousNN1, false);
+                int result1 = PlayOneGame(history, evaluationNetworkPlayer, currnns[i], nns[i], false);
 
                 if (result1 == 1)
-                {
                     winsX[i]++;
-                }
                 else if (result1 == -1)
-                {
                     winsZ[i]++;
-                }
                 else
-                {
                     drawsBla[i]++;
-                }
-
 
                 if (evaluationNetworkPlayer == Player.X && result1 == 1 ||
                     evaluationNetworkPlayer == Player.Z && result1 == -1)
-                {
                     wins[i]++;
-                }
                 else if (result1 == 0)
-                {
                     draws[i]++;
-                }
                 else
-                {
                     losses[i]++;
-                }
 
                 movecount[i] += history.Count;
-
             });
 
+            // #################################### PROCESS STATISTICS ##########################################
 
             int winsTotal = wins.Sum();
             int lossesTotal = losses.Sum();
@@ -351,28 +345,13 @@ namespace TicTacToe_DL_RL
             Console.WriteLine("Score: W/D/L " + winsTotal + "/" + drawsTot + "/" + lossesTotal + "  WinrateX/Drawrate/WinrateZ " +
                 Math.Round(winsAsXMovingAvg.Average, 2) + "/" + Math.Round(drawsMovingAvg.Average, 2) + "/" + Math.Round(winsAsZMovingAvg.Average, 2));
 
+
+            // #################################### CREATE NEW BEST NETWORK ##########################################
             if (winsTotal < lossesTotal)
             {
-                if(winrateVsRandTotal < 0.0f)
-                {
-                    // if never checked random player then do a test, else use last result
-                    Params.DIRICHLET_NOISE_WEIGHT = 0.0f;
-                    Parallel.For(0, Params.NOF_GAMES_VS_RANDOM, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
-                    {
-                        NeuralNetwork currentNN = currnns[i];
-                        Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
-                        winrateVsRand[i] += PlayAgainstRandom(1, currentNN, evaluationNetworkPlayer);
-                    });
-                    winrateVsRandTotal = (float)winrateVsRand.Average();
-                    winrateVsRandMovingAvg.ComputeAverage((decimal)winrateVsRandTotal);
-                }
-                else
-                {
-                    winrateVsRandMovingAvg.ComputeAverage((decimal)winrateVsRandTotal);
-                }
+                // bad new network, ignore it
                 currentPseudoELO += 0;
 
-                // ignore new network, it was bad
                 bestNN.ApplyWeightDecay(); // every time the new network is not better take old one with decayed weights
                 bestNN.ParseWeights();
                 currentNN.weights = new List<float>(bestNN.weights);
@@ -382,28 +361,38 @@ namespace TicTacToe_DL_RL
             }
             else
             {
-                // new best, check vs random player
+                // new best network, use it
+                currentPseudoELO += (float)(winsTotal - lossesTotal) / (float)Params.NOF_GAMES_TEST;
+
+                bestNN.weights = new List<float>(currentNN.weights);
+                bestNN.untrainable_weights = new List<float>(currentNN.untrainable_weights);
+                bestNN.ParseWeights();
+
+                printPolicy(currentNN);
+                printValue(currentNN);
+            }
+
+
+            // #################################### CHECK PERFORMANCE VS RANDOM ##########################################
+
+            if (winsTotal >= lossesTotal || winrateVsRandTotal < 0.0f)
+            {
                 Params.DIRICHLET_NOISE_WEIGHT = 0.0f;
                 Parallel.For(0, Params.NOF_GAMES_VS_RANDOM, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
                 {
                     NeuralNetwork currentNN = currnns[i];
-
-                    // for each test game also play once against random player
                     Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
                     winrateVsRand[i] += PlayAgainstRandom(1, currentNN, evaluationNetworkPlayer);
                 });
                 winrateVsRandTotal = (float)winrateVsRand.Average();
                 winrateVsRandMovingAvg.ComputeAverage((decimal)winrateVsRandTotal);
-
-                currentPseudoELO += (float)(winsTotal - lossesTotal) / (float)Params.NOF_GAMES_TEST;
-                //previousNN3 = previousNN2;
-                //previousNN2 = previousNN1;
-                bestNN.weights = new List<float>(currentNN.weights);
-                bestNN.untrainable_weights = new List<float>(currentNN.untrainable_weights);
-                bestNN.ParseWeights();
-                printPolicy(currentNN);
-                printValue(currentNN);
             }
+            else
+            {
+                winrateVsRandMovingAvg.ComputeAverage((decimal)winrateVsRandTotal);
+            }
+
+            // #################################### WRITE PLOTTING STATISTICS ##########################################
 
             using (System.IO.StreamWriter file = new System.IO.StreamWriter(Params.PLOT_FILENAME, true))
             {
@@ -692,7 +681,8 @@ namespace TicTacToe_DL_RL
             /* add dirichlet noise to root */
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
-                float noiseWeight = ((25-depth) / 25.0f)* ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT;
+                //float noiseWeight = ((25-depth) / 25.0f)* ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT; // quadratic
+                float noiseWeight = ((25 - depth) / 25.0f) * Params.DIRICHLET_NOISE_WEIGHT; // linear
                 float winrate_temp = currNode.Children[i].winrate * (1 - noiseWeight) + noiseWeight * dn.GetNoise(i);
                 if (winrate_temp > best_winrate)
                 {
