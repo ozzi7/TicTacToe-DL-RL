@@ -19,9 +19,9 @@ namespace TicTacToe_DL_RL
 {
     static class OpenCL
     {
-        public static List<Channel<Job>> ResponseChannels = new List<Channel<Job>>(Params.NOF_NNs);
+        public static List<Channel<Job>> ResponseChannels;
         public static Channel<Job> InputChannel = Channel.CreateUnbounded<Job>();
-        public static List<ChannelWriter<Job>> writers = new List<ChannelWriter<Job>>(Params.NOF_NNs);
+        public static List<ChannelWriter<Job>> writers;
         public static ChannelReader<Job> reader; 
 
         // for input layer
@@ -100,10 +100,12 @@ namespace TicTacToe_DL_RL
         static private ComputeContextPropertyList properties;
         static private ComputeKernel kernel;
 
-        public static void Init()
+        public static void Init(int maxChannels)
         {
             CompileKernel();
-            for (int i = 0; i < Params.NOF_NNs; ++i)
+            ResponseChannels = new List<Channel<Job>>();
+            writers = new List<ChannelWriter<Job>>();
+            for (int i = 0; i < maxChannels; ++i)
             {
                 ResponseChannels.Add(Channel.CreateUnbounded<Job>());
                 writers.Add(ResponseChannels[i].Writer);
@@ -275,6 +277,7 @@ namespace TicTacToe_DL_RL
         }
         public static void RunKernels()
         {
+            Console.WriteLine("Kernel executions starting...");
             CB_input = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, input.ToArray());
             CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, networkIndex.ToArray());
 
@@ -320,6 +323,7 @@ namespace TicTacToe_DL_RL
                 Console.WriteLine(e.ToString());
             }
         }
+        // TODO: remove duplicate
         public static void CreateNetworkWeightBuffers()
         {
             // Create the input buffers and fill them with data from the arrays.

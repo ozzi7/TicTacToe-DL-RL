@@ -10,8 +10,7 @@ namespace TicTacToe_DL_RL
     {
         // HARDWARE SETTINGS
         public static bool GPU_ENABLED = true;
-        public static int NOF_NNs = 24; // number of NNs to keep in GPU memory, currently this must be NOF_OFFSPRING*2 (= keep all networks in memory) 
-        public static int MAX_KERNEL_EXECUTIONS = 40; // opencl waits for x inputs and then executes all kernels = pop size
+        public static int MAX_KERNEL_EXECUTIONS = 12; // opencl waits for x inputs and then executes all kernels
 
         public static int MAX_THREADS_CPU = 4;
 

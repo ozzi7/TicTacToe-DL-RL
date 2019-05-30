@@ -8,6 +8,7 @@ distribution
 -> use random seeds to distribute nodes and build client/server architecture
 port to opencl
 node hashing
-virtual batchnorm
+virtual batchnorm, DONE
 -> prevent local minimum
 virtual visits for MCTS to OpenCL port
+what about loops in MCTS tree?
