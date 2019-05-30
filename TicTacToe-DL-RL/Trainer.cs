@@ -484,8 +484,7 @@ namespace TicTacToe_DL_RL
                 MCTSRootNodeNN1.Value = game.position;
                 MCTSRootNodeNN2.Value = game.position;
 
-                if (game.IsOver())
-                {
+                if (game.IsOver()) {
                     return game.GetScore();
                 }
 
