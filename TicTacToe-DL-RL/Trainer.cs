@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Threading;
+using System.Diagnostics;
 
 namespace TicTacToe_DL_RL
 {
@@ -51,6 +52,9 @@ namespace TicTacToe_DL_RL
             //################################# GENERATE NEW WEIGHTS ###########################################
 
             Console.WriteLine("Main Thread: Creating new offspring weights...");
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+
             List<float> rewards = new List<float>(Params.NOF_OFFSPRING);
             List<List<float>> weights = new List<List<float>>(Params.NOF_OFFSPRING);
             List<List<float>> noise = new List<List<float>>(Params.NOF_OFFSPRING);
@@ -114,8 +118,12 @@ namespace TicTacToe_DL_RL
             }
 
             // ###################################### GPU TRAINING LOOP ##############################################
+            sw.Stop();
+            Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds +"ms");
+            sw.Reset();
+            sw.Start();
 
-            //Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
+            Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
             if (Params.GPU_ENABLED)
             {
                 Console.WriteLine("Main Thread: GPU training games starting...");
@@ -201,6 +209,10 @@ namespace TicTacToe_DL_RL
                     rewards[i] = totalReward;
                 });
             }
+            sw.Stop();
+            Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds + "ms");
+            sw.Reset();
+            sw.Start();
 
             // ########################## CREATE NEW NETWORK GIVEN REWARDS FROM TRAINING LOOP ###########################
 
@@ -284,6 +296,10 @@ namespace TicTacToe_DL_RL
                 }
                 OpenCL.CreateNetworkWeightBuffers();
             }
+            sw.Stop();
+            Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds + "ms");
+            sw.Reset();
+            sw.Start();
 
             // #################################### GPU TEST LOOP ##########################################
 
@@ -374,6 +390,10 @@ namespace TicTacToe_DL_RL
                     }
                 });
             }
+            sw.Stop();
+            Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds + "ms");
+            sw.Reset();
+            sw.Start();
 
             // #################################### PROCESS STATISTICS ##########################################
 
@@ -420,7 +440,10 @@ namespace TicTacToe_DL_RL
                 printPolicy(bestNN);
                 printValue(bestNN);
             }
-
+            sw.Stop();
+            Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds + "ms");
+            sw.Reset();
+            sw.Start();
 
             // #################################### CHECK PERFORMANCE VS RANDOM ##########################################
 
@@ -450,6 +473,10 @@ namespace TicTacToe_DL_RL
                     Math.Round(winsAsZMovingAvg.Average, 2) + " " + Math.Round(drawsMovingAvg.Average, 2) + " " +
                     Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg.Average, 2));
             }
+            sw.Stop();
+            Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds + "ms");
+            sw.Reset();
+            sw.Start();
         }
         /// <summary>
         /// Play against random player
