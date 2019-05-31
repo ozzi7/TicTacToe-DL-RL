@@ -97,6 +97,7 @@ namespace TicTacToe_DL_RL
         static private ComputeContext context;
         static private ComputeContextPropertyList properties;
         static private ComputeKernel kernel;
+        static private ComputeCommandQueue commands;
 
         public static void Init(int maxChannels)
         {
@@ -199,6 +200,8 @@ namespace TicTacToe_DL_RL
             }
             // Create the kernel function and set its arguments.
             kernel = program.CreateKernel("NN");
+            // Create the command queue. This is used to control kernel execution and manage read/write/copy operations.
+            commands = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
         }
 
         public static void EnqueueWeights(NeuralNetwork nn)
@@ -273,19 +276,18 @@ namespace TicTacToe_DL_RL
         {
             CB_input = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, input.ToArray());
             CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, networkIndex.ToArray());
+            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly, output.Length); // only specify length?
 
             try
             {
                 kernel.SetMemoryArgument(0, CB_input);
                 kernel.SetMemoryArgument(24, CB_networkIndex);
+                kernel.SetMemoryArgument(23, CB_output);
 
                 // Create the event wait list. An event list is not really needed for this example but it is important to see how it works.
                 // Note that events (like everything else) consume OpenCL resources and creating a lot of them may slow down execution.
                 // For this reason their use should be avoided if possible.
                 ComputeEventList eventList = new ComputeEventList();
-
-                // Create the command queue. This is used to control kernel execution and manage read/write/copy operations.
-                ComputeCommandQueue commands = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
 
                 // Execute the kernel "count" times. After this call returns, "eventList" will contain an event associated with this command.
                 // If eventList == null or typeof(eventList) == ReadOnlyCollection<ComputeEventBase>, a new event will not be created.
@@ -309,7 +311,9 @@ namespace TicTacToe_DL_RL
                 // 2) Or simply use
                 commands.Finish();
                 CB_input.Dispose();
-                commands.Dispose();
+                CB_networkIndex.Dispose();
+                CB_output.Dispose();
+                //commands.Dispose();
             }
             catch (Exception e)
             {
@@ -356,7 +360,6 @@ namespace TicTacToe_DL_RL
             CB_policyConnectionWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, policyConnectionWeights.ToArray());
             CB_policyBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, policyBiases.ToArray());
             CB_convFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convFilterWeights.ToArray());
-            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.CopyHostPointer, output);
 
             try
             {
@@ -390,8 +393,6 @@ namespace TicTacToe_DL_RL
 
                 kernel.SetMemoryArgument(21, CB_policyBiases);
                 kernel.SetMemoryArgument(22, CB_convFilterWeights);
-
-                kernel.SetMemoryArgument(23, CB_output);
             }
             catch (Exception e)
             {
