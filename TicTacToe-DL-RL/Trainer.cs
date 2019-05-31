@@ -253,7 +253,7 @@ namespace TicTacToe_DL_RL
 
             // ######################## RUN TEST GAMES TO CHECK IF NEW NETWORK IS BETTER ###############################
 
-            Console.WriteLine("Main Thread: Combinding offspring networks...");
+            Console.WriteLine("Main Thread: Combining offspring networks...");
             List<int> wins = new List<int>();
             List<int> draws = new List<int>();
             List<int> losses = new List<int>();
