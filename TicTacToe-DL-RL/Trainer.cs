@@ -195,11 +195,21 @@ namespace TicTacToe_DL_RL
             {
                 rewards[i] = (rewards[i] > 0) ? rewards[i] : 0; // set reward to 0 if negative
             }
-            /* normalize rewards (we could also divide by (standard deviation + eps) after subtracting the mean */
+            /* normalize rewards */
             float sum = rewards.Sum();
+            float mean = sum / rewards.Count;
+            float stddev = 0.0f;
             for (int i = 0; i < rewards.Count; ++i)
             {
-                rewards[i] -= sum / rewards.Count;
+                rewards[i] -= mean;
+                stddev += rewards[i] * rewards[i];
+            }
+            stddev /= rewards.Count;
+            stddev = (float)Math.Sqrt(stddev + 0.0001f);
+
+            for (int i = 0; i < rewards.Count; ++i)
+            {
+                rewards[i] /= stddev;
             }
 
             /* set weight for new network */

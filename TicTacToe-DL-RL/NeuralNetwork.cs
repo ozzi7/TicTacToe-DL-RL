@@ -22,11 +22,11 @@ namespace TicTacToe_DL_RL
         const int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
         const int nofOutputValues = 1; // value head has 1 output
         const int nofFilters = 6; //64- the convolution layer has 64 filters
-        const int nofConvLayers = 11; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
-        const int nofResidualLayers = 5; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
-        const int nofPolicyPlanes = 8; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
-        const int nofValuePlanes = 8; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
-        const int valueHiddenLayerSize = 16; // was 128
+        const int nofConvLayers = 7; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
+        const int nofResidualLayers = 3; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
+        const int nofPolicyPlanes = 4; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
+        const int nofValuePlanes = 4; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
+        const int valueHiddenLayerSize = 8; // was 128
         const float softmaxTemperature = 1.0f;
 
         // for input layer
