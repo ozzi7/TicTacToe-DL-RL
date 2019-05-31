@@ -57,7 +57,7 @@ namespace TicTacToe_DL_RL
         public static List<float> BNGammas = new List<float>();
 
         // output of NN
-        public static float[] output = new float[(Params.MAX_KERNEL_EXECUTIONS) *26];
+        public static float[] output = new float[(Params.MAX_PARALLEL_KERNEL_EXECUTIONS) *26];
         public static List<int> networkIndex = new List<int>();
 
         // opencl buffers
@@ -122,7 +122,7 @@ namespace TicTacToe_DL_RL
                 input.Clear();
                 networkIndex.Clear();
                 int nofInputsFound = 0;
-                for (int i = 0; i < Params.MAX_KERNEL_EXECUTIONS; ++i)
+                for (int i = 0; i < Params.MAX_PARALLEL_KERNEL_EXECUTIONS; ++i)
                 {
                     Job job = null;
                     bool success = reader.TryRead(out job);
@@ -136,7 +136,9 @@ namespace TicTacToe_DL_RL
                         networkIndex.Add(job.globalID);
                     }
                     else
+                    {
                         break;
+                    }
                 }
                 nofProcessedNets += nofInputsFound;
                 if (nofProcessedNets > nextOutput)

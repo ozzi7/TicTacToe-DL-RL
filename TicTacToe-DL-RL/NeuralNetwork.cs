@@ -178,6 +178,7 @@ namespace TicTacToe_DL_RL
 
             //while (!success)
             //{
+            //    Thread.Sleep(1);
             //    success = reader.TryRead(out job);
             //}
             //for (int i = 0; i < 25; ++i)

@@ -115,7 +115,7 @@ namespace TicTacToe_DL_RL
 
             // ###################################### GPU TRAINING LOOP ##############################################
 
-            Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
+            //Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
             if (Params.GPU_ENABLED)
             {
                 Console.WriteLine("Main Thread: GPU training games starting...");
@@ -123,84 +123,47 @@ namespace TicTacToe_DL_RL
                 thread.Priority = ThreadPriority.Highest;
                 thread.Start();
 
-                Parallel.For(0, Params.NOF_OFFSPRING, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
+                int numOfThreads = Math.Min(Params.NOF_OFFSPRING, Params.MAX_THREADS_CPU);
+                WaitHandle[] waitHandles = new WaitHandle[numOfThreads];
+
+                for (int i = 0; i < numOfThreads; i++)
                 {
-                    /* get reward of network*/
-                    List<Tuple<int, int>> history = new List<Tuple<int, int>>();
-                    float totalReward = 0;
-                    for (int j = 0; j < Params.NOF_GAMES_PER_OFFSPRING; ++j) // if more than 2 games we need some noise
+                    var jk = i;
+                    // Or you can use AutoResetEvent/ManualResetEvent
+                    var handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                    var thread2 = new Thread(() =>
                     {
-                        history.Clear();
-                        Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
-
-
-                        int result = PlayOneGameGPU(history, evaluationNetworkPlayer, nns[i], currnns[i], true);
-
-                        if (evaluationNetworkPlayer == Player.X && result == 1 ||
-                            evaluationNetworkPlayer == Player.Z && result == -1)
+                        /* get reward of network*/
+                        List<Tuple<int, int>> history = new List<Tuple<int, int>>();
+                        float totalReward = 0;
+                        for (int j = 0; j < Params.NOF_GAMES_PER_OFFSPRING; ++j) // if more than 2 games we need some noise
                         {
-                            totalReward++;
-                        }
-                        else if (result != 0)
-                        {
-                            totalReward--;
-                        }
-                        //draw is +0
-                    }
+                            history.Clear();
+                            Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
 
-                    rewards[i] = totalReward;
+                            int result = PlayOneGameGPU(history, evaluationNetworkPlayer, nns[jk], currnns[jk], true);
 
-                });
+                            if (evaluationNetworkPlayer == Player.X && result == 1 ||
+                                evaluationNetworkPlayer == Player.Z && result == -1)
+                            {
+                                totalReward++;
+                            }
+                            else if (result != 0)
+                            {
+                                totalReward--;
+                            }
+                            // draw is +0
+                        }
+
+                        rewards[jk] = totalReward;
+
+                        handle.Set();
+                    });
+                    waitHandles[jk] = handle;
+                    thread2.Start();
+                }
+                WaitHandle.WaitAll(waitHandles);
                 thread.Abort();
-
-
-                //Console.WriteLine("Main Thread: GPU training games starting...");
-                //Thread thread = new Thread(OpenCL.Run);
-                //thread.Priority = ThreadPriority.Highest;
-                //thread.Start();
-
-                //int numOfThreads = Params.NOF_OFFSPRING;
-                //WaitHandle[] waitHandles = new WaitHandle[numOfThreads];
-
-                //for (int i = 0; i < numOfThreads; i++)
-                //{
-                //    var jk = i;
-                //    // Or you can use AutoResetEvent/ManualResetEvent
-                //    var handle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                //    var thread2 = new Thread(() =>
-                //    {
-                //        /* get reward of network*/
-                //        List<Tuple<int, int>> history = new List<Tuple<int, int>>();
-                //        float totalReward = 0;
-                //        for (int j = 0; j < Params.NOF_GAMES_PER_OFFSPRING; ++j) // if more than 2 games we need some noise
-                //        {
-                //            history.Clear();
-                //            Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
-
-
-                //            int result = PlayOneGameGPU(history, evaluationNetworkPlayer, nns[i], currnns[i], true);
-
-                //            if (evaluationNetworkPlayer == Player.X && result == 1 ||
-                //                evaluationNetworkPlayer == Player.Z && result == -1)
-                //            {
-                //                totalReward++;
-                //            }
-                //            else if (result != 0)
-                //            {
-                //                totalReward--;
-                //            }
-                //            // draw is +0
-                //        }
-
-                //        rewards[i] = totalReward;
-
-
-                //    });
-                //    waitHandles[jk] = handle;
-                //    thread2.Start();
-                //}
-                //WaitHandle.WaitAll(waitHandles);
-                //thread.Abort();
             }
 
             // ###################################### CPU TRAINING LOOP ##############################################
@@ -327,38 +290,52 @@ namespace TicTacToe_DL_RL
             if (Params.GPU_ENABLED)
             {
                 Console.WriteLine("Main Thread: GPU test games starting...");
+
                 Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
                 Thread thread = new Thread(OpenCL.Run);
                 thread.Priority = ThreadPriority.Highest;
                 thread.Start();
 
-                Parallel.For(0, Params.NOF_GAMES_TEST, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
+                int numOfThreads = Math.Min(Params.NOF_GAMES_TEST, Params.MAX_THREADS_CPU);
+                WaitHandle[] waitHandles = new WaitHandle[numOfThreads];
+
+                for (int i = 0; i < numOfThreads; i++)
                 {
-                    List<Tuple<int, int>> history = new List<Tuple<int, int>>();
-                    Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
-
-                    int result = PlayOneGameGPU(history, evaluationNetworkPlayer, currnns[i], nns[i], false);
-
-                    if (result == 1)
-                        winsX[i]++;
-                    else if (result == -1)
-                        winsZ[i]++;
-
-                    if (evaluationNetworkPlayer == Player.X && result == 1 ||
-                        evaluationNetworkPlayer == Player.Z && result == -1)
-                        wins[i]++;
-                    else if (result == 0)
-                        draws[i]++;
-                    else
-                        losses[i]++;
-
-                    /* to display some games (debugging)*/
-                    if (run % Params.SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH == 0 && i == Params.NOF_GAMES_TEST - 1)
+                    var jk = i;
+                    // Or you can use AutoResetEvent/ManualResetEvent
+                    var handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+                    var thread2 = new Thread(() =>
                     {
-                        TicTacToeGame game = new TicTacToeGame();
-                        game.DisplayHistory(history);
-                    }
-                });
+                        List<Tuple<int, int>> history = new List<Tuple<int, int>>();
+                        Player evaluationNetworkPlayer = (jk % 2) == 0 ? Player.X : Player.Z;
+
+                        int result = PlayOneGameGPU(history, evaluationNetworkPlayer, currnns[jk], nns[jk], false);
+
+                        if (result == 1)
+                            winsX[jk]++;
+                        else if (result == -1)
+                            winsZ[jk]++;
+
+                        if (evaluationNetworkPlayer == Player.X && result == 1 ||
+                            evaluationNetworkPlayer == Player.Z && result == -1)
+                            wins[jk]++;
+                        else if (result == 0)
+                            draws[jk]++;
+                        else
+                            losses[jk]++;
+
+                        /* to display some games (debugging)*/
+                        if (run % Params.SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH == 0 && jk == Params.NOF_GAMES_TEST - 1)
+                        {
+                            TicTacToeGame game = new TicTacToeGame();
+                            game.DisplayHistory(history);
+                        }
+                        handle.Set();
+                    });
+                    waitHandles[jk] = handle;
+                    thread2.Start();
+                }
+                WaitHandle.WaitAll(waitHandles);
                 thread.Abort();
             }
 
