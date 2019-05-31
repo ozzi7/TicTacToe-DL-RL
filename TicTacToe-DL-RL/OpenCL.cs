@@ -181,9 +181,6 @@ namespace TicTacToe_DL_RL
             devices.Add(platform.Devices[0]);
             context = new ComputeContext(devices, properties, null, IntPtr.Zero);
 
-            // The output buffer doesn't need any data from the host. Only its size is specified res.length.
-            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.CopyHostPointer, output);
-
             // Create and build the opencl program.
             StreamReader streamReader = new StreamReader("../../NeuralNetwork.cl");
             string openClCode = streamReader.ReadToEnd();
@@ -327,6 +324,9 @@ namespace TicTacToe_DL_RL
             // Access modifiers should match those in a kernel.
             // CopyHostPointer means the buffer should be filled with the data provided in the last argument.
             // opencl buffers
+
+            // The output buffer doesn't need any data from the host. Only its size is specified res.length.
+
             CB_firstConvFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, firstConvFilterWeights.ToArray());
 
             CB_BNMeans = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNMeans.ToArray());
@@ -336,11 +336,14 @@ namespace TicTacToe_DL_RL
 
             CB_convWeightsValue1 = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convWeightsValue1.ToArray());
             CB_convWeightsValue2 = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convWeightsValue2.ToArray());
+
             CB_BNMeansValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNMeansValue.ToArray());
             CB_BNStddevValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNStddevValue.ToArray());
             CB_BNBetaValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNBetaValue.ToArray());
+
             CB_BNGammaValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNGammaValue.ToArray());
             CB_valueConnectionWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueConnectionWeights.ToArray());
+
             CB_valueBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueBiases.ToArray());
             CB_valueBiasLast = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueBiasLast.ToArray());
 
@@ -348,10 +351,12 @@ namespace TicTacToe_DL_RL
             CB_BNMeansPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNMeansPolicy.ToArray());
             CB_BNStddevPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNStddevPolicy.ToArray());
             CB_BNBetaPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNBetaPolicy.ToArray());
+
             CB_BNGammaPolicy = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNGammaPolicy.ToArray());
             CB_policyConnectionWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, policyConnectionWeights.ToArray());
             CB_policyBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, policyBiases.ToArray());
             CB_convFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convFilterWeights.ToArray());
+            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly | ComputeMemoryFlags.CopyHostPointer, output);
 
             try
             {
@@ -362,11 +367,14 @@ namespace TicTacToe_DL_RL
                 kernel.SetMemoryArgument(4, CB_BNBetas);
                 kernel.SetMemoryArgument(5, CB_BNGammas);
 
+
                 kernel.SetMemoryArgument(6, CB_convWeightsValue1);
                 kernel.SetMemoryArgument(7, CB_convWeightsValue2);
+
                 kernel.SetMemoryArgument(8, CB_BNMeansValue);
                 kernel.SetMemoryArgument(9, CB_BNStddevValue);
                 kernel.SetMemoryArgument(10, CB_BNBetaValue);
+
                 kernel.SetMemoryArgument(11, CB_BNGammaValue);
                 kernel.SetMemoryArgument(12, CB_valueConnectionWeights);
                 kernel.SetMemoryArgument(13, CB_valueBiases);
@@ -375,9 +383,11 @@ namespace TicTacToe_DL_RL
                 kernel.SetMemoryArgument(15, CB_convWeightsPolicy);
                 kernel.SetMemoryArgument(16, CB_BNMeansPolicy);
                 kernel.SetMemoryArgument(17, CB_BNStddevPolicy);
+
                 kernel.SetMemoryArgument(18, CB_BNBetaPolicy);
                 kernel.SetMemoryArgument(19, CB_BNGammaPolicy);
                 kernel.SetMemoryArgument(20, CB_policyConnectionWeights);
+
                 kernel.SetMemoryArgument(21, CB_policyBiases);
                 kernel.SetMemoryArgument(22, CB_convFilterWeights);
 

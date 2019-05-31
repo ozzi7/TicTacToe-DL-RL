@@ -9,7 +9,7 @@ namespace TicTacToe_DL_RL
     public static class Params
     {
         // HARDWARE SETTINGS
-        public static bool GPU_ENABLED = false;
+        public static bool GPU_ENABLED = true;
         public static int MAX_PARALLEL_KERNEL_EXECUTIONS = 2304; // opencl calls at most MAX_PARALLEL_KERNEL_EXECUTIONS and less if not enough data arrived from CPU
 
         public static int MAX_THREADS_CPU = 64; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
@@ -25,8 +25,8 @@ namespace TicTacToe_DL_RL
         public static int NOF_GAMES_PER_OFFSPRING = 16;
         public static int NOF_GAMES_TEST = 16; // must be 2n for equal tests of player X and player Z
         public static int NOF_GAMES_VS_RANDOM = 2;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 4; // could/should be time
-        public static int NOF_SIMS_PER_MOVE_TESTING = 4; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 40; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TESTING = 40; // could/should be time
 
         public static float C_PUCT = 4.0f; // in theory sqrt(2), in practice usually higher (=more exploration) for training
         public static float NOISE_SIGMA = 0.1f;  // noise standard deviation 0.1 (default), 0.01 ok
