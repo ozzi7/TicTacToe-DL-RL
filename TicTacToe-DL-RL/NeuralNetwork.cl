@@ -200,36 +200,36 @@ kernel void NN(
 	private int nofOutputPolicies = 25; // policy net has 9 outputs (1 per potential move)
 	private int nofOutputValues = 1; // value head has 1 output
 	private int nofFilters = 6; //64- the convolution layer has 64 filters
-	private int nofConvLayers = 9; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
-	private int nofResidualLayers = 4; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
+	private int nofConvLayers = 7; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
+	private int nofResidualLayers = 3; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
 	private int nofPolicyPlanes = 4; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
 	private int nofValuePlanes = 4; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
-	private int valueHiddenLayerSize = 16; // was 128
+	private int valueHiddenLayerSize = 8; // was 128
 	private float softmaxTemperature = 1.0f;
 
 	// private array to work on, could re-use some later
-    private float outputConvFilter[6 * 5 * 5]; // noflayers *..
-    private float outputResidualLayer[6 * 5 * 5]; // noflayers *..
-    private float temporary[6 * 5 * 5]; // noflayers *..
-    private float inputResidualLayer[6 * 5 * 5]; // noflayers *..
+    private float outputConvFilter[6 * 5 * 5]; // nofFilters *..
+    private float outputResidualLayer[6 * 5 * 5]; // nofFilters *..
+    private float temporary[6 * 5 * 5]; // nofFilters *..
+    private float inputResidualLayer[6 * 5 * 5]; // nofFilters *..
 	private float inputFCLayerPolicy[4 * 5* 5]; // nofpolicyplanes * ..
 	private float outputValueData[4 * 5 * 5]; // nofvalueplanes* ..
 	private float outputPolicyData[4 * 5 * 5]; // nofvalueplanes* ..
-	private float localInput[2*5*5];
-	private float temporaryValueData[valueHiddenLayerSize];
+	private float localInput[5*5*2];
+	private float temporaryValueData[8]; // valueHiddenLayerSize
 
     float softmaxPolicy[25]; // nofoutputpolicies
     float winrateOut[1];
 
-    /*Conv layer */
 	// copy input to inputreslayer because of access specifiers which may not change and because the input output is 
 	// swapped to conv function call we also cant change the specifier in the argument, plus should be faster anyway
-	for(int i = inputIndex*50; i < inputIndex + 25; ++i) {
+	for(int i = inputIndex*2*5*5; i < inputIndex + 50; ++i) {
 		localInput[i] = input[i];	
 	}
 
 	////////////////////////////////////////////// start of network eval //////////////////////////////////////////////
-
+	
+	/*Conv layer */
     Convolution(localInput, outputConvFilter, firstConvFilterWeights, nofPlanes, nofFilters, filterWidth, filterHeight, 0, networkIndex);
     BN(outputConvFilter, inputResidualLayer, BNMeans, BNStddev, nofFilters, 0, BNGammas, BNBetas, networkIndex);
 

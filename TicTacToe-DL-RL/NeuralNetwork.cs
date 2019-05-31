@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
@@ -10,7 +11,6 @@ namespace TicTacToe_DL_RL
 {
     class NeuralNetwork
     {
-        public bool GPU_PREDICT = false;
         public int globalID = -1;
 
         // params
@@ -81,7 +81,6 @@ namespace TicTacToe_DL_RL
         public List<float> weights = new List<float>();
         public List<float> untrainable_weights = new List<float>();
 
-
         // reader and writer channel to opencl thread
         ChannelReader<Job> reader;
         ChannelWriter<Job> writer;
@@ -126,22 +125,67 @@ namespace TicTacToe_DL_RL
             {   // whose turn it is
                 input[Params.boardSizeX * Params.boardSizeY + i] = pos.sideToMove == Player.X ? 1 : -1;
             }
-            if (GPU_PREDICT)
+            return ForwardPassCPU(input);
+        }
+        public void PredictGPU(TicTacToePosition pos)
+        {
+            /*Not using game history, not using caching*/
+            int[] tmp = new int[pos.gameBoard.GetLength(0) * pos.gameBoard.GetLength(1)];
+            Buffer.BlockCopy(pos.gameBoard, 0, tmp, 0, tmp.Length * sizeof(int));
+            List<int> gameBoard = new List<int>(tmp);
+
+            // set nn input
+            for (int i = 0; i < Params.boardSizeX * Params.boardSizeY; ++i)
+            {   // the board itself
+                input[i] = gameBoard[i];
+            }
+
+            for (int i = 0; i < Params.boardSizeX * Params.boardSizeY; ++i)
+            {   // whose turn it is
+                input[Params.boardSizeX * Params.boardSizeY + i] = pos.sideToMove == Player.X ? 1 : -1;
+            }
+
+            Job job = new Job();
+            job.input = input.ToList();
+            job.globalID = globalID;
+            writer.TryWrite(job);
+        }
+        public Tuple<float[], float> GetResultAsync()
+        {
+            Job job = null;
+            bool success = reader.TryRead(out job);
+            if (success)
             {
-                Job job = new Job();
-                job.input = input.ToList();
-                job.globalID = globalID;
-                writer.TryWrite(job);
-
-                Task t = Consume(reader);
-                t.Wait();
-
+                for (int i = 0; i < 25; ++i)
+                {
+                    softmaxPolicy[i] = job.output[i];
+                }
+                winrateSigOut = job.output[25];
                 return Tuple.Create(softmaxPolicy, winrateSigOut);
             }
             else
             {
-                return ForwardPassCPU(input);
+                return null;
             }
+        }
+        public Tuple<float[], float> GetResultSync()
+        {
+            Task t = Consume(reader);
+            t.Wait();
+            return Tuple.Create(softmaxPolicy, winrateSigOut);
+            //Job job = null;
+            //bool success = reader.TryRead(out job);
+
+            //while (!success)
+            //{
+            //    success = reader.TryRead(out job);
+            //}
+            //for (int i = 0; i < 25; ++i)
+            //{
+            //    softmaxPolicy[i] = job.output[i];
+            //}
+            //winrateSigOut = job.output[25];
+            //return Tuple.Create(softmaxPolicy, winrateSigOut);
         }
         private async Task Consume(ChannelReader<Job> c)
         {

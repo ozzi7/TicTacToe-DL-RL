@@ -2,8 +2,6 @@
  * Idea: Create buffers for the network weights and keep X different networks in GPU memory
  * For each network we also add Y different inputs and so we run X*Y forward passes in one call
  * The inputs are changed on each call but weights only change after evolution
- * TODOs: Don't resend untrainable weights, don't resend weights for every input
- * Copy stuff to local memory
  */
  using System;
 using System.Collections.Generic;
@@ -103,6 +101,8 @@ namespace TicTacToe_DL_RL
         public static void Init(int maxChannels)
         {
             CompileKernel();
+
+            Console.WriteLine("OpenCL: Creating new channels...");
             ResponseChannels = new List<Channel<Job>>();
             writers = new List<ChannelWriter<Job>>();
             for (int i = 0; i < maxChannels; ++i)
@@ -115,63 +115,58 @@ namespace TicTacToe_DL_RL
 
         public static void Run()
         {
+            int nofProcessedNets = 0;
+            int nextOutput = 10000;
             while (true)
             {
                 input.Clear();
                 networkIndex.Clear();
+                int nofInputsFound = 0;
                 for (int i = 0; i < Params.MAX_KERNEL_EXECUTIONS; ++i)
                 {
-                    //Task t = Consume(InputChannel);
-                    Task<Job> task = Consume(InputChannel).AsTask();
-                    try
+                    Job job = null;
+                    bool success = reader.TryRead(out job);
+                    if (success)
                     {
-                        Job job = task.Result;
-                        //var result = Task.Run(async () => { return await Consume(InputChannel); }).Wait(100);
-                        if (job != null)
+                        nofInputsFound++;
+                        for (int j = 0; j < job.input.Count; ++j)
                         {
-                            for (int j = 0; j < job.input.Count; ++j)
-                            {
-                                input.Add(job.input[j]);
-                            }
-                            networkIndex.Add(job.globalID);
+                            input.Add(job.input[j]);
                         }
+                        networkIndex.Add(job.globalID);
                     }
-                    catch (Exception e) { 
-                        //Console.WriteLine("Timeout on waiting for input to openCL channel (intended behaviour)");
-                    }
+                    else
+                        break;
                 }
-                RunKernels();
-
-                int outputCount = 0;
-                for(int i = 0; i < networkIndex.Count; ++i)
+                nofProcessedNets += nofInputsFound;
+                if (nofProcessedNets > nextOutput)
                 {
-                    Job job = new Job();
-                    for (int j = 0; j < 26; ++j)
+                    Console.WriteLine("OpenCL: Received a total of " + nofProcessedNets + " NN inputs");
+                    nextOutput += 10000;
+                }
+
+                if (nofInputsFound > 0)
+                {
+                    RunKernels();
+
+                    // as long as the output is same order as input we can distribute the output with fifo queues as they came in
+                    int outputCount = 0;
+                    for (int i = 0; i < networkIndex.Count; ++i)
                     {
-                        job.output.Add(output[outputCount]);
-                        outputCount++;
+                        Job job = new Job();
+                        for (int j = 0; j < 26; ++j)
+                        {
+                            job.output.Add(output[outputCount]);
+                            outputCount++;
+                        }
+                        writers[networkIndex[i]].TryWrite(job);
                     }
-                    writers[networkIndex[i]].TryWrite(job);
                 }
-            }
-        }
-        private static async ValueTask<Job> Consume(ChannelReader<Job> c)
-        {
-            try
-            {
-                TimeSpan timeout = TimeSpan.FromMilliseconds(1);
-
-                using (var cts = new CancellationTokenSource(timeout))
-                {
-                    return await c.ReadAsync(cts.Token);
-                }
-            }
-            catch (TaskCanceledException e) {
-                return null;
             }
         }
         public static void CompileKernel()
         {
+            Console.WriteLine("OpenCL: Compiling kernel code...");
             platform = ComputePlatform.Platforms[0]; // todo find amd gpus..
             IList<ComputeDevice> devices;
             devices = new List<ComputeDevice>();
@@ -277,7 +272,6 @@ namespace TicTacToe_DL_RL
         }
         public static void RunKernels()
         {
-            Console.WriteLine("Kernel executions starting...");
             CB_input = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, input.ToArray());
             CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, networkIndex.ToArray());
 
@@ -326,6 +320,7 @@ namespace TicTacToe_DL_RL
         // TODO: remove duplicate
         public static void CreateNetworkWeightBuffers()
         {
+            Console.WriteLine("OpenCL: Creating new network weight buffers...");
             // Create the input buffers and fill them with data from the arrays.
             // Access modifiers should match those in a kernel.
             // CopyHostPointer means the buffer should be filled with the data provided in the last argument.

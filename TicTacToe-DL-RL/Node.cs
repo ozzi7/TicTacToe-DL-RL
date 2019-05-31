@@ -19,13 +19,12 @@ namespace TicTacToe_DL_RL
          * c >= 0, low c = choose lucrative nodes, else explore
         */
         public float visitCount = 0;
-        public Tuple<int, int> bestMove = Tuple.Create(-1, -1);
-        public int bestChildIndex = -1;
         public List<float> nn_policy = null;
         public float nn_value;
         public int moveIndex = -1; // from 0 to 24 
         public float winrate = 0.0f; // from 0 to 1, 1 means the current player (of this node) always wins
         public int virtualLossCount = 0; // a visit which needs a NN eval increases this
+        public bool waitingForGPUPrediction = false; // if this node is already waiting for a GPU eval
 
         public Node<TValue> parent = null;
 

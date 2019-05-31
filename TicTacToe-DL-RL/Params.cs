@@ -9,23 +9,28 @@ namespace TicTacToe_DL_RL
     public static class Params
     {
         // HARDWARE SETTINGS
-        public static bool GPU_ENABLED = false;
-        public static int MAX_KERNEL_EXECUTIONS = 12; // opencl waits for x inputs and then executes all kernels
+        public static bool GPU_ENABLED = true;
+        public static int MAX_KERNEL_EXECUTIONS = 10000; // opencl waits for x inputs and then executes all kernels
 
-        public static int MAX_THREADS_CPU = 4;
+        public static int MAX_THREADS_CPU = 4; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL
+        public static int MAX_PENDING_NN_EVALS = 100; // should be lower than sims per move 
+        // = how many NN evals are queued up in the MCTS tree before the CPU thread must wait for results
+        // the MCTS search becomes less useful if it continues with fake data while waiting for the real outputs
+        // it is better to keep this low and increase parallel trees (increasing number of CPU threads)
+        // TODO: currently before a new move starts the CPU threads wait for all results first 
 
         // NEUROEVOLUTION PARAMS
         public static int NOF_EPOCHS = 10000000;
-        public static int NOF_OFFSPRING = 32; // must be 2n because half of popsize share same weight mutation but in opposite direction
-        public static int NOF_GAMES_PER_OFFSPRING = 32;
-        public static int NOF_GAMES_TEST = 32; // must be 2n for equal tests of player X and player Z
-        public static int NOF_GAMES_VS_RANDOM = 32;
+        public static int NOF_OFFSPRING = 16; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
+        public static int NOF_GAMES_PER_OFFSPRING = 16;
+        public static int NOF_GAMES_TEST = 16; // must be 2n for equal tests of player X and player Z
+        public static int NOF_GAMES_VS_RANDOM = 2;
         public static int NOF_SIMS_PER_MOVE_TRAINING = 10; // could/should be time
         public static int NOF_SIMS_PER_MOVE_TESTING = 10; // could/should be time
 
-        public static float C_PUCT = 3.0f; // roughly sqrt 2 // was 2
+        public static float C_PUCT = 4.0f; // in theory sqrt(2), in practice usually higher (=more exploration) for training
         public static float NOISE_SIGMA = 0.1f;  // noise standard deviation 0.1 (default), 0.01 ok
-        public static float LEARNING_RATE = 0.001f;
+        public static float LEARNING_RATE = 0.0005f;
         public static float WEIGHT_DECAY_FACTOR = 0.99f;
         public static float DIRICHLET_NOISE_WEIGHT;
         public static DIRICHLET_NOISE_SCALING DN_SCALING = DIRICHLET_NOISE_SCALING.CONSTANT; // as a function of depth in mcts search tree
