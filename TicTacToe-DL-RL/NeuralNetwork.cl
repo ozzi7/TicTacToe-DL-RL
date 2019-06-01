@@ -223,7 +223,7 @@ kernel void NN(
 
 	// copy input to inputreslayer because of access specifiers which may not change and because the input output is 
 	// swapped to conv function call we also cant change the specifier in the argument, plus should be faster anyway
-	for(int i = inputIndex*2*5*5; i < inputIndex + 50; ++i) {
+	for(int i = inputIndex; i < inputIndex + 50; ++i) {
 		localInput[i] = input[i];	
 	}
 
@@ -250,8 +250,8 @@ kernel void NN(
     /*value head*/
     Convolution(inputResidualLayer, outputValueData, convWeightsValue1, nofFilters, nofValuePlanes, 1, 1, 0, networkIndex);
     BN(outputValueData, outputValueData, BNMeansValue, BNStddevValue, nofValuePlanes, 0, BNGammaValue, BNBetaValue, networkIndex);
-    FCLayer(outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true, 25*2*128*networkIndex, 128*networkIndex); // with rectifier
-    FCLayer(temporaryValueData, winrateOut, convWeightsValue2, valueBiasLast, false, 128*networkIndex, networkIndex); // 1 output, 1 bias
+    FCLayer(outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true, 25*2*8*networkIndex, 8*networkIndex); // with rectifier
+    FCLayer(temporaryValueData, winrateOut, convWeightsValue2, valueBiasLast, false, 8*networkIndex, networkIndex); // 1 output, 1 bias
     float winrateSig = (1.0f + tanh(winrateOut[0])) / 2.0f;
 
     /*policy head*/
@@ -264,9 +264,9 @@ kernel void NN(
 
 	for(int i = 0; i < 25; ++i) 
 	{
-		results[outputIndex*26+i] = softmaxPolicy[i];
+		results[outputIndex+i] = softmaxPolicy[i];
 	}
-	results[outputIndex*26+25] = winrateSig;	
+	results[outputIndex+25] = winrateSig;	
 }
 
 /*	See http://developer.amd.com/wordpress/media/2013/07/AMD_Accelerated_Parallel_Processing_OpenCL_Programming_Guide-rev-2.7.pdf
