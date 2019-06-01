@@ -1,4 +1,4 @@
-filepath = ".\\bin\\Release\\plotdata.txt"
+filepath = ".\\bin\\Debug\\plotdata.txt"
 set terminal wxt size 1280,800
 
 while (1) {

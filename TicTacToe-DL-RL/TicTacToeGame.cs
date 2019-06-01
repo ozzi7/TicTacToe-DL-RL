@@ -41,7 +41,25 @@ namespace TicTacToe_DL_RL
         /// <returns></returns>
         public bool IsOver()
         {
-            return (HasWinner() || GetMoves().Count == 0);
+            return (HasWinner() || IsFullyOccupied());
+        }
+        /// <summary>
+        /// Check if the game is fully occupied
+        /// </summary>
+        /// <returns></returns>
+        public bool IsFullyOccupied()
+        {
+            for(int i = 0; i < 5; ++i)
+            {
+                for(int j = 0; j < 5; ++j)
+                {
+                    if(position.gameBoard[i,j] == 0)
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
         public void DoMove(Tuple<int, int> move)
         {
@@ -52,7 +70,7 @@ namespace TicTacToe_DL_RL
             {
                 position.score = position.sideToMove == Player.X ? -1 : 1;
             }
-            else if (IsDrawn())
+            else if (IsFullyOccupied())
             {
                 position.score = 0;
             }
@@ -113,10 +131,7 @@ namespace TicTacToe_DL_RL
                 return true;
             return false;
         }
-        public bool IsDrawn()
-        {
-            return IsOver() && !HasWinner();
-        }
+
         /// <summary>
         /// Replay the game given the complete move history and display the boards during the game
         /// </summary>
@@ -169,7 +184,14 @@ namespace TicTacToe_DL_RL
         /// <param name="aPosition"></param>
         public TicTacToePosition(TicTacToePosition aPosition)
         {
-            gameBoard = aPosition.gameBoard.Clone() as int[,];
+            //gameBoard = aPosition.gameBoard.Clone() as int[,];
+            for (int i = 0; i < 5; ++i)
+            {
+                for (int j = 0; j < 5; ++j)
+                {
+                    gameBoard[i, j] = aPosition.gameBoard[i, j];
+                }
+            }
             sideToMove = aPosition.sideToMove;
             score = aPosition.score;
         }

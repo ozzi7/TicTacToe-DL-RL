@@ -23,8 +23,9 @@ namespace TicTacToe_DL_RL
         public static ChannelReader<Job> reader; 
 
         // for input layer
-        public static List<float> input = new List<float>();
+        public static float[] input = new float[Params.MAX_PARALLEL_KERNEL_EXECUTIONS*50];
         public static List<float> firstConvFilterWeights = new List<float>();
+        public static int[] networkIndex = new int[Params.MAX_PARALLEL_KERNEL_EXECUTIONS];
 
         // for residual tower
         public static List<float> convFilterWeights = new List<float>();
@@ -58,7 +59,6 @@ namespace TicTacToe_DL_RL
 
         // output of NN
         public static float[] output = new float[(Params.MAX_PARALLEL_KERNEL_EXECUTIONS) *26];
-        public static List<int> networkIndex = new List<int>();
 
         // opencl buffers
         static private ComputeBuffer<float> CB_input;
@@ -97,7 +97,8 @@ namespace TicTacToe_DL_RL
         static private ComputeContext context;
         static private ComputeContextPropertyList properties;
         static private ComputeKernel kernel;
-        static private ComputeCommandQueue commands;
+        static private ComputeCommandQueue commandQueue1;
+        static private ComputeCommandQueue commandQueue2;
 
         public static void Init(int maxChannels)
         {
@@ -117,12 +118,12 @@ namespace TicTacToe_DL_RL
         public static void Run()
         {
             int nofProcessedNets = 0;
-            int nextOutput = 10000;
+            int nextOutput = 100000;
             while (true)
             {
-                input.Clear();
-                networkIndex.Clear();
                 int nofInputsFound = 0;
+                int inputIndex = 0;
+                int networkIndexIndex = 0;
                 for (int i = 0; i < Params.MAX_PARALLEL_KERNEL_EXECUTIONS; ++i)
                 {
                     Job job = null;
@@ -132,9 +133,11 @@ namespace TicTacToe_DL_RL
                         nofInputsFound++;
                         for (int j = 0; j < job.input.Count; ++j)
                         {
-                            input.Add(job.input[j]);
+                            input[inputIndex] = job.input[j];
+                            inputIndex++;
                         }
-                        networkIndex.Add(job.globalID);
+                        networkIndex[networkIndexIndex] = job.globalID;
+                        networkIndexIndex++;
                     }
                     else
                     {
@@ -145,16 +148,16 @@ namespace TicTacToe_DL_RL
                 if (nofProcessedNets > nextOutput)
                 {
                     Console.WriteLine("OpenCL: Received a total of " + nofProcessedNets + " NN inputs");
-                    nextOutput += 10000;
+                    nextOutput += 100000;
                 }
 
                 if (nofInputsFound > 0)
                 {
-                    RunKernels();
+                    RunKernels(networkIndexIndex);
 
                     // as long as the output is same order as input we can distribute the output with fifo queues as they came in
                     int outputCount = 0;
-                    for (int i = 0; i < networkIndex.Count; ++i)
+                    for (int i = 0; i < networkIndexIndex; ++i)
                     {
                         Job job = new Job();
                         for (int j = 0; j < 26; ++j)
@@ -201,7 +204,8 @@ namespace TicTacToe_DL_RL
             // Create the kernel function and set its arguments.
             kernel = program.CreateKernel("NN");
             // Create the command queue. This is used to control kernel execution and manage read/write/copy operations.
-            commands = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
+            commandQueue1 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
+            commandQueue2 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
         }
 
         public static void EnqueueWeights(NeuralNetwork nn)
@@ -272,17 +276,12 @@ namespace TicTacToe_DL_RL
             BNBetas.Clear();
             BNGammas.Clear();
         }
-        public static void RunKernels()
+        public static void RunKernels(int nofKernels)
         {
-            CB_input = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, input.ToArray());
-            CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, networkIndex.ToArray());
-            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly, output.Length); // only specify length?
-
             try
             {
-                kernel.SetMemoryArgument(0, CB_input);
-                kernel.SetMemoryArgument(24, CB_networkIndex);
-                kernel.SetMemoryArgument(23, CB_output);
+                commandQueue1.WriteToBuffer(input, CB_input, false, null);
+                commandQueue1.WriteToBuffer(networkIndex, CB_networkIndex, false, null);
 
                 // Create the event wait list. An event list is not really needed for this example but it is important to see how it works.
                 // Note that events (like everything else) consume OpenCL resources and creating a lot of them may slow down execution.
@@ -292,13 +291,14 @@ namespace TicTacToe_DL_RL
                 // Execute the kernel "count" times. After this call returns, "eventList" will contain an event associated with this command.
                 // If eventList == null or typeof(eventList) == ReadOnlyCollection<ComputeEventBase>, a new event will not be created.
 
-                commands.Execute(kernel, null, new long[] { networkIndex.Count }, null, null);
+                commandQueue1.Execute(kernel, null, new long[] { nofKernels}, null, null);
+                commandQueue1.Flush();
 
                 // Read back the results. If the command-queue has out-of-order execution enabled (default is off), ReadFromBuffer 
                 // will not execute until any previous events in eventList (in our case only eventList[0]) are marked as complete 
                 // by OpenCL. By default the command-queue will execute the commands in the same order as they are issued from the host.
                 // eventList will contain two events after this method returns.
-                commands.ReadFromBuffer(CB_output, ref output, false, null); // , eventList
+                commandQueue1.ReadFromBuffer(CB_output, ref output, true, null); // , eventList
 
                 // A blocking "ReadFromBuffer" (if 3rd argument is true) will wait for itself and any previous commands
                 // in the command queue or eventList to finish execution. Otherwise an explicit wait for all the opencl commands 
@@ -309,10 +309,7 @@ namespace TicTacToe_DL_RL
                 //eventList.Wait();
 
                 // 2) Or simply use
-                commands.Finish();
-                CB_input.Dispose();
-                CB_networkIndex.Dispose();
-                CB_output.Dispose();
+                //commandQueue1.Finish();
             }
             catch (Exception e)
             {
@@ -360,6 +357,10 @@ namespace TicTacToe_DL_RL
             CB_policyBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, policyBiases.ToArray());
             CB_convFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convFilterWeights.ToArray());
 
+            CB_input = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, input);
+            CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, networkIndex);
+            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly, Params.MAX_PARALLEL_KERNEL_EXECUTIONS*26); // only specify length?
+
             try
             {
                 kernel.SetMemoryArgument(1, CB_firstConvFilterWeights);
@@ -392,6 +393,10 @@ namespace TicTacToe_DL_RL
 
                 kernel.SetMemoryArgument(21, CB_policyBiases);
                 kernel.SetMemoryArgument(22, CB_convFilterWeights);
+
+                kernel.SetMemoryArgument(0, CB_input);
+                kernel.SetMemoryArgument(24, CB_networkIndex);
+                kernel.SetMemoryArgument(23, CB_output);
             }
             catch (Exception e)
             {

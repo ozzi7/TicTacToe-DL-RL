@@ -10,6 +10,7 @@ namespace TicTacToe_DL_RL
     {
         // HARDWARE SETTINGS
         public static bool GPU_ENABLED = true;
+        //public static int GPU_THREADS_AND_QUEUES = 2;
         public static int MAX_PARALLEL_KERNEL_EXECUTIONS = 2304; // opencl calls at most MAX_PARALLEL_KERNEL_EXECUTIONS and less if not enough data arrived from CPU
 
         public static int MAX_THREADS_CPU = 64; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
@@ -21,7 +22,7 @@ namespace TicTacToe_DL_RL
 
         // NEUROEVOLUTION PARAMS
         public static int NOF_EPOCHS = 10000000;
-        public static int NOF_OFFSPRING = 32; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
+        public static int NOF_OFFSPRING = 50; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
         public static int NOF_GAMES_PER_OFFSPRING = 24;
         public static int NOF_GAMES_TEST = 32; // must be 2n for equal tests of player X and player Z
         public static int NOF_GAMES_VS_RANDOM = 32;

@@ -4,13 +4,12 @@ see https://arxiv.org/pdf/1712.06567.pdf
 temperature in addition or replacement to dirichlet noise
 see https://github.com/LeelaChessZero/lczero/blob/release/src/UCTSearch.cpp
 hyperparameter tuning
-distribution 
--> use random seeds to distribute nodes and build client/server architecture
-port to opencl
+use random seeds to distribute nodes and build client/server architecture
+port to opencl DONE
+add second command queue and more clever batching for GPU
 node hashing
-virtual batchnorm, DONE
--> prevent local minimum
-virtual visits for MCTS to OpenCL port
+virtual batchnorm -> prevent local minimum DONE
+virtual visits for MCTS to OpenCL port DONE
 what about loops in MCTS tree?
 change cpuct value (its not a constant)
 http://blog.lczero.org/2018/12/alphazero-paper-and-lc0-v0191.html
