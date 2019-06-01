@@ -1,12 +1,12 @@
-﻿static inline void Convolution(float* input, float* output, constant float* convWeights,
-    int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index, int networkIndex)
+﻿static inline void Convolution(int sizeOfOutput, float* input, float* output, constant float* convWeights,
+    int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index, int networkOffset)
 {
     // convolution on gameboard_width*5*depth
     // with nofFilters filters of filterWidth*filterHeight*nofInputPlanes size
     // resulting in gameboard_width*5*x volume
     // zero padding
 
-    for (int u = 0; u < sizeof(output)/sizeof(float); ++u)
+    for (int u = 0; u < sizeOfOutput; ++u)
     {
         output[u] = 0.0f;
     }
@@ -33,7 +33,7 @@
                             output[i * 5 * 5 + k * 5 + l] += 
                                 input[j * 5 * 5 + k * 5 + l] *
                                 convWeights[
-									networkIndex * nofFilters * nofInputPlanes * filterHeight * filterWidth +
+									networkOffset +
                                     index * nofFilters * nofInputPlanes * filterHeight * filterWidth +
                                     i * nofInputPlanes * filterHeight * filterWidth + 
                                     j * filterHeight * filterWidth +
@@ -46,35 +46,35 @@
         }
     }
     // after summing all values, divide by number of summed up fields
-    for (int u = 0; u < sizeof(output)/sizeof(float); ++u)
+    for (int u = 0; u < sizeOfOutput; ++u)
     {
         output[u] /= nofInputPlanes * filterHeight * filterWidth;
     }
 }
-static inline void BN(float* input, float* output, constant float* BNMeans, constant float* BNStdDev, 
+static inline void BN(int sizeofInput, float* input, float* output, constant float* BNMeans, constant float* BNStdDev, 
 	int nofFilters, int index, constant float* BNGammas, constant float* BNBetas, int networkIndex)
 {
     // without residual add
     for (int i = 0; i < nofFilters; ++i)
     {
         // go through each plane coming into BN and apply to each element the means and stddev..
-        for (int j = 0; j < (sizeof(input)/sizeof(float))/nofFilters; ++j)
+        for (int j = 0; j < sizeofInput/nofFilters; ++j)
         {
-            // we know the size of one plane by dividing input through number of plans (input.length/noffilters)
+            // we know the size of one plane by dividing input through number of planes (input.length/noffilters)
             // batch norm/ batch stddev
             /* see Alg 1: https://arxiv.org/pdf/1502.03167.pdf */
-            float x_til = (float)((input[i * (sizeof(input)/sizeof(float))/ nofFilters + j] - BNMeans[networkIndex*index * nofFilters  + index * nofFilters + i])/
-                (sqrt(BNStdDev[networkIndex*index * nofFilters + index * nofFilters + i]+0.01f)));
-            output[i * (sizeof(input)/sizeof(float)) / nofFilters + j] = BNGammas[networkIndex *index * nofFilters + index * nofFilters + i] *
-					x_til+BNBetas[networkIndex *index * nofFilters + index * nofFilters + i];
+            float x_til = (float)((input[i * sizeofInput/ nofFilters + j] - BNMeans[networkIndex +  index * nofFilters + i])/
+                (sqrt(BNStdDev[networkIndex +  index * nofFilters + i]+0.0001f)));
+            output[i * sizeofInput / nofFilters + j] = BNGammas[networkIndex + index * nofFilters + i] *
+					x_til+BNBetas[networkIndex + index * nofFilters + i];
 
             // relu
-            if (output[i * (sizeof(input)/sizeof(float)) / nofFilters + j] < 0.0f)
-                output[i* (sizeof(input)/sizeof(float)) / nofFilters + j] = 0.0f;
+            if (output[i * sizeofInput / nofFilters + j] < 0.0f)
+                output[i* sizeofInput / nofFilters + j] = 0.0f;
         }
     }
 }
-static inline void BNWithResidual(float* input, float* output, float* residual, constant float* BNMeans, constant float* BNStdDev, 
+static inline void BNWithResidual(int sizeofInput,float* input, float* output, float* residual, constant float* BNMeans, constant float* BNStdDev, 
 	int nofFilters, int index, constant float* BNGammas, constant float* BNBetas, int networkIndex)
 {
     for (int i = 0; i < nofFilters; ++i)
@@ -82,32 +82,32 @@ static inline void BNWithResidual(float* input, float* output, float* residual, 
         for (int j = 0; j < 5 * 5; ++j)
         {
             // batch norm/ batch stddev
-            float x_til = (float)((input[i * (sizeof(input)/sizeof(float)) / nofFilters + j] + 
-                residual[i * (sizeof(input)/sizeof(float)) / nofFilters + j] - BNMeans[networkIndex *index * nofFilters + index * nofFilters + i]) /
-                (sqrt(BNStdDev[networkIndex *index * nofFilters + index * nofFilters + i] + 0.01f)));
+            float x_til = (float)((input[i * sizeofInput/ nofFilters + j] + 
+                residual[i * sizeofInput / nofFilters + j] - BNMeans[networkIndex + index * nofFilters + i]) /
+                (sqrt(BNStdDev[networkIndex +index * nofFilters + i] + 0.01f)));
 
-            output[i * (sizeof(input)/sizeof(float)) / nofFilters + j] = BNGammas[networkIndex*index * nofFilters + index * nofFilters + i] * x_til + 
-																		BNBetas[networkIndex*index * nofFilters + index * nofFilters + i];
+            output[i * sizeofInput / nofFilters + j] = BNGammas[networkIndex + index * nofFilters + i] * x_til + 
+																		BNBetas[networkIndex + index * nofFilters + i];
 
             // relu
-            if (output[i * (sizeof(input)/sizeof(float)) / nofFilters + j] < 0.0f)
-                output[i * (sizeof(input)/sizeof(float)) / nofFilters + j] = 0.0f;
+            if (output[i * sizeofInput / nofFilters + j] < 0.0f)
+                output[i * sizeofInput / nofFilters + j] = 0.0f;
         }
     }
 }
-static inline void FCLayer(float* input, float* output, constant float* connectionWeights, constant float* outputBiases, bool rectifier, int outputIndex, int outputBiasesIndex)
+static inline void FCLayer(int sizeofInput, int sizeofOutput, float* input, float* output, constant float* connectionWeights, constant float* outputBiases, bool rectifier, int connectionWeightIndex, int outputBiasesIndex)
 {
-    for (int u = 0; u < (sizeof(output)/sizeof(float)); ++u)
+    for (int u = 0; u < sizeofOutput; ++u)
     {
         output[u] = 0.0f;
     }
-    for (int i = 0; i < (sizeof(output)/sizeof(float)); ++i)
+    for (int i = 0; i < sizeofOutput; ++i)
     {
-        for (int j = 0; j < (sizeof(input)/sizeof(float)); ++j)
+        for (int j = 0; j < sizeofInput; ++j)
         {
-            output[i] += input[j] * connectionWeights[outputIndex + i * (sizeof(input)/sizeof(float)) + j];
+            output[i] += input[j] * connectionWeights[connectionWeightIndex + i * sizeofInput + j];
         }
-        output[i] /= (sizeof(input)/sizeof(float));
+        output[i] /= sizeofInput;
         output[i] += outputBiases[outputBiasesIndex + i];
 
         if(rectifier && output[i] < 0.0f)
@@ -119,7 +119,7 @@ static inline void FCLayer(float* input, float* output, constant float* connecti
 static inline void Softmax(float* input, float* output, float temperature)
 {
     // must be input length == output length
-	float alpha = FLT_MIN;	
+	float alpha = -FLT_MAX;	
 	for(int i = 0; i < 25; ++i) {
 		if(input[i] >= alpha) {
 			alpha = input[i];
@@ -128,21 +128,21 @@ static inline void Softmax(float* input, float* output, float temperature)
     alpha /= temperature;
 
     float denom = 0.0f;
-    float helper[(sizeof(output)/sizeof(float))];
-    for (int i = 0; i < (sizeof(output)/sizeof(float)); i++) {
+    float helper[25];
+    for (int i = 0; i < 25; i++) {
         float val = (float)exp((input[i] / temperature) - alpha);
         helper[i] = val;
         denom += val;
     }
 
-    for (int i = 0; i < (sizeof(output)/sizeof(float)); ++i)
+    for (int i = 0; i < 25; ++i)
     {
         output[i] = helper[i] / denom;
     }
 }
-static inline void Rectifier(float* data)
+static inline void Rectifier(int sizeofData, float* data)
 {
-    for (int i = 0; i < (sizeof(data)/sizeof(float)); ++i)
+    for (int i = 0; i < sizeofData; ++i)
     { 
         // relu
         if (data[i] < 0.0f)
@@ -182,7 +182,7 @@ kernel void NN(
 // for residual tower
 	constant float* convFilterWeights,
 // output
-	global float* results,
+	global float* output,
 // identify the run
 	constant int* _networkIndex) // which NN weights to use from global memory
 {
@@ -196,6 +196,8 @@ kernel void NN(
 
     private int filterWidth = 3;
     private int filterHeight = 3;
+	private int gameboardWidth = 5;
+	private int gameboardHeight = 5;
     private int nofPlanes = 2;
 	private int nofOutputPolicies = 25; // policy net has 9 outputs (1 per potential move)
 	private int nofOutputValues = 1; // value head has 1 output
@@ -214,12 +216,12 @@ kernel void NN(
     private float inputResidualLayer[6 * 5 * 5]; // nofFilters *..
 	private float inputFCLayerPolicy[4 * 5* 5]; // nofpolicyplanes * ..
 	private float outputValueData[4 * 5 * 5]; // nofvalueplanes* ..
-	private float outputPolicyData[4 * 5 * 5]; // nofvalueplanes* ..
-	private float localInput[5*5*2];
+	private float outputPolicyData[5 * 5]; // nofvalueplanes* ..
+	private float localInput[5*5*2]; 
 	private float temporaryValueData[8]; // valueHiddenLayerSize
 
-    float softmaxPolicy[25]; // nofoutputpolicies
-    float winrateOut[1];
+    private float softmaxPolicy[25]; // nofOutputPolicies
+    private float winrateOut[1];
 
 	// copy input to inputreslayer because of access specifiers which may not change and because the input output is 
 	// swapped to conv function call we also cant change the specifier in the argument, plus should be faster anyway
@@ -230,43 +232,64 @@ kernel void NN(
 	////////////////////////////////////////////// start of network eval //////////////////////////////////////////////
 	
 	/*Conv layer */
-    Convolution(localInput, outputConvFilter, firstConvFilterWeights, nofPlanes, nofFilters, filterWidth, filterHeight, 0, networkIndex);
-    BN(outputConvFilter, inputResidualLayer, BNMeans, BNStddev, nofFilters, 0, BNGammas, BNBetas, networkIndex);
+	private int networkOffsetConv = networkIndex*nofFilters* nofPlanes * filterHeight * filterWidth; 
+    Convolution(6 * 5 * 5, localInput, outputConvFilter, firstConvFilterWeights, nofPlanes, nofFilters, filterWidth, filterHeight, 0, networkOffsetConv);
+
+	private int networkOffsetBN = networkIndex*nofConvLayers * nofFilters; 
+    BN(6 * 5 * 5, outputConvFilter, inputResidualLayer, BNMeans, BNStddev, nofFilters, 0, BNGammas, BNBetas, networkOffsetBN);
 
     /*Residual tower*/
+	networkOffsetConv = networkIndex * (2 * nofResidualLayers) * nofFilters * nofFilters * filterHeight * filterWidth;
     for (int index = 0; index < nofResidualLayers; index += 1) 
 	{
-        Convolution(inputResidualLayer, outputResidualLayer, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2, networkIndex);
-        BN(outputResidualLayer, outputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+1, BNGammas, BNBetas, networkIndex);
-        Convolution(outputResidualLayer, temporary, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2+1, networkIndex);
-        BNWithResidual(temporary, outputResidualLayer, inputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+2, BNGammas, BNBetas, networkIndex);
+        Convolution(6 * 5 * 5, inputResidualLayer, outputResidualLayer, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2, networkOffsetConv);
+        BN(6 * 5 * 5, outputResidualLayer, outputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+1, BNGammas, BNBetas, networkIndex);
+        Convolution(6 * 5 * 5, outputResidualLayer, temporary, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2+1, networkOffsetConv);
+        BNWithResidual(6 * 5 * 5, temporary, outputResidualLayer, inputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+2, BNGammas, BNBetas, networkIndex);
                 
         // temporary holds result
-		for(int z = 0; z < (sizeof(outputResidualLayer)/sizeof(float)); ++z) {
+		for(int z = 0; z < 6 * 5 * 5; ++z) {
 			inputResidualLayer[z] = outputResidualLayer[z];
 		}
     }
 
     /*value head*/
-    Convolution(inputResidualLayer, outputValueData, convWeightsValue1, nofFilters, nofValuePlanes, 1, 1, 0, networkIndex);
-    BN(outputValueData, outputValueData, BNMeansValue, BNStddevValue, nofValuePlanes, 0, BNGammaValue, BNBetaValue, networkIndex);
-    FCLayer(outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true, 25*2*8*networkIndex, 8*networkIndex); // with rectifier
-    FCLayer(temporaryValueData, winrateOut, convWeightsValue2, valueBiasLast, false, 8*networkIndex, networkIndex); // 1 output, 1 bias
+	networkOffsetBN = networkIndex*nofValuePlanes; 
+	networkOffsetConv = networkIndex * nofFilters* nofValuePlanes;
+
+    Convolution(4 * 5 * 5, inputResidualLayer, outputValueData, convWeightsValue1, nofFilters, nofValuePlanes, 1, 1, 0, networkOffsetConv);
+    BN(4 * 5 * 5, outputValueData, outputValueData, BNMeansValue, BNStddevValue, nofValuePlanes, 0, BNGammaValue, BNBetaValue, networkOffsetBN);
+
+	private int networkOffsetFCLayer = networkIndex * gameboardHeight * gameboardWidth*nofValuePlanes * valueHiddenLayerSize;
+	private int networkOffsetFCLayer2 = networkIndex * valueHiddenLayerSize;
+
+    FCLayer(4 * 5 * 5, 8, outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true, networkOffsetFCLayer, networkOffsetFCLayer2); // with rectifier
+
+	networkOffsetFCLayer = networkIndex * valueHiddenLayerSize;
+	networkOffsetFCLayer2 = networkIndex;
+
+    FCLayer(8, 1, temporaryValueData, winrateOut, convWeightsValue2, valueBiasLast, false, networkOffsetFCLayer, networkOffsetFCLayer2); // 1 output, 1 bias
     float winrateSig = (1.0f + tanh(winrateOut[0])) / 2.0f;
 
     /*policy head*/
-    Convolution(inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, nofFilters, nofPolicyPlanes, 1, 1, 0, networkIndex);
-    BN(inputFCLayerPolicy, inputFCLayerPolicy, BNMeansPolicy, BNStddevPolicy, nofPolicyPlanes, 0, BNGammaPolicy, BNBetaPolicy, networkIndex);
-    FCLayer(inputFCLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false, 25*2*25*networkIndex, 25*networkIndex); // without rectifier
+	networkOffsetBN = networkIndex*nofPolicyPlanes; 
+	networkOffsetConv = networkIndex * nofPolicyPlanes* nofFilters;
+    Convolution(4 * 5* 5, inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, nofFilters, nofPolicyPlanes, 1, 1, 0, networkOffsetConv);
+    BN(4*5*5, inputFCLayerPolicy, inputFCLayerPolicy, BNMeansPolicy, BNStddevPolicy, nofPolicyPlanes, 0, BNGammaPolicy, BNBetaPolicy, networkOffsetBN);
+
+	networkOffsetFCLayer = networkIndex * gameboardHeight * gameboardWidth* nofPolicyPlanes * nofOutputPolicies;
+	networkOffsetFCLayer2 = networkIndex*nofOutputPolicies;
+
+    FCLayer(4*5*5, 5*5, inputFCLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false, networkOffsetFCLayer, networkOffsetFCLayer2); // without rectifier
     Softmax(outputPolicyData, softmaxPolicy, softmaxTemperature);
 
 	////////////////////////////////////////////// end of network eval //////////////////////////////////////////////
 
 	for(int i = 0; i < 25; ++i) 
 	{
-		results[outputIndex+i] = softmaxPolicy[i];
+		output[outputIndex+i] = softmaxPolicy[i];
 	}
-	results[outputIndex+25] = winrateSig;	
+	output[outputIndex+25] = winrateSig;	
 }
 
 /*	See http://developer.amd.com/wordpress/media/2013/07/AMD_Accelerated_Parallel_Processing_OpenCL_Programming_Guide-rev-2.7.pdf

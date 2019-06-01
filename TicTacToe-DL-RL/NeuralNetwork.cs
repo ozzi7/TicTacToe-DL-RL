@@ -42,8 +42,8 @@ namespace TicTacToe_DL_RL
 
         // for policy layer
         public float[] convWeightsPolicy = new float[nofPolicyPlanes* nofFilters]; // weights 1x1xnofplanes filters
-        public float[] BNMeansPolicy = new float[nofPolicyPlanes]; // weights
-        public float[] BNStddevPolicy = new float[nofPolicyPlanes]; // weights
+        public float[] BNMeansPolicy = new float[nofPolicyPlanes]; // weights UNTRAINABLE
+        public float[] BNStddevPolicy = new float[nofPolicyPlanes]; // weights UNTRAINABLE
         public float[] BNBetaPolicy = new float[nofPolicyPlanes];
         public float[] BNGammaPolicy = new float[nofPolicyPlanes];
         public float[] policyConnectionWeights = new float[gameboardHeight * gameboardWidth* nofPolicyPlanes * nofOutputPolicies]; // weights
@@ -54,8 +54,8 @@ namespace TicTacToe_DL_RL
         // for value layer
         public float[] convWeightsValue1 = new float[nofFilters* nofValuePlanes]; // 1x1 filters, 32 of them for 64 input planes // weights
         public float[] convWeightsValue2 = new float[valueHiddenLayerSize]; // weights
-        public float[] BNMeansValue = new float[nofValuePlanes]; // weights
-        public float[] BNStddevValue = new float[nofValuePlanes]; // weights
+        public float[] BNMeansValue = new float[nofValuePlanes]; // weights UNTRAINABLE
+        public float[] BNStddevValue = new float[nofValuePlanes]; // weights UNTRAINABLE
         public float[] BNBetaValue = new float[nofValuePlanes];
         public float[] BNGammaValue = new float[nofValuePlanes];
         public float[] valueConnectionWeights = new float[gameboardHeight * gameboardWidth*nofValuePlanes * valueHiddenLayerSize]; // weights
