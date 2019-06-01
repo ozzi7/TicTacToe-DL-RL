@@ -260,7 +260,7 @@ namespace TicTacToe_DL_RL
             List<int> movecount = new List<int>();
             List<int> winsX = new List<int>();
             List<int> winsZ = new List<int>();
-            List<float> winrateVsRand = new List<float>();
+            List<float> winsVsRand = new List<float>();
 
             nns = new List<NeuralNetwork>();
             currnns = new List<NeuralNetwork>();
@@ -273,7 +273,7 @@ namespace TicTacToe_DL_RL
                 movecount.Add(0);
                 winsX.Add(0);
                 winsZ.Add(0);
-                winrateVsRand.Add(0);
+                winsVsRand.Add(0);
 
                 NeuralNetwork previousNN = new NeuralNetwork(bestNN.weights, bestNN.untrainable_weights);
                 nns.Add(previousNN);
@@ -455,9 +455,9 @@ namespace TicTacToe_DL_RL
                 {
                     NeuralNetwork currentNN = currnns[i];
                     Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
-                    winrateVsRand[i] += PlayAgainstRandom(1, currentNN, evaluationNetworkPlayer);
+                    winsVsRand[i] += PlayAgainstRandom(currentNN, evaluationNetworkPlayer);
                 });
-                winrateVsRandTotal = (float)winrateVsRand.Average();
+                winrateVsRandTotal = (float)winsVsRand.Average();
                 winrateVsRandMovingAvg.ComputeAverage((decimal)winrateVsRandTotal);
             }
             else
@@ -482,70 +482,70 @@ namespace TicTacToe_DL_RL
         /// Play against random player
         /// </summary>
         /// <param name="nofGames"></param>
-        /// <returns>Winrate</returns>
-        public float PlayAgainstRandom(int nofGames, NeuralNetwork NN, Player evaluationNetworkPlayer)
+        /// <returns>1 if game is won by NN player</returns>
+        public float PlayAgainstRandom(NeuralNetwork NN, Player evaluationNetworkPlayer)
         {
-            float totalWinsAgainstRandom = 0;
-            float totalGamesAgainstRandom = 0;
-            for (int j = 0; j < nofGames; ++j)
+            List<Tuple<int, int>> history = new List<Tuple<int, int>>();
+
+            TicTacToeGame game = new TicTacToeGame();
+
+            float result = 0.0f;
+            Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
+
+            for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
             {
-                List<Tuple<int, int>> history = new List<Tuple<int, int>>();
+                MCTSRootNode.Value = new TicTacToePosition(game.position);
 
-                TicTacToeGame game = new TicTacToeGame();
-
-                float result = 0.0f;
-                Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
-
-                for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
+                if (game.IsOver())
                 {
-                    MCTSRootNode.Value = new TicTacToePosition(game.position);
-
-                    if (game.IsOver())
+                    result = game.GetScore();
+                    if (evaluationNetworkPlayer == Player.X && result == 1 ||
+                        evaluationNetworkPlayer == Player.Z && result == -1)
                     {
-                        result = game.GetScore();
-                        break;
-                    }
-
-                    DirichletNoise dn = new DirichletNoise(game.GetMoves().Count);
-                    // for root node (all root nodes not just the actual game start)
-                    // also tree use makes this a bit less effective going down the tree, maybe use temperature later
-
-                    int best_child_index = -1;
-                    if (game.position.sideToMove == evaluationNetworkPlayer)
-                    {
-                        for (int simulation = 0; simulation < Params.NOF_SIMS_PER_MOVE_TRAINING; ++simulation)
-                        {
-                            SearchUsingNN(MCTSRootNode, NN);
-                        }
-                        best_child_index = findBestChildWinrate(MCTSRootNode, dn, curr_ply);
-                        //best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
+                        return 1;
                     }
                     else
-                    {
-                        SearchUsingNN(MCTSRootNode, NN); // just in case we dont create the children properly for random player
-                        best_child_index = RandomNr.GetInt(0, MCTSRootNode.Children.Count);
-                    }
-
-                    List<Tuple<int, int>> moves = game.GetMoves();
-                    Tuple<int, int> move = moves[best_child_index]; // add randomness here
-                    game.DoMove(move);
-                    history.Add(move);
-
-                    /* tree re-use */
-                    MCTSRootNode = MCTSRootNode.Children[best_child_index];
-                    MCTSRootNode.parent = null; // remove the tree above new root -> free memory, don't propagate wins 
+                        return 0;
                 }
 
-                result = game.position.score;
+                DirichletNoise dn = new DirichletNoise(game.GetMoves().Count);
+                // for root node (all root nodes not just the actual game start)
+                // also tree use makes this a bit less effective going down the tree, maybe use temperature later
 
-                if (evaluationNetworkPlayer == Player.X && result == 1 ||
-                    evaluationNetworkPlayer == Player.Z && result == -1)
+                int best_child_index = -1;
+                if (game.position.sideToMove == evaluationNetworkPlayer)
                 {
-                    totalWinsAgainstRandom++;
+                    for (int simulation = 0; simulation < Params.NOF_SIMS_PER_MOVE_TESTING; ++simulation)
+                    {
+                        SearchUsingNN(MCTSRootNode, NN);
+                    }
+                    best_child_index = findBestChildWinrate(MCTSRootNode, dn, curr_ply);
+                    //best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
                 }
-                totalGamesAgainstRandom++;
+                else
+                {
+                    SearchUsingNN(MCTSRootNode, NN); // just in case we dont create the children properly for random player
+                    best_child_index = RandomNr.GetInt(0, MCTSRootNode.Children.Count);
+                }
+
+                List<Tuple<int, int>> moves = game.GetMoves();
+                Tuple<int, int> move = moves[best_child_index]; // add randomness here
+                game.DoMove(move);
+                history.Add(move);
+
+                /* tree re-use */
+                MCTSRootNode = MCTSRootNode.Children[best_child_index];
+                MCTSRootNode.parent = null; // remove the tree above new root -> free memory, don't propagate wins 
             }
-            return totalWinsAgainstRandom / totalGamesAgainstRandom;
+
+            result = game.position.score;
+
+            if (evaluationNetworkPlayer == Player.X && result == 1 ||
+                evaluationNetworkPlayer == Player.Z && result == -1)
+            {
+                return 1;
+            }
+            return 0;
         }
         /// <summary>
         /// 
