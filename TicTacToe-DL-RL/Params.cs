@@ -26,12 +26,14 @@ namespace TicTacToe_DL_RL
         public static int NOF_GAMES_PER_OFFSPRING = 24;
         public static int NOF_GAMES_TEST = 32; // must be 2n for equal tests of player X and player Z
         public static int NOF_GAMES_VS_RANDOM = 32;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 80; // could/should be time
-        public static int NOF_SIMS_PER_MOVE_TESTING = 80; // could/should be time
-
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 10; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TESTING = 10; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
+        public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
+        public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;
         public static float C_PUCT = 4.0f; // in theory sqrt(2), in practice usually higher (=more exploration) for training
         public static float NOISE_SIGMA = 0.1f;  // noise standard deviation 0.1 (default), 0.01 ok
-        public static float LEARNING_RATE = 0.0005f;
+        public static float LEARNING_RATE = 0.01f;
         public static float WEIGHT_DECAY_FACTOR = 0.99f;
         public static float DIRICHLET_NOISE_WEIGHT;
         public static DIRICHLET_NOISE_SCALING DN_SCALING = DIRICHLET_NOISE_SCALING.CONSTANT; // as a function of depth in mcts search tree

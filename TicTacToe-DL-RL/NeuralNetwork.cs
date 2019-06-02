@@ -227,10 +227,10 @@ namespace TicTacToe_DL_RL
                 // set nn input
                 for (int k = 0; k < Params.boardSizeX * Params.boardSizeY; ++k)
                 {   // the board itself
-                    input[k] = RandomNr.GetInt(-1,2);
+                    input[k] = RandomGen2.Next(-1,2);
                 }
 
-                int sideToMove = RandomNr.GetInt(0, 2) * 2 -1;
+                int sideToMove = RandomGen2.Next(0, 2) * 2 -1;
                 for (int k = 0; k < Params.boardSizeX * Params.boardSizeY; ++k)
                 {   // whose turn it is
                     input[Params.boardSizeX * Params.boardSizeY + k] = sideToMove;

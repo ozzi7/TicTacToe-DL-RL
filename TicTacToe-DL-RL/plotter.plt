@@ -2,6 +2,7 @@ filepath = ".\\bin\\Release\\plotdata.txt"
 set terminal wxt size 1280,800
 
 while (1) {
+	set key opaque
 	set key left top
 	set key box
 	set multiplot
@@ -15,7 +16,9 @@ while (1) {
 	plot filepath using 2 with lines title "Winrate Player X (starts) [against self]" lw 3,\
 	'' using 3 with lines title "Winrate Player Z [against self]" lw 3,\
 	'' using 4 with lines title "Drawrate [against self]" lw 3,\
-	'' using 6 with lines title "Winrate [against random]" lw 3
+	'' using 6 with lines title "Winrate [against random 80 nodes]" lw 3, \
+	'' using 7 with lines title "Winrate [against random 10 nodes]" lw 3, \
+	'' using 8 with lines title "Winrate [against random 1 node]" lw 3 linetype 14
 
 	set ytics auto
 	set y2tics auto

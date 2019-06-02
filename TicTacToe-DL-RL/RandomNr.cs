@@ -9,14 +9,7 @@ namespace TicTacToe_DL_RL
     public static class RandomNr
     {
         private static Random random = new Random();
-        public static int GetInt(int fromInclusive, int toExclusive)
-        {
-            return random.Next(fromInclusive, toExclusive);
-        }
-        public static float GetFloat(int from, int to)
-        {
-            return (float)(from + random.NextDouble() * (to - from));
-        }
+
         public static float GetGaussianFloat()
         {
             double u1 = 1.0 - random.NextDouble(); //uniform(0,1] random doubles
@@ -24,6 +17,24 @@ namespace TicTacToe_DL_RL
             double randStdNormal = Math.Sqrt(-2.0 * Math.Log(u1)) *
                          Math.Sin(2.0 * Math.PI * u2); //random normal(0,1)
             return (float)randStdNormal;
+        }
+    }
+    public static class RandomGen2
+    {
+        private static Random _global = new Random();
+        [ThreadStatic]
+        private static Random _local;
+
+        public static int Next(int from, int to)
+        {
+            Random inst = _local;
+            if (inst == null)
+            {
+                int seed;
+                lock (_global) seed = _global.Next();
+                _local = inst = new Random(seed);
+            }
+            return inst.Next(from, to);
         }
     }
 }

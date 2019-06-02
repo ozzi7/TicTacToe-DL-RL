@@ -23,8 +23,7 @@ namespace TicTacToe_DL_RL
 
 
             /* to load from file */
-            //NN.ReadWeightsFromFile("weights_net_8.txt");
-            //NN.CalculateVirtualBNs();
+            //NN.ReadWeightsFromFile("weights_net_22.txt");
 
             Trainer trainer = new Trainer(NN);
             trainer.Train();
