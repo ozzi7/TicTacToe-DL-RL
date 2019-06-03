@@ -98,7 +98,7 @@ namespace TicTacToe_DL_RL
         static private ComputeContextPropertyList properties;
         static private ComputeKernel kernel;
         static private ComputeCommandQueue commandQueue1;
-        static private ComputeCommandQueue commandQueue2;
+        //static private ComputeCommandQueue commandQueue2;
 
         public static void Init(int maxChannels)
         {
@@ -205,7 +205,7 @@ namespace TicTacToe_DL_RL
             kernel = program.CreateKernel("NN");
             // Create the command queue. This is used to control kernel execution and manage read/write/copy operations.
             commandQueue1 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
-            commandQueue2 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
+            //commandQueue2 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
         }
 
         public static void EnqueueWeights(NeuralNetwork nn)

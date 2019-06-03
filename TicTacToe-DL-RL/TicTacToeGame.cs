@@ -138,8 +138,6 @@ namespace TicTacToe_DL_RL
         /// <param name="history"></param>
         public void DisplayHistory(List<Tuple<int, int>> history)
         {
-            Console.WriteLine("Played game:");
-
             foreach (var move in history)
             {
                 DoMove(move);

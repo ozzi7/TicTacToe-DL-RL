@@ -224,9 +224,9 @@ namespace TicTacToe_DL_RL
             // rewards[i] is total reward for the games of player i
             for (int i = 0; i < rewards.Count; ++i)
             {
-                rewards[i] = (rewards[i] > 0) ? rewards[i] : 0; // set reward to 0 if negative
+                //rewards[i] = (rewards[i] > 0) ? rewards[i] : 0; // set reward to 0 if negative
             }
-            Console.WriteLine("Main Thread: Average training reward (ignoring negative rewards): " + Math.Round(rewards.Average(), 2));
+            Console.WriteLine("Main Thread: Average training reward: " + Math.Round(rewards.Average(), 2));
 
             /* normalize rewards */
             float mean = rewards.Average();
@@ -339,8 +339,16 @@ namespace TicTacToe_DL_RL
                         movecount[jk] += history.Count;
 
                         /* to display some games (debugging)*/
-                        if (run % Params.SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH == 0 && jk == Params.NOF_GAMES_TEST - 1)
+                        if (run % Params.SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH == 0 && jk >= Params.NOF_GAMES_TEST - 2)
                         {
+                            if(jk % 2 == 0)
+                            {
+                                Console.WriteLine("Sample game where Evaluation Player is X");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Sample game where Evaluation Player is Z");
+                            }
                             TicTacToeGame game = new TicTacToeGame();
                             game.DisplayHistory(history);
                         }
@@ -484,12 +492,6 @@ namespace TicTacToe_DL_RL
                 winrateVsRandMovingAvg3.ComputeAverage((decimal)winrateVsRandTotal3);
                 Console.WriteLine("Main Thread: Wins/Games vs Random Player (" + Params.NOF_SIMS_PER_MOVE_VS_RANDOM3 + " Nodes): " + Math.Round(winrateVsRandTotal3 * 100,2) + "%");
             }
-            else
-            {
-                winrateVsRandMovingAvg1.ComputeAverage((decimal)winrateVsRandTotal1);
-                winrateVsRandMovingAvg2.ComputeAverage((decimal)winrateVsRandTotal2);
-                winrateVsRandMovingAvg3.ComputeAverage((decimal)winrateVsRandTotal3);
-            }
 
             // #################################### WRITE PLOTTING STATISTICS ##########################################
 
@@ -612,38 +614,22 @@ namespace TicTacToe_DL_RL
                 {
                     calculateNNOutput(MCTSRootNodeNN2, NN2);
                 }
-                if (train)
+                int nofSimsPerMove = train ? Params.NOF_SIMS_PER_MOVE_TRAINING : Params.NOF_SIMS_PER_MOVE_TESTING;
+
+                for (int simulation = 0; simulation < nofSimsPerMove; ++simulation)
                 {
-                    for (int simulation = 0; simulation < Params.NOF_SIMS_PER_MOVE_TESTING; ++simulation)
+                    if(curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
+                        SearchUsingNN(MCTSRootNodeNN1, NN1); // expand tree and improve accuracy at MCTSRootNode
+                    else
+                        SearchUsingNN(MCTSRootNodeNN2, NN2); // expand tree and improve accuracy at MCTSRootNode
+
+                    // show last simulation tree
+                    if (simulation == nofSimsPerMove - 1 && curr_ply == 0)
                     {
-                        if(curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
-                            SearchUsingNN(MCTSRootNodeNN1, NN1); // expand tree and improve accuracy at MCTSRootNode
-                        else
-                            SearchUsingNN(MCTSRootNodeNN2, NN2); // expand tree and improve accuracy at MCTSRootNode
-
-                        // show last simulation tree
-                        if (simulation == Params.NOF_SIMS_PER_MOVE_TESTING - 1 && curr_ply == 0)
-                        {
-                            // DisplayMCTSTree(MCTSRootNode);
-                        }
-                    }
-
-                }
-                else
-                {
-                    for (int simulation = 0; simulation < Params.NOF_SIMS_PER_MOVE_TRAINING; ++simulation)
-                    {
-                        if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
-                            SearchUsingNN(MCTSRootNodeNN1, NN1); // expand tree and improve accuracy at MCTSRootNode
-                        else
-                            SearchUsingNN(MCTSRootNodeNN2, NN2); // expand tree and improve accuracy at MCTSRootNode
-
-                        if (simulation == Params.NOF_SIMS_PER_MOVE_TRAINING - 1 && curr_ply == 0)
-                        {
-                            //DisplayMCTSTree(MCTSRootNode);
-                        }
+                        //DisplayMCTSTree(MCTSRootNode);
                     }
                 }
+
                 int best_child_index = -1;
                 if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
                     best_child_index = findBestChildWinrate(MCTSRootNodeNN1, dn, curr_ply);
@@ -911,7 +897,7 @@ namespace TicTacToe_DL_RL
                 }
                 else
                 {
-                    if (currNode.nn_policy == null)
+                    if (currNode.nn_policy == null && !currNode.waitingForGPUPrediction)
                     {
                         calculateNNOutputGPU(currNode, NN, queue);
                         propagateVirtualLoss(currNode);
@@ -1104,7 +1090,7 @@ namespace TicTacToe_DL_RL
                 float bestUCTScore = float.NegativeInfinity;
                 int bestChildIndex = -1;
 
-                List<float> winratesChildren = new List<float>(); // we want to check if all children have 0 winrates and policy doesnt exist, because then it is better 
+                //List<float> winratesChildren = new List<float>(); // we want to check if all children have 0 winrates and policy doesnt exist, because then it is better 
                 // to choose a random child not the last one
 
                 // if nnpolicy is null then also all children have no nn output, but possibly a score from endgame position
@@ -1113,7 +1099,7 @@ namespace TicTacToe_DL_RL
                     // this factors in all virtual losses into the winrate
                     float childWinrateWithVirtualLoss = (currNode.Children[i].winrate * currNode.Children[i].visitCount) /
                         (currNode.Children[i].visitCount + currNode.Children[i].virtualLossCount+1);
-                    winratesChildren.Add(childWinrateWithVirtualLoss);
+                    //winratesChildren.Add(childWinrateWithVirtualLoss);
 
                     float temp_UCT_score = childWinrateWithVirtualLoss;
                     if (currNode.nn_policy != null)
@@ -1121,7 +1107,12 @@ namespace TicTacToe_DL_RL
                         temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *
                             (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
                     }
-
+                    else
+                    {
+                        // assume policy equal for all children if not found yet
+                        temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * (1.0f/currNode.Children.Count) *
+                            (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
+                    }
                     if (temp_UCT_score > bestUCTScore)
                     {
                         // new best child 
@@ -1129,10 +1120,10 @@ namespace TicTacToe_DL_RL
                         bestUCTScore = temp_UCT_score;
                     }
                 }
-                if(winratesChildren.Sum() == 0 && currNode.nn_policy == null)
-                {
-                    bestChildIndex = RandomGen2.Next(0, moves.Count);
-                }
+                //if(winratesChildren.Sum() == 0 && currNode.nn_policy == null)
+                //{
+                //    bestChildIndex = RandomGen2.Next(0, moves.Count);
+                //}
 
                 currNode = currNode.Children[bestChildIndex];
             }
