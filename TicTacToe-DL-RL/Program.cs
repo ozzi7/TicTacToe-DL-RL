@@ -17,16 +17,20 @@ namespace TicTacToe_DL_RL
             NeuralNetwork NN = new NeuralNetwork();
 
             /* to create a new network */
-            NN.CalculateVirtualBNs();
-            NN.SaveWeightsToFile("weights_start.txt");
-            NN.ReadWeightsFromFile("weights_start.txt");
+            //NN.InitializeWeights(1.0f);
+            //NN.InitializeWeightsTo0();
+            //NN.CalculateVirtualBNs();
+            //NN.SaveWeightsToFile("weights_start.txt");
+            //NN.ReadWeightsFromFile("weights_start.txt");
 
 
             /* to load from file */
-            //NN.ReadWeightsFromFile("weights_net_9.txt");
-
+            //NN.ReadWeightsFromFile("weights_net_14_longgpurun.txt");
+            NN.ReadWeightsFromFileKeras("./../../../Training/weights.txt"); 
             Trainer trainer = new Trainer(NN);
-            trainer.Train();
+           // trainer.Train();
+            //trainer.ProduceTrainingGamesKeras(10);
+            trainer.CheckPerformanceVsRandomKeras(100);
         }
     }
 }

@@ -23,7 +23,7 @@ namespace TicTacToe_DL_RL
         public static ChannelReader<Job> reader; 
 
         // for input layer
-        public static float[] input = new float[Params.MAX_PARALLEL_KERNEL_EXECUTIONS*50];
+        public static float[] input = new float[Params.MAX_PARALLEL_KERNEL_EXECUTIONS*3*25];
         public static List<float> firstConvFilterWeights = new List<float>();
         public static int[] networkIndex = new int[Params.MAX_PARALLEL_KERNEL_EXECUTIONS];
 
@@ -41,7 +41,7 @@ namespace TicTacToe_DL_RL
 
         // for value layer
         public static List<float> convWeightsValue1 = new List<float>();
-        public static List<float> convWeightsValue2 = new List<float>();
+        public static List<float> valueConnectionWeights2 = new List<float>();
         public static List<float> BNMeansValue = new List<float>();
         public static List<float> BNStddevValue = new List<float>();
         public static List<float> BNBetaValue = new List<float>();
@@ -69,7 +69,7 @@ namespace TicTacToe_DL_RL
         static private ComputeBuffer<float> CB_BNGammas;
 
         static private ComputeBuffer<float> CB_convWeightsValue1;
-        static private ComputeBuffer<float> CB_convWeightsValue2;
+        static private ComputeBuffer<float> CB_valueConnectionWeights2;
         static private ComputeBuffer<float> CB_BNMeansValue;
         static private ComputeBuffer<float> CB_BNStddevValue;
         static private ComputeBuffer<float> CB_BNBetaValue;
@@ -153,11 +153,11 @@ namespace TicTacToe_DL_RL
 
                 if (nofInputsFound > 0)
                 {
-                    RunKernels(networkIndexIndex);
+                    RunKernels(nofInputsFound);
 
                     // as long as the output is same order as input we can distribute the output with fifo queues as they came in
                     int outputCount = 0;
-                    for (int i = 0; i < networkIndexIndex; ++i)
+                    for (int i = 0; i < nofInputsFound; ++i)
                     {
                         Job job = new Job();
                         for (int j = 0; j < 26; ++j)
@@ -226,7 +226,7 @@ namespace TicTacToe_DL_RL
 
             // for value layer
             convWeightsValue1.AddRange(nn.convWeightsValue1);
-            convWeightsValue2.AddRange(nn.convWeightsValue2);
+            valueConnectionWeights2.AddRange(nn.valueConnectionWeights2);
             BNMeansValue.AddRange(nn.BNMeansValue);
             BNStddevValue.AddRange(nn.BNStddevValue);
             BNBetaValue.AddRange(nn.BNBetaValue);
@@ -260,7 +260,7 @@ namespace TicTacToe_DL_RL
 
             // for value layer
             convWeightsValue1.Clear();
-            convWeightsValue2.Clear();
+            valueConnectionWeights2.Clear();
             BNMeansValue.Clear();
             BNStddevValue.Clear();
             BNBetaValue.Clear();
@@ -334,7 +334,7 @@ namespace TicTacToe_DL_RL
             CB_BNGammas = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNGammas.ToArray());
 
             CB_convWeightsValue1 = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convWeightsValue1.ToArray());
-            CB_convWeightsValue2 = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convWeightsValue2.ToArray());
+            CB_valueConnectionWeights2 = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, valueConnectionWeights2.ToArray());
 
             CB_BNMeansValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNMeansValue.ToArray());
             CB_BNStddevValue = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, BNStddevValue.ToArray());
@@ -362,6 +362,7 @@ namespace TicTacToe_DL_RL
 
             try
             {
+                kernel.SetMemoryArgument(0, CB_input);
                 kernel.SetMemoryArgument(1, CB_firstConvFilterWeights);
 
                 kernel.SetMemoryArgument(2, CB_BNMeans);
@@ -371,31 +372,30 @@ namespace TicTacToe_DL_RL
 
 
                 kernel.SetMemoryArgument(6, CB_convWeightsValue1);
-                kernel.SetMemoryArgument(7, CB_convWeightsValue2);
+                kernel.SetMemoryArgument(7, CB_valueConnectionWeights2);
 
                 kernel.SetMemoryArgument(8, CB_BNMeansValue);
                 kernel.SetMemoryArgument(9, CB_BNStddevValue);
                 kernel.SetMemoryArgument(10, CB_BNBetaValue);
-
                 kernel.SetMemoryArgument(11, CB_BNGammaValue);
+
                 kernel.SetMemoryArgument(12, CB_valueConnectionWeights);
                 kernel.SetMemoryArgument(13, CB_valueBiases);
                 kernel.SetMemoryArgument(14, CB_valueBiasLast);
 
                 kernel.SetMemoryArgument(15, CB_convWeightsPolicy);
+
                 kernel.SetMemoryArgument(16, CB_BNMeansPolicy);
                 kernel.SetMemoryArgument(17, CB_BNStddevPolicy);
-
                 kernel.SetMemoryArgument(18, CB_BNBetaPolicy);
                 kernel.SetMemoryArgument(19, CB_BNGammaPolicy);
+
                 kernel.SetMemoryArgument(20, CB_policyConnectionWeights);
-
                 kernel.SetMemoryArgument(21, CB_policyBiases);
-                kernel.SetMemoryArgument(22, CB_convFilterWeights);
 
-                kernel.SetMemoryArgument(0, CB_input);
-                kernel.SetMemoryArgument(24, CB_networkIndex);
+                kernel.SetMemoryArgument(22, CB_convFilterWeights);
                 kernel.SetMemoryArgument(23, CB_output);
+                kernel.SetMemoryArgument(24, CB_networkIndex);
             }
             catch (Exception e)
             {

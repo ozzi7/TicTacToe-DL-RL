@@ -25,7 +25,7 @@ namespace TicTacToe_DL_RL
         [ThreadStatic]
         private static Random _local;
 
-        public static int Next(int from, int to)
+        public static int Next(int fromInclusive, int toExclusive)
         {
             Random inst = _local;
             if (inst == null)
@@ -34,7 +34,7 @@ namespace TicTacToe_DL_RL
                 lock (_global) seed = _global.Next();
                 _local = inst = new Random(seed);
             }
-            return inst.Next(from, to);
+            return inst.Next(fromInclusive, toExclusive);
         }
     }
 }

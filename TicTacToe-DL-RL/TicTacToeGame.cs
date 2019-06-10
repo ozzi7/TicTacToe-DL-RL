@@ -209,5 +209,19 @@ namespace TicTacToe_DL_RL
 
             return returnString + boardString + "\n";
         }
+        public override int GetHashCode()
+        {
+            int hash = 0;
+            int index = 1;
+            for (int i = 0; i < 5; ++i)
+            {
+                for (int j = 0; j < 5; ++j)
+                {
+                    hash = hash + (gameBoard[i, j]*(int)Math.Pow(index,2)); // convert -1,0,1 to 0,1,2
+                }
+            }
+            hash = sideToMove == Player.X ? hash : hash *(-1);
+            return hash;
+        }
     }
 }
