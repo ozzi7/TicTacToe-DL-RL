@@ -204,9 +204,9 @@ namespace TicTacToe_DL_RL
             float totalWinsAsX = winsX.Sum();
             float totalWinsAsZ = winsZ.Sum();
             float totalDraws = draws.Sum();
-            drawsMovingAvg.ComputeAverage((Decimal)totalDraws);
-            winsAsXMovingAvg.ComputeAverage((Decimal)totalWinsAsX);
-            winsAsZMovingAvg.ComputeAverage((Decimal)totalWinsAsZ);
+            drawsMovingAvg.ComputeAverage((Decimal)totalDraws/Params.NOF_GAMES_TEST);
+            winsAsXMovingAvg.ComputeAverage((Decimal)totalWinsAsX/Params.NOF_GAMES_TEST);
+            winsAsZMovingAvg.ComputeAverage((Decimal)totalWinsAsZ/Params.NOF_GAMES_TEST);
 
             if (((totalWins + 0.5f * totalDraws) / Params.NOF_GAMES_TEST) * 100.0f > Params.MINIMUM_WIN_PERCENTAGE)
             {
@@ -286,7 +286,7 @@ namespace TicTacToe_DL_RL
         /// <returns></returns>
         public String ProduceTrainingGamesKeras(NeuralNetwork nn, int nofGames)
         {
-            Console.WriteLine("Main Thread: Creating " + nofGames + " training samples...");
+            Console.WriteLine("Main Thread: Creating " + nofGames + " training games...");
 
             List<NeuralNetwork> nns = new List<NeuralNetwork>();
             List<NeuralNetwork> currnns = new List<NeuralNetwork>();
