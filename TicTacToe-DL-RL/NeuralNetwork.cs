@@ -91,7 +91,10 @@ namespace TicTacToe_DL_RL
         {
 
         }
-
+        /// <summary>
+        /// Use this for keras weight, since it doesn't have untrainable params
+        /// </summary>
+        /// <param name="aWeights"></param>
         public NeuralNetwork(List<float> aWeights)
         {
             weights = new List<float>(aWeights);

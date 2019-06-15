@@ -22,7 +22,7 @@ namespace TicTacToe_DL_RL
 
         public static float EPS = 0.001f; // for numerical stability in square roots etc.
 
-        // NEUROEVOLUTION PARAMS
+        // NEUROEVOLUTION + BP PARAMS
         public static int NOF_EPOCHS = 10000000;
         public static int NOF_OFFSPRING = 10; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
         public static int NOF_GAMES_PER_OFFSPRING = 10;
@@ -44,6 +44,9 @@ namespace TicTacToe_DL_RL
         public static int SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH = 20;
         public static int SAVE_WEIGHT_EVERY_XTH_EPOCH = 20;
         public static String PLOT_FILENAME = "plotdata.txt";
+
+        // BP only
+        public static int NOF_GAMES_TRAIN_KERAS = 100;
 
         // GAME SPECIFIC 
         public static int MAXIMUM_PLYS = 100; // when to stop playing a game completely and declare draw (in tic tac toe game is always finished in 100 moves)

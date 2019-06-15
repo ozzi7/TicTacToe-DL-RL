@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Threading;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace TicTacToe_DL_RL
 {
@@ -37,7 +38,9 @@ namespace TicTacToe_DL_RL
             if (Params.GPU_ENABLED)
                 OpenCL.Init(Math.Max(Params.NOF_OFFSPRING*2, Params.NOF_GAMES_TEST*2));
         }
-
+        /// <summary>
+        /// Main loop for neuroevolution training
+        /// </summary>
         public void Train()
         {
             bestNN = new NeuralNetwork(currentNN.weights, currentNN.untrainable_weights);
@@ -49,6 +52,65 @@ namespace TicTacToe_DL_RL
                 TrainingRun(i);
                 if (i % Params.SAVE_WEIGHT_EVERY_XTH_EPOCH == 0)
                     currentNN.SaveWeightsToFile("weights_net_" + ((int)(i / Params.SAVE_WEIGHT_EVERY_XTH_EPOCH)).ToString() + ".txt");
+            }
+        }
+        /// <summary>
+        /// Main loop for Backpropagation training
+        /// </summary>
+        public void TrainKeras()
+        {
+            bestNN = new NeuralNetwork(currentNN.weights);
+
+            while (true)
+            {
+                Console.WriteLine("Epoch start");
+
+                String filename = ProduceTrainingGamesKeras(bestNN, Params.NOF_GAMES_TRAIN_KERAS);
+
+                ProcessStartInfo pythonInfo = new ProcessStartInfo();
+                Process python;
+                pythonInfo.FileName = @"python.exe";//@"C:\Users\Admin\Anaconda3\envs\NALU\python.exe";
+                pythonInfo.Arguments = "\"Z:\\CloudStation\\GitHub Projects\\TicTacToe-DL-RL\\Training\\main.py \" " + filename; // TODO: should be relative
+                pythonInfo.CreateNoWindow = false;
+                pythonInfo.UseShellExecute = false;
+
+                var location = new Uri(Assembly.GetEntryAssembly().GetName().CodeBase);
+                String exePath = new FileInfo(location.AbsolutePath).Directory.FullName;
+
+                pythonInfo.RedirectStandardOutput = true;
+
+                Console.WriteLine("Invoking python script...");
+                python = Process.Start(pythonInfo);
+
+                // the old network, we do this while waiting for python
+                CheckPerformanceVsRandomKeras(bestNN, 20);
+
+                while (!python.StandardOutput.EndOfStream)
+                {
+                    string line = python.StandardOutput.ReadLine();
+                    Console.WriteLine(line);
+                }
+
+                python.WaitForExit();
+                python.Close();
+
+                // #################################### TEST NEW NETWORK ##########################################
+
+                currentNN.ReadWeightsFromFileKeras("./../../../Training/weights.txt"); // must have been created with python script
+                bool newBestFound = CheckPerformanceVsOldNet(currentNN, bestNN);
+
+                // #################################### CREATE NEW BEST NETWORK ##########################################
+
+
+                if (newBestFound)
+                {  
+                    bestNN.weights = new List<float>(currentNN.weights);
+                    bestNN.ParseWeightsKeras();
+
+                    printPolicy(bestNN);
+                }
+
+                WritePlotStatistics();
             }
         }
         public void ValidateOuput()
@@ -72,19 +134,103 @@ namespace TicTacToe_DL_RL
             Console.WriteLine("Value " + prediction.Item2);
             Console.WriteLine("\n");
         }
-        public void CheckPerformanceVsRandomKeras(int nofGames)
+        /// <summary>
+        /// Keras only, returns whether network should be replaced
+        /// </summary>
+        /// <param name="nofGames"></param>
+        /// <param name="newNN"></param>
+        /// <param name="oldNN"></param>
+        public bool CheckPerformanceVsOldNet(NeuralNetwork newNN, NeuralNetwork oldNN)
         {
-            bestNN = new NeuralNetwork(currentNN.weights);
+            Stopwatch sw = new Stopwatch();
+            Console.WriteLine("Main Thread: CPU test games starting...");
 
+            List<int> wins = new List<int>(new int[Params.NOF_GAMES_TEST]);
+            List<int> draws = new List<int>(new int[Params.NOF_GAMES_TEST]);
+            List<int> losses = new List<int>(new int[Params.NOF_GAMES_TEST]);
+            List<int> movecount = new List<int>(new int[Params.NOF_GAMES_TEST]);
+            List<int> winsX = new List<int>(new int[Params.NOF_GAMES_TEST]);
+            List<int> winsZ = new List<int>(new int[Params.NOF_GAMES_TEST]);
+
+            List<NeuralNetwork> nns = new List<NeuralNetwork>();
+            List<NeuralNetwork> currnns = new List<NeuralNetwork>();
+
+            for (int i = 0; i < Params.NOF_GAMES_TEST; ++i)
+            {
+                NeuralNetwork tempNN = new NeuralNetwork(oldNN.weights);
+                nns.Add(tempNN);
+
+                tempNN = new NeuralNetwork(newNN.weights);
+                currnns.Add(tempNN);
+            }
+
+            Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
+            Parallel.For(0, Params.NOF_GAMES_TEST, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
+            {
+                List<Tuple<int, int>> history = new List<Tuple<int, int>>();
+                Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
+
+                int result = PlayOneGame(history, evaluationNetworkPlayer, currnns[i], nns[i], false);
+
+                if (result == 1)
+                    winsX[i]++;
+                else if (result == -1)
+                    winsZ[i]++;
+
+                if (evaluationNetworkPlayer == Player.X && result == 1 ||
+                    evaluationNetworkPlayer == Player.Z && result == -1)
+                    wins[i]++;
+                else if (result == 0)
+                    draws[i]++;
+                else
+                    losses[i]++;
+
+                movecount[i] += history.Count;
+
+                /* to display some games (debugging)*/
+                if (i >= Params.NOF_GAMES_TEST - 2)
+                {
+                    if ((i % 2) == 0)
+                        Console.WriteLine("Eval player playing as Player X");
+                    else
+                        Console.WriteLine("Eval player playing as Player Z");
+                    TicTacToeGame game = new TicTacToeGame();
+                    game.DisplayHistory(history);
+                }
+            });
+
+            bool plsReplaceMe = false;
+            float totalWins = wins.Sum();
+            float totalWinsAsX = winsX.Sum();
+            float totalWinsAsZ = winsZ.Sum();
+            float totalDraws = draws.Sum();
+            drawsMovingAvg.ComputeAverage((Decimal)totalDraws);
+            winsAsXMovingAvg.ComputeAverage((Decimal)totalWinsAsX);
+            winsAsZMovingAvg.ComputeAverage((Decimal)totalWinsAsZ);
+
+            if (((totalWins + 0.5f * totalDraws) / Params.NOF_GAMES_TEST) * 100.0f > Params.MINIMUM_WIN_PERCENTAGE)
+            {
+                plsReplaceMe = true;
+
+                currentPseudoELO += (float)(totalWins - (Params.NOF_GAMES_TEST-totalDraws-totalWins)) / (float)Params.NOF_GAMES_TEST;
+            }
+
+            sw.Stop();
+            Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds + "ms");
+
+            return plsReplaceMe;
+        }
+        public void CheckPerformanceVsRandomKeras(NeuralNetwork nn, int nofGames)
+        {
             List<NeuralNetwork>  nns = new List<NeuralNetwork>();
             List<NeuralNetwork>  currnns = new List<NeuralNetwork>();
 
             for (int i = 0; i < nofGames; ++i)
             {
-                NeuralNetwork previousNN = new NeuralNetwork(bestNN.weights);
+                NeuralNetwork previousNN = new NeuralNetwork(nn.weights);
                 nns.Add(previousNN);
 
-                NeuralNetwork newNN = new NeuralNetwork(currentNN.weights);
+                NeuralNetwork newNN = new NeuralNetwork(nn.weights);
                 currnns.Add(newNN);
             }
 
@@ -120,26 +266,37 @@ namespace TicTacToe_DL_RL
             winrateVsRandMovingAvg3.ComputeAverage((decimal)winrateVsRandTotal3);
             Console.WriteLine("Main Thread: Wins/Games vs Random Player (" + Params.NOF_SIMS_PER_MOVE_VS_RANDOM3 + " Nodes): " + Math.Round(winrateVsRandTotal3 * 100, 2) + "%");
         }
+
+        public void WritePlotStatistics()
+        {
+            // #################################### WRITE PLOTTING STATISTICS ##########################################
+
+            using (System.IO.StreamWriter file = new System.IO.StreamWriter(Params.PLOT_FILENAME, true))
+            {
+                file.WriteLine(currentPseudoELO + " " + Math.Round(winsAsXMovingAvg.Average, 2) + " " +
+                    Math.Round(winsAsZMovingAvg.Average, 2) + " " + Math.Round(drawsMovingAvg.Average, 2) + " " +
+                    Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg1.Average, 2)
+                    + " " + Math.Round(winrateVsRandMovingAvg2.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg3.Average, 2));
+            }
+        }
         /// <summary>
         /// Return file name for games
         /// </summary>
         /// <param name="nofGames"></param>
         /// <returns></returns>
-        public String ProduceTrainingGamesKeras(int nofGames)
+        public String ProduceTrainingGamesKeras(NeuralNetwork nn, int nofGames)
         {
             Console.WriteLine("Main Thread: Creating " + nofGames + " training samples...");
-
-            bestNN = new NeuralNetwork(currentNN.weights);
 
             List<NeuralNetwork> nns = new List<NeuralNetwork>();
             List<NeuralNetwork> currnns = new List<NeuralNetwork>();
 
             for (int i = 0; i < nofGames; ++i)
             {
-                NeuralNetwork playingNNlocal = new NeuralNetwork(currentNN.weights);
+                NeuralNetwork playingNNlocal = new NeuralNetwork(nn.weights);
                 nns.Add(playingNNlocal);
 
-                NeuralNetwork currNNlocal = new NeuralNetwork(currentNN.weights);
+                NeuralNetwork currNNlocal = new NeuralNetwork(nn.weights);
                 currnns.Add(currNNlocal);
             }
 
@@ -199,6 +356,7 @@ namespace TicTacToe_DL_RL
         public void TrainingRun(int run)
         {
             Console.WriteLine("Main Thread: Epoch start");
+
             //################################# GENERATE NEW WEIGHTS ###########################################
 
             Console.WriteLine("Main Thread: Creating new offspring weights...");
@@ -573,7 +731,7 @@ namespace TicTacToe_DL_RL
 
 
             // #################################### CREATE NEW BEST NETWORK ##########################################
-            if (((winsTotal+drawsTotal*0.5)/ Params.NOF_GAMES_TEST)*100.0f < Params.MINIMUM_WIN_PERCENTAGE)
+            if (((winsTotal+drawsTotal*0.5f)/ Params.NOF_GAMES_TEST)*100.0f < Params.MINIMUM_WIN_PERCENTAGE)
             {
                 // bad new network, ignore it
                 currentPseudoELO += 0;
@@ -641,15 +799,7 @@ namespace TicTacToe_DL_RL
                 Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds + "ms");
             }
 
-            // #################################### WRITE PLOTTING STATISTICS ##########################################
-
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter(Params.PLOT_FILENAME, true))
-            {
-                file.WriteLine(currentPseudoELO + " " + Math.Round(winsAsXMovingAvg.Average, 2) + " " +
-                    Math.Round(winsAsZMovingAvg.Average, 2) + " " + Math.Round(drawsMovingAvg.Average, 2) + " " +
-                    Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg1.Average, 2)
-                    + " " + Math.Round(winrateVsRandMovingAvg2.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg3.Average, 2));
-            }
+            WritePlotStatistics();
         }
         /// <summary>
         /// Play against random player
