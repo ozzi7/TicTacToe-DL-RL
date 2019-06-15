@@ -152,11 +152,10 @@ namespace TicTacToe_DL_RL
             }
             List<float> scores = new List<float>(nofGames);
             scores.AddRange(Enumerable.Repeat(0.0f, nofGames));
-            Params.DIRICHLET_NOISE_WEIGHT = 0.5f;
+            Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
             Parallel.For(0, nofGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
-                Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
-
+                Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z; // doesnt really matter for 2 equal networks
                 scores[i] = RecordOneGame(moves[i], policies[i], evaluationNetworkPlayer, currnns[i], nns[i], true);
             });
 
@@ -693,14 +692,14 @@ namespace TicTacToe_DL_RL
                 {
                     for (int simulation = 0; simulation < nofSimsPerMove; ++simulation)
                     {
-                        SearchUsingNN(MCTSRootNode, NN);
+                        SearchUsingNN(MCTSRootNode, NN, curr_ply);
                     }
                     //best_child_index = findBestChildWinrate(MCTSRootNode, dn, curr_ply);
-                    best_child_index = findBestChildVisitCount(MCTSRootNode, dn, curr_ply);
+                    best_child_index = findBestChildVisitCount(MCTSRootNode);
                 }
                 else
                 {
-                    SearchUsingNN(MCTSRootNode, NN); // just in case we dont create the children properly for random player
+                    SearchUsingNN(MCTSRootNode, NN, curr_ply); // just in case we dont create the children properly for random player
                     best_child_index = RandomGen2.Next(0, MCTSRootNode.Children.Count);
                 }
 
@@ -754,21 +753,21 @@ namespace TicTacToe_DL_RL
                 /* find value, policy */
                 if (MCTSRootNodeNN1.nn_policy == null)
                 {
-                    calculateNNOutput(MCTSRootNodeNN1, NN1);
+                    calculateNNOutputWithNoise(MCTSRootNodeNN1, NN1, curr_ply);
                 }
                 createChildren(MCTSRootNodeNN2);
                 if (MCTSRootNodeNN2.nn_policy == null)
                 {
-                    calculateNNOutput(MCTSRootNodeNN2, NN2);
+                    calculateNNOutputWithNoise(MCTSRootNodeNN2, NN2, curr_ply);
                 }
                 int nofSimsPerMove = train ? Params.NOF_SIMS_PER_MOVE_TRAINING : Params.NOF_SIMS_PER_MOVE_TESTING;
 
                 for (int simulation = 0; simulation < nofSimsPerMove; ++simulation)
                 {
                     if(curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
-                        SearchUsingNN(MCTSRootNodeNN1, NN1); // expand tree and improve accuracy at MCTSRootNode
+                        SearchUsingNN(MCTSRootNodeNN1, NN1, curr_ply); // expand tree and improve accuracy at MCTSRootNode
                     else
-                        SearchUsingNN(MCTSRootNodeNN2, NN2); // expand tree and improve accuracy at MCTSRootNode
+                        SearchUsingNN(MCTSRootNodeNN2, NN2, curr_ply); // expand tree and improve accuracy at MCTSRootNode
 
                     // show last simulation tree
                     if (simulation == nofSimsPerMove - 1 && curr_ply == 0)
@@ -780,10 +779,10 @@ namespace TicTacToe_DL_RL
                 int best_child_index = -1;
                 if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
                     //best_child_index = findBestChildWinrate(MCTSRootNodeNN1, dn, curr_ply);
-                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN1, dn, curr_ply);
+                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN1);
                 else
                     //best_child_index = findBestChildWinrate(MCTSRootNodeNN2, dn, curr_ply);
-                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN2, dn, curr_ply);
+                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN2);
 
                 List<Tuple<int, int>> moves = game.GetMoves();
                 Tuple<int, int> move = moves[best_child_index]; // add randomness here
@@ -832,21 +831,21 @@ namespace TicTacToe_DL_RL
                 /* find value, policy */
                 if (MCTSRootNodeNN1.nn_policy == null)
                 {
-                    calculateNNOutput(MCTSRootNodeNN1, NN1);
+                    calculateNNOutputWithNoise(MCTSRootNodeNN1, NN1, curr_ply);
                 }
                 createChildren(MCTSRootNodeNN2);
                 if (MCTSRootNodeNN2.nn_policy == null)
                 {
-                    calculateNNOutput(MCTSRootNodeNN2, NN2);
+                    calculateNNOutputWithNoise(MCTSRootNodeNN2, NN2, curr_ply);
                 }
                 int nofSimsPerMove = train ? Params.NOF_SIMS_PER_MOVE_TRAINING : Params.NOF_SIMS_PER_MOVE_TESTING;
 
                 for (int simulation = 0; simulation < nofSimsPerMove; ++simulation)
                 {
                     if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
-                        SearchUsingNN(MCTSRootNodeNN1, NN1); // expand tree and improve accuracy at MCTSRootNode
+                        SearchUsingNN(MCTSRootNodeNN1, NN1, curr_ply); // expand tree and improve accuracy at MCTSRootNode
                     else
-                        SearchUsingNN(MCTSRootNodeNN2, NN2); // expand tree and improve accuracy at MCTSRootNode
+                        SearchUsingNN(MCTSRootNodeNN2, NN2, curr_ply); // expand tree and improve accuracy at MCTSRootNode
 
                     // show last simulation tree
                     if (simulation == nofSimsPerMove - 1 && curr_ply == 0)
@@ -903,10 +902,10 @@ namespace TicTacToe_DL_RL
                 int best_child_index = -1;
                 if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
                     //best_child_index = findBestChildWinrate(MCTSRootNodeNN1, dn, curr_ply);
-                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN1, dn, curr_ply);
+                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN1);
                 else
                     //best_child_index = findBestChildWinrate(MCTSRootNodeNN2, dn, curr_ply);
-                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN2, dn, curr_ply);
+                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN2);
 
                 List<Tuple<int, int>> moves = game.GetMoves();
                 Tuple<int, int> move = moves[best_child_index]; // add randomness here
@@ -1037,10 +1036,10 @@ namespace TicTacToe_DL_RL
                 int best_child_index = -1;
                 if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
                    // best_child_index = findBestChildWinrate(MCTSRootNodeNN1, dn, curr_ply);
-                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN1, dn, curr_ply);
+                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN1);
                 else
                     //best_child_index = findBestChildWinrate(MCTSRootNodeNN2, dn, curr_ply);
-                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN2, dn, curr_ply);
+                    best_child_index = findBestChildVisitCount(MCTSRootNodeNN2);
 
                 //int best_child_index = findBestChildVisitCount(MCTSRootNode, dn);
 
@@ -1064,7 +1063,7 @@ namespace TicTacToe_DL_RL
         /// </summary>
         /// <param name="currNode"></param>
         /// <returns>Eval</returns>
-        private void SearchUsingNN(Node<TicTacToePosition> currNode, NeuralNetwork NN)
+        private void SearchUsingNN(Node<TicTacToePosition> currNode, NeuralNetwork NN, int depth)
         {
             TicTacToeGame game = new TicTacToeGame(currNode.Value);
             List<Tuple<int, int>> moves = game.GetMoves();
@@ -1085,7 +1084,7 @@ namespace TicTacToe_DL_RL
                 {
                     if (currNode.nn_policy == null)
                     {
-                        calculateNNOutput(currNode, NN);
+                        calculateNNOutputWithNoise(currNode, NN, depth);
                     }
                     score = currNode.nn_value;
                 }
@@ -1095,7 +1094,7 @@ namespace TicTacToe_DL_RL
                 /* find value, policy */
                 if (currNode.nn_policy == null)
                 {
-                    calculateNNOutput(currNode, NN);
+                    calculateNNOutputWithNoise(currNode, NN, depth);
                 }
 
                 /* create children of normal leaf */
@@ -1115,7 +1114,7 @@ namespace TicTacToe_DL_RL
                     {
                         if (currNode.nn_policy == null)
                         {
-                            calculateNNOutput(currNode, NN);
+                            calculateNNOutputWithNoise(currNode, NN, depth);
                         }
                         score = currNode.nn_value;
                     }
@@ -1124,7 +1123,7 @@ namespace TicTacToe_DL_RL
                 {
                     if (currNode.nn_policy == null)
                     {
-                        calculateNNOutput(currNode, NN);
+                        calculateNNOutputWithNoise(currNode, NN, depth);
                     }
 
                     score = currNode.nn_value; // [0..1] where player X wins at 1 and player Z wins at 0
@@ -1337,7 +1336,7 @@ namespace TicTacToe_DL_RL
             }
             return noiseWeight;
         }
-        private int findBestChildWinrate(Node<TicTacToePosition> currNode, DirichletNoise dn, int depth)
+        private int findBestChildWinrate(Node<TicTacToePosition> currNode)
         {
             float best_winrate = float.NegativeInfinity;
             int best_child_index = -1;
@@ -1345,9 +1344,7 @@ namespace TicTacToe_DL_RL
             /* add dirichlet noise to root */
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
-                float noiseWeight = getNoiseWeight(depth);
-               
-                float winrate_temp = currNode.Children[i].winrate * (1 - noiseWeight) + noiseWeight * dn.GetNoise(i);
+                float winrate_temp = currNode.Children[i].winrate;
                 if (winrate_temp > best_winrate)
                 {
                     best_winrate = winrate_temp;
@@ -1357,16 +1354,14 @@ namespace TicTacToe_DL_RL
 
             return best_child_index;
         }
-        private int findBestChildVisitCount(Node<TicTacToePosition> currNode, DirichletNoise dn, int depth)
+        private int findBestChildVisitCount(Node<TicTacToePosition> currNode)
         {
             float best_visit_count = 0;
             int best_child_index = -1;
 
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
-                float noiseWeight = getNoiseWeight(depth);
-
-                float tempvisitCount = currNode.Children[i].visitCount * (1 - noiseWeight) + noiseWeight * dn.GetNoise(i);
+                float tempvisitCount = currNode.Children[i].visitCount;
                 if (tempvisitCount > best_visit_count)
                 {
                     best_visit_count = tempvisitCount;
@@ -1398,6 +1393,19 @@ namespace TicTacToe_DL_RL
             Tuple<float[], float> prediction = NN.Predict(currNode.Value);
             currNode.nn_policy = new List<float>(prediction.Item1);
             currNode.nn_value = prediction.Item2;
+        }
+        private void calculateNNOutputWithNoise(Node<TicTacToePosition> currNode, NeuralNetwork NN, int depth)
+        {
+            Tuple<float[], float> prediction = NN.Predict(currNode.Value);
+            currNode.nn_policy = new List<float>(prediction.Item1);
+            currNode.nn_value = prediction.Item2;
+
+            DirichletNoise dn = new DirichletNoise(Params.boardSizeX * Params.boardSizeY);
+            for (int i = 0; i < Params.boardSizeX * Params.boardSizeY; ++i)
+            {
+                float noise = dn.GetNoise(i);
+                currNode.nn_policy[i] = currNode.nn_policy[i] * (1 - getNoiseWeight(depth)) + getNoiseWeight(depth) * noise;
+            }
         }
         /// <summary>
         /// Sends prediction request to neural network and adds the node to a queue to later fill in the result

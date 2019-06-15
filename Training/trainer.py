@@ -11,13 +11,20 @@ from tictactoe_nn import *
 class Trainer():
     def __init__(self):
         self.nnet = TicTacToeNet()
-        self.EPOCHS = 2
+        self.EPOCHS = 1
         self.BATCH_SIZE = 100
         self.EPOCHS_FIT = 30
 
         print(K.image_data_format())  # print current format
 
+    def save_init_weights(self):
+
+        self.nnet.model.save("best_model.hd5f")
+        self.nnet.dump_weights()
+
     def train(self, inputs, output_values, output_policies):
+
+        self.nnet.model.save("best_model.hd5f")
 
         for eps in range(self.EPOCHS):
             print("Episode %d" % (eps))
@@ -59,23 +66,3 @@ class Trainer():
         print("Output: ")
         print(prediction[0])
         print(prediction[1])
-
-    # def save_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
-    #     filepath = os.path.join(folder, filename)
-    #     if not os.path.exists(folder):
-    #         print("Checkpoint Directory does not exist! Making directory {}".format(folder))
-    #         os.mkdir(folder)
-    #     else:
-    #         print("Checkpoint Directory exists! ")
-    #     if self.saver == None:
-    #         self.saver = tf.train.Saver(self.nnet.graph.get_collection('variables'))
-    #     with self.nnet.graph.as_default():
-    #         self.saver.save(self.sess, filepath)
-    #
-    # def load_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
-    #     filepath = os.path.join(folder, filename)
-    #     if not os.path.exists(filepath+'.meta'):
-    #         raise("No model in path {}".format(filepath))
-    #     with self.nnet.graph.as_default():
-    #         self.saver = tf.train.Saver()
-    #         self.saver.restore(self.sess, filepath)

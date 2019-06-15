@@ -28,8 +28,8 @@ namespace TicTacToe_DL_RL
         public static int NOF_GAMES_PER_OFFSPRING = 10;
         public static int NOF_GAMES_TEST = 30; // must be 2n for equal tests of player X and player Z
         public static int NOF_GAMES_VS_RANDOM = 10;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 12; // could/should be time
-        public static int NOF_SIMS_PER_MOVE_TESTING = 28; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 40; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TESTING = 40; // could/should be time
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;

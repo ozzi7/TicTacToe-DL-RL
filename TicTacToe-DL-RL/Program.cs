@@ -20,7 +20,7 @@ namespace TicTacToe_DL_RL
             NeuralNetwork NN = new NeuralNetwork();
 
             /* to create a new network */
-            //NN.InitializeWeights(1.0f);
+            //NN.InitializeWeights(0.5f);
             //NN.InitializeWeightsTo0();
             //NN.CalculateVirtualBNs();
             //NN.SaveWeightsToFile("weights_start.txt");
@@ -36,7 +36,7 @@ namespace TicTacToe_DL_RL
             {
                 Trainer trainer = new Trainer(NN);
 
-                String filename = trainer.ProduceTrainingGamesKeras(200);
+                String filename = trainer.ProduceTrainingGamesKeras(100);
 
                 //trainer.Train();
                 ProcessStartInfo pythonInfo = new ProcessStartInfo();

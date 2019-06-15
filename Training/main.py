@@ -71,9 +71,9 @@ def read_samples(filename):
                         policy[i] = policies[move*25+i]
 
                     if player == 1:
-                        output_values.append(np.array([output_value]))
+                        output_values.append(np.array([output_value])) # output val is from the view of player X
                     elif player == -1:
-                        output_values.append(np.array([1-output_value]))
+                        output_values.append(np.array([(-1)*output_value]))
                     player *= -1
                     output_policies.append(policy)
 
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     os.chdir(os.path.dirname(sys.argv[0]))
     trainer = Trainer()
-
+    #trainer.save_init_weights()
     trainer.train(*read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1]))
     #(inputs, output_values, output_policies) = read_samples()
     #trainer.predict([inputs[0]])
