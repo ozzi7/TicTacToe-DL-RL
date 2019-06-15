@@ -70,10 +70,8 @@ def read_samples(filename):
                     for i in range(25):
                         policy[i] = policies[move*25+i]
 
-                    if player == 1:
-                        output_values.append(np.array([output_value])) # output val is from the view of player X
-                    elif player == -1:
-                        output_values.append(np.array([(-1)*output_value]))
+                    output_values.append(np.array([output_value])) # output val is from the view of player X
+                    
                     player *= -1
                     output_policies.append(policy)
 

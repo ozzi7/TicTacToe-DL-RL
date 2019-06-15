@@ -204,9 +204,11 @@ namespace TicTacToe_DL_RL
             float totalWinsAsX = winsX.Sum();
             float totalWinsAsZ = winsZ.Sum();
             float totalDraws = draws.Sum();
+            float totalMoves = movecount.Sum();
             drawsMovingAvg.ComputeAverage((Decimal)totalDraws/Params.NOF_GAMES_TEST);
             winsAsXMovingAvg.ComputeAverage((Decimal)totalWinsAsX/Params.NOF_GAMES_TEST);
             winsAsZMovingAvg.ComputeAverage((Decimal)totalWinsAsZ/Params.NOF_GAMES_TEST);
+            averageMovesMovingAvg.ComputeAverage((decimal)totalMoves/Params.NOF_GAMES_TEST);
 
             if (((totalWins + 0.5f * totalDraws) / Params.NOF_GAMES_TEST) * 100.0f > Params.MINIMUM_WIN_PERCENTAGE)
             {
