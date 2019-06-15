@@ -120,9 +120,14 @@ namespace TicTacToe_DL_RL
             winrateVsRandMovingAvg3.ComputeAverage((decimal)winrateVsRandTotal3);
             Console.WriteLine("Main Thread: Wins/Games vs Random Player (" + Params.NOF_SIMS_PER_MOVE_VS_RANDOM3 + " Nodes): " + Math.Round(winrateVsRandTotal3 * 100, 2) + "%");
         }
-        public void ProduceTrainingGamesKeras(int nofGames)
+        /// <summary>
+        /// Return file name for games
+        /// </summary>
+        /// <param name="nofGames"></param>
+        /// <returns></returns>
+        public String ProduceTrainingGamesKeras(int nofGames)
         {
-            Console.WriteLine("Main Thread: Creating training samples...");
+            Console.WriteLine("Main Thread: Creating " + nofGames + " training samples...");
 
             bestNN = new NeuralNetwork(currentNN.weights);
 
@@ -152,11 +157,13 @@ namespace TicTacToe_DL_RL
             {
                 Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
 
-                scores[i] = (RecordOneGame(moves[i], policies[i], evaluationNetworkPlayer, currnns[i], nns[i], true)+1)/0.5f;
+                scores[i] = RecordOneGame(moves[i], policies[i], evaluationNetworkPlayer, currnns[i], nns[i], true);
             });
 
             // store moves in file
-            StreamWriter fileWriter = new StreamWriter("./../../../Training/training_games_" + RandomGen2.Next(0,Int32.MaxValue)+".txt");
+            Int32 unixTimestamp = (Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            String filename = "training_games_" + unixTimestamp + ".txt";
+            StreamWriter fileWriter = new StreamWriter("./../../../Training/" + filename);
             for (int i = 0; i < scores.Count; ++i)
             {
                 fileWriter.Write(scores[i]+ "\n");
@@ -188,6 +195,7 @@ namespace TicTacToe_DL_RL
                 fileWriter.Write("\n");
             }
             fileWriter.Close();
+            return filename;
         }
         public void TrainingRun(int run)
         {

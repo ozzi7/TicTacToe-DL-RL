@@ -410,7 +410,7 @@ namespace TicTacToe_DL_RL
             BN(outputValueData, outputValueData, BNMeansValue, BNStddevValue, nofValueFilters, 0, BNGammaValue, BNBetaValue);
             FCLayer(outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true); // with rectifier
             FCLayer(temporaryValueData, winrateOut, valueConnectionWeights2, valueBiasLast, false); // 1 output, 1 bias
-            winrateSigOut = (float)Math.Tanh(winrateOut[0]);
+            winrateSigOut = (1.0f+(float)Math.Tanh(winrateOut[0]))/2.0f; // TODO check
 
             /*policy head*/
             Convolution(inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, nofFilters, nofPolicyFilters, 1, 1, 0);
@@ -560,7 +560,8 @@ namespace TicTacToe_DL_RL
             }
         }
         private void FCLayer(float[] input, float[] output, float[] connectionWeights, float[] outputBiases, bool rectifier)
-        {
+        { 
+            // keras uses channels last, so the weights are a bit weirdly distributed here
             for (int i = 0; i < output.Length; ++i)
             {
                 output[i] = 0.0f;

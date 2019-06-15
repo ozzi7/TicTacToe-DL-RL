@@ -11,11 +11,13 @@ from trainer import Trainer
 import numpy as np
 from ast import literal_eval as createTuple
 import re
+import sys
+import os
 
 
-def read_samples():
+def read_samples(filename):
     # read training data from file
-    with open("./training_games_668383.txt") as f:
+    with open(filename) as f:
         games = f.readlines()
         inputs = []
         output_values = []
@@ -32,13 +34,6 @@ def read_samples():
                 # empty board first
                 input = np.zeros((5, 5, 3))
                 input[:, :, 2].fill(1)
-
-                # TODO remove hardcode some moves for testing
-                input[3, 2, 0] = 1
-                input[0, 1, 1] = 1
-                input[0, 4, 0] = 1
-                input[2, 4, 1] = 1
-
                 inputs.append(input)
 
                 pattern = '\((\d+, \d+)\)'
@@ -66,7 +61,6 @@ def read_samples():
 
             # read policy
             elif line_count % 3 == 2:
-                policies = []
                 line = line.replace("(","").replace(")","").replace(",", " ")
                 policies = [float(number) for number in line.split()]
 
@@ -88,9 +82,10 @@ def read_samples():
     return (inputs,output_values, output_policies)
 
 if __name__ == '__main__':
+
+    os.chdir(os.path.dirname(sys.argv[0]))
     trainer = Trainer()
 
-
-    #trainer.train(*read_samples())
-    (inputs, output_values, output_policies) = read_samples()
-    trainer.predict([inputs[0]])
+    trainer.train(*read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1]))
+    #(inputs, output_values, output_policies) = read_samples()
+    #trainer.predict([inputs[0]])

@@ -106,6 +106,7 @@ class TicTacToeNet():
 
         x = BatchNormalization(axis=3)(x)
         x = LeakyReLU()(x)
+        x = Permute((3, 1, 2), input_shape=(5, 5, NOF_VALUE_FILTERS))(x)
         x = Flatten()(x)
         x = Dense(
             NOF_FC_NEURONS_VAL_LAYER
@@ -136,6 +137,7 @@ class TicTacToeNet():
 
         x = BatchNormalization()(x)
         x = LeakyReLU()(x)
+        x = Permute((3,1,2), input_shape=(5,5,NOF_POLICY_FILTERS))(x)
         x = Flatten()(x)
         x = Dense( # this is equivalent to dense layer + softmax layer, but combined
             NOF_POLICIES
@@ -146,13 +148,11 @@ class TicTacToeNet():
         return (x)
 
     def dump_weights(self):
-        f = open("weights.txt", "a")
+        f = open("weights.txt", "w")
         for layer in self.model.layers:
             weights = layer.get_weights()  # list of numpy arrays
             if weights: # if no weights
                 for w in weights: # sometimes there is bias as well
-                    print(w.shape)
-                    #w = np.transpose(w, (3,0,1,2))
                     try:
                         w2 = np.transpose(w, (3, 2, 0, 1)) # (3,..) = move that was last to first place
                         np.savetxt(f, w2.flatten(order='C'), delimiter=',', newline=" ")
