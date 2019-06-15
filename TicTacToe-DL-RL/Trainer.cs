@@ -51,6 +51,27 @@ namespace TicTacToe_DL_RL
                     currentNN.SaveWeightsToFile("weights_net_" + ((int)(i / Params.SAVE_WEIGHT_EVERY_XTH_EPOCH)).ToString() + ".txt");
             }
         }
+        public void ValidateOuput()
+        {
+            TicTacToeGame game = new TicTacToeGame();
+            game.DoMove(Tuple.Create(3, 2));
+            game.DoMove(Tuple.Create(0, 1));
+            game.DoMove(Tuple.Create(0, 4)); // y, x
+            game.DoMove(Tuple.Create(2, 4));
+
+            Tuple<float[],float> prediction = currentNN.Predict(game.position);
+
+            for (int i = 0; i < 5; ++i)
+            {
+                Console.WriteLine(prediction.Item1[i * 5 + 0].ToString("0.000") + " " +
+                prediction.Item1[i * 5 + 1].ToString("0.000") + " " +
+                prediction.Item1[i * 5 + 2].ToString("0.000") + " " +
+                prediction.Item1[i * 5 + 3].ToString("0.000") + " " +
+                prediction.Item1[i * 5 + 4].ToString("0.000"));
+            }
+            Console.WriteLine("Value " + prediction.Item2);
+            Console.WriteLine("\n");
+        }
         public void CheckPerformanceVsRandomKeras(int nofGames)
         {
             bestNN = new NeuralNetwork(currentNN.weights);
@@ -110,40 +131,40 @@ namespace TicTacToe_DL_RL
 
             for (int i = 0; i < nofGames; ++i)
             {
-                NeuralNetwork playingNNlocal = new NeuralNetwork(currentNN.weights, currentNN.untrainable_weights);
+                NeuralNetwork playingNNlocal = new NeuralNetwork(currentNN.weights);
                 nns.Add(playingNNlocal);
 
-                NeuralNetwork currNNlocal = new NeuralNetwork(currentNN.weights, currentNN.untrainable_weights);
+                NeuralNetwork currNNlocal = new NeuralNetwork(currentNN.weights);
                 currnns.Add(currNNlocal);
             }
 
-            List<List<Tuple<int,int>>> games = new List<List<Tuple<int, int>>>(nofGames);
+            List<List<Tuple<int,int>>> moves = new List<List<Tuple<int, int>>>(nofGames);
             List<List<List<float>>> policies = new List<List<List<float>>>(nofGames);
             for (int i = 0; i < nofGames; ++i)
             {
-                games.Add(new List<Tuple<int, int>>());
+                moves.Add(new List<Tuple<int, int>>());
                 policies.Add(new List<List<float>>());
             }
             List<float> scores = new List<float>(nofGames);
             scores.AddRange(Enumerable.Repeat(0.0f, nofGames));
-            Params.DIRICHLET_NOISE_WEIGHT = 0.999f;
+            Params.DIRICHLET_NOISE_WEIGHT = 0.5f;
             Parallel.For(0, nofGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
                 Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
 
-                scores[i] = (RecordOneGame(games[i], policies[i], evaluationNetworkPlayer, currnns[i], nns[i], true)+1)/0.5f;
+                scores[i] = (RecordOneGame(moves[i], policies[i], evaluationNetworkPlayer, currnns[i], nns[i], true)+1)/0.5f;
             });
 
-            // store games in file
-            StreamWriter fileWriter = new StreamWriter("training_games.txt");
+            // store moves in file
+            StreamWriter fileWriter = new StreamWriter("./../../../Training/training_games_" + RandomGen2.Next(0,Int32.MaxValue)+".txt");
             for (int i = 0; i < scores.Count; ++i)
             {
                 fileWriter.Write(scores[i]+ "\n");
-                for (int j = 0; j < games[i].Count-1; ++j)
+                for (int j = 0; j < moves[i].Count-1; ++j)
                 {
-                    fileWriter.Write(games[i][j] + ", ");
+                    fileWriter.Write(moves[i][j] + ", ");
                 }
-                fileWriter.Write(games[i][games[i].Count - 1]);
+                fileWriter.Write(moves[i][moves[i].Count - 1]);
                 fileWriter.Write("\n");
 
                 for (int j = 0; j < policies[i].Count; ++j)
@@ -545,7 +566,7 @@ namespace TicTacToe_DL_RL
 
 
             // #################################### CREATE NEW BEST NETWORK ##########################################
-            if (winsTotal < lossesTotal)
+            if (((winsTotal+drawsTotal*0.5)/ Params.NOF_GAMES_TEST)*100.0f < Params.MINIMUM_WIN_PERCENTAGE)
             {
                 // bad new network, ignore it
                 currentPseudoELO += 0;

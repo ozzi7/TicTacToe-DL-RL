@@ -13,30 +13,31 @@ namespace TicTacToe_DL_RL
         //public static int GPU_THREADS_AND_QUEUES = 2;
         public static int MAX_PARALLEL_KERNEL_EXECUTIONS = 1000; // opencl calls at most MAX_PARALLEL_KERNEL_EXECUTIONS and less if not enough data arrived from CPU //2304
 
-        public static int MAX_THREADS_CPU = 64; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
+        public static int MAX_THREADS_CPU = 4; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
         public static int MAX_PENDING_NN_EVALS = 4; // should be lower than sims per move 
         // = how many NN evals are queued up in the MCTS tree before the CPU thread must wait for results
         // the MCTS search becomes less useful if it continues with fake data while waiting for the real outputs
         // it is better to keep this low and increase parallel trees (increasing number of CPU threads)
         // TODO: currently before a new move starts the CPU threads wait for all results first 
 
-        public static float EPS = 0.0001f; // for numerical stability in square roots etc.
+        public static float EPS = 0.001f; // for numerical stability in square roots etc.
 
         // NEUROEVOLUTION PARAMS
         public static int NOF_EPOCHS = 10000000;
         public static int NOF_OFFSPRING = 10; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
         public static int NOF_GAMES_PER_OFFSPRING = 10;
-        public static int NOF_GAMES_TEST = 60; // must be 2n for equal tests of player X and player Z
+        public static int NOF_GAMES_TEST = 30; // must be 2n for equal tests of player X and player Z
         public static int NOF_GAMES_VS_RANDOM = 10;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 16; // could/should be time
-        public static int NOF_SIMS_PER_MOVE_TESTING = 16; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 12; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TESTING = 28; // could/should be time
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;
-        public static float PERCENT_GROUND_TRUTH = 10.0f;
-        public static float C_PUCT = 3.0f; // in theory sqrt(2), in practice usually higher (=more exploration) for training
-        public static float NOISE_SIGMA = 0.0001f;  // noise standard deviation 0.1 (default), 0.01 ok
+        public static float PERCENT_GROUND_TRUTH = 100.0f;
+        public static float C_PUCT = 3.4f; // in theory sqrt(2), in practice usually higher (=more exploration) for training
+        public static float NOISE_SIGMA = 0.01f;  // noise standard deviation 0.1 (default), 0.01 ok
         public static float LEARNING_RATE = 0.001f;
+        public static float MINIMUM_WIN_PERCENTAGE = 55.0f; // new networks must win at least x percent against old
         public static float WEIGHT_DECAY_FACTOR = 0.995f;
         public static float DIRICHLET_NOISE_WEIGHT;
         public static DIRICHLET_NOISE_SCALING DN_SCALING = DIRICHLET_NOISE_SCALING.FIRST_NODE_ONLY; // as a function of depth in mcts search tree

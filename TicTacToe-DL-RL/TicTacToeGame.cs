@@ -25,8 +25,8 @@ namespace TicTacToe_DL_RL
         public List<Tuple<int, int>> GetMoves()
         {
             List<Tuple<int, int>> moves = new List<Tuple<int, int>>();
-            for (int i = 0; i < 5; ++i)
-                for (int j = 0; j < 5; ++j)
+            for (int i = 0; i < Params.boardSizeY; ++i)
+                for (int j = 0; j < Params.boardSizeX; ++j)
                     if (position.gameBoard[i, j] == 0)
                         moves.Add(Tuple.Create(i, j));
             return moves;
@@ -165,6 +165,7 @@ namespace TicTacToe_DL_RL
     /// </summary>
     class TicTacToePosition
     {
+        // [Y coord, X coord]
         public int[,] gameBoard = new int[5, 5] { { 0, 0, 0, 0, 0 }, 
                                                   { 0, 0, 0, 0, 0 }, 
                                                   { 0, 0, 0, 0, 0 },

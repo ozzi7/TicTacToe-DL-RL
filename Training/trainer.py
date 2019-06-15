@@ -13,17 +13,17 @@ class Trainer():
         self.nnet = TicTacToeNet()
         self.EPOCHS = 1
         self.BATCH_SIZE = 100
-        self.EPOCHS_FIT = 100
+        self.EPOCHS_FIT = 30
+
+        print(K.image_data_format())  # print current format
 
     def train(self, inputs, output_values, output_policies):
-        """
-        examples: list of examples, each example is of form (board, pi, v)
-        """
 
         for eps in range(self.EPOCHS):
             print("Episode %d" % (eps))
             print("====================================================================================")
 
+            #self.nnet.model.load_weights("best_model.hd5f")
             self.nnet.model.fit([inputs], [output_policies, output_values],
                                      batch_size=self.BATCH_SIZE,
                                      epochs=self.EPOCHS_FIT,
@@ -32,8 +32,33 @@ class Trainer():
 
         self.nnet.dump_weights()
 
-    def predict(self):
-        self.nnet.model.predict()
+    def predict(self,  input):
+        self.nnet.model.load_weights("best_model.hd5f")
+
+        #self.nnet.dump_weights()
+
+        print("Prediction for: ")
+        print(input)
+
+        inp = self.nnet.model.input  # input placeholder
+        outputs = [layer.output for layer in  self.nnet.model.layers][1:]  # all layer outputs except first (input) layer
+        functor = K.function([inp], outputs)  # evaluation function
+
+        # Testing
+        print(np.transpose(input[0], (2, 0, 1)).flatten(order='C'))  # correct
+        layer_outs = functor([input,1.0])
+        for layer in layer_outs:
+            try:
+                print(np.transpose(layer, (0, 3,1,2)).flatten(order='C'))
+            except:
+                print(layer)
+
+        prediction = self.nnet.model.predict([input])
+        np.set_printoptions(threshold=np.inf)
+        np.set_printoptions(suppress=True)
+        print("Output: ")
+        print(prediction[0])
+        print(prediction[1])
 
     def save_checkpoint(self, folder='checkpoint', filename='checkpoint.pth.tar'):
         filepath = os.path.join(folder, filename)

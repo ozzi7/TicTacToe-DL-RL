@@ -6,6 +6,12 @@ Authors: Evgeny Tyurin, github.com/evg-tyurin, github @suragnair @ozzi7, possibl
 
 Based on the OthelloNNet by SourKream and Surag Nair.
 
+conv2d weights
+That's the tensorflow convention, the kernel shape is (kernel_height, kernel_width, input_channels, output_channels).
+(output_channels, input_channels, kernel_height, kernel_width)
+To reverse it, you can always just get the value and transpose it appropriately,
+e.g. with filters = model.get_weights()[0][:, :, 0, :].transpose((2, 1, 0)).
+
 """
 
 import argparse
@@ -27,13 +33,13 @@ NOF_RES_LAYERS=4
 
 class TicTacToeNet():
     def __init__(self):
-        self.input_boards = Input(
-            shape=(BOARD_X, BOARD_Y, NOF_INPUT_PLANES))  # s: batch_size x board_x x board_y
+        self.input_boards = Input(shape=(BOARD_X, BOARD_Y, NOF_INPUT_PLANES))  # s: batch_size x board_x x board_y
         x = Conv2D(filters=NOF_FILTERS,
                    kernel_size=(3,3),
-                   padding='same', activation='linear',use_bias=False)(self.input_boards)
+                   padding='same', activation='linear', use_bias=False,
+                   data_format="channels_last")(self.input_boards)
 
-        x = BatchNormalization(axis=3)(x)
+        x = BatchNormalization(axis=3)(x) # axis -1 is equal to 3 here, means last dimension
         x = LeakyReLU()(x)
         for _ in range(NOF_RES_LAYERS):
             x = self.residual_layer(x, NOF_FILTERS,
@@ -123,7 +129,7 @@ class TicTacToeNet():
             :return:
         """
         x = Conv2D(
-            filters = 8
+            filters = NOF_POLICY_FILTERS
             , kernel_size = (1,1)
             , padding = 'same'
             , activation='linear', use_bias=False)(x)
@@ -131,10 +137,10 @@ class TicTacToeNet():
         x = BatchNormalization()(x)
         x = LeakyReLU()(x)
         x = Flatten()(x)
-        x = Dense(
+        x = Dense( # this is equivalent to dense layer + softmax layer, but combined
             NOF_POLICIES
             , activation='softmax'
-            , name = 'policy_head'
+            , name ='policy_head'
             )(x)
 
         return (x)
@@ -143,10 +149,18 @@ class TicTacToeNet():
         f = open("weights.txt", "a")
         for layer in self.model.layers:
             weights = layer.get_weights()  # list of numpy arrays
-            if(weights):
-                for element in weights:
-                    np.savetxt(f, element.flatten(), fmt='%.5f',delimiter=',', newline=" ")
-                    f.write("\n")
+            if weights: # if no weights
+                for w in weights: # sometimes there is bias as well
+                    print(w.shape)
+                    #w = np.transpose(w, (3,0,1,2))
+                    try:
+                        w2 = np.transpose(w, (3, 2, 0, 1)) # (3,..) = move that was last to first place
+                        np.savetxt(f, w2.flatten(order='C'), delimiter=',', newline=" ")
+                        f.write("\n")
+
+                    except:
+                        np.savetxt(f, w.flatten(order='C'), delimiter=',', newline=" ")
+                        f.write("\n")
         f.close()
 
     def calculate_loss(self):

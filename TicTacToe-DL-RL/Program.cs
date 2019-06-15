@@ -28,9 +28,12 @@ namespace TicTacToe_DL_RL
             //NN.ReadWeightsFromFile("weights_net_14_longgpurun.txt");
             NN.ReadWeightsFromFileKeras("./../../../Training/weights.txt"); 
             Trainer trainer = new Trainer(NN);
-           // trainer.Train();
-            //trainer.ProduceTrainingGamesKeras(10);
-            trainer.CheckPerformanceVsRandomKeras(100);
+            //trainer.Train();
+            ////trainer.CheckPerformanceVsRandomKeras(20);
+            //trainer.ProduceTrainingGamesKeras(300);
+            trainer.ValidateOuput();
+            Console.WriteLine("Done");
+            Console.ReadLine();
         }
     }
 }

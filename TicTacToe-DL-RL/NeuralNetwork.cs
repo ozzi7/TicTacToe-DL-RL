@@ -71,8 +71,8 @@ namespace TicTacToe_DL_RL
         public float[] BNMeans = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
         public float[] BNStddev = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
 
-        public float[] BNBetas = new float[nofConvLayers*nofFilters];
-        public float[] BNGammas = new float[nofConvLayers* nofFilters];
+        public float[] BNBetas = new float[nofConvLayers * nofFilters];
+        public float[] BNGammas = new float[nofConvLayers * nofFilters];
 
         // output of NN
         public float[] softmaxPolicy = new float[nofOutputPolicies];
@@ -126,24 +126,23 @@ namespace TicTacToe_DL_RL
             /*Not using position history, not using caching*/
 
             // set nn input
-            for (int i = 0; i < Params.boardSizeX; ++i)
+            for (int i = 0; i < Params.boardSizeY; ++i)
             {
-                for (int j = 0; j < Params.boardSizeY; ++j)
+                for (int j = 0; j < Params.boardSizeX; ++j)
                 {
                     if (pos.gameBoard[i, j] == 1)
                     {
-                        input[i*5+j] = 1;
+                        input[i * Params.boardSizeX + j] = 1;
                     }
                     else if (pos.gameBoard[i, j] == -1)
                     {
-                        input[Params.boardSizeX * Params.boardSizeY + i*5+j] = 1;
+                        input[Params.boardSizeY * Params.boardSizeX + i * Params.boardSizeX + j] = 1;
                     }
                 }
             }
-
-            for (int i = 0; i < Params.boardSizeX * Params.boardSizeY; ++i)
+            for (int i = 0; i < Params.boardSizeY * Params.boardSizeX; ++i)
             {   // whose turn it is
-                input[Params.boardSizeX * Params.boardSizeY * 2 + i] = pos.sideToMove == Player.X ? 1 : 0;
+                input[Params.boardSizeY * Params.boardSizeX * 2 + i] = pos.sideToMove == Player.X ? 1 : 0;
             }
             Tuple<float[], float> resultTuple = ForwardPassCPU(input);
             //hashtable.Add(pos, resultTuple);
@@ -309,7 +308,6 @@ namespace TicTacToe_DL_RL
                 for (int i = 0; i < BATCHSIZE; ++i)
                 {
                     Convolution(intermediateData[i], temporary, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index * 2 + 1);
-                    AddResidual(temporary, temporary, residualSave[i]);
 
                     /* copy to intermediate */
                     intermediateData[i] = new float[temporary.Length];
@@ -320,7 +318,9 @@ namespace TicTacToe_DL_RL
                 // apply the means and stddev 
                 for (int i = 0; i < BATCHSIZE; ++i)
                 {
-                    BN(intermediateData[i], outputResidualLayer, BNMeans, BNStddev, nofFilters, index * 2 +2, BNGammas, BNBetas);
+                    BNNoRELU(intermediateData[i], outputResidualLayer, BNMeans, BNStddev, nofFilters, index * 2 +2, BNGammas, BNBetas);
+                    AddResidual(outputResidualLayer, outputResidualLayer, residualSave[i]);
+                    leakyRELU(outputResidualLayer);
 
                     /* copy to intermediate */
                     intermediateData[i] = new float[outputResidualLayer.Length];
@@ -410,7 +410,7 @@ namespace TicTacToe_DL_RL
             BN(outputValueData, outputValueData, BNMeansValue, BNStddevValue, nofValueFilters, 0, BNGammaValue, BNBetaValue);
             FCLayer(outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true); // with rectifier
             FCLayer(temporaryValueData, winrateOut, valueConnectionWeights2, valueBiasLast, false); // 1 output, 1 bias
-            winrateSigOut = (1.0f + (float)Math.Tanh(winrateOut[0])) / 2.0f;
+            winrateSigOut = (float)Math.Tanh(winrateOut[0]);
 
             /*policy head*/
             Convolution(inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, nofFilters, nofPolicyFilters, 1, 1, 0);
@@ -434,7 +434,9 @@ namespace TicTacToe_DL_RL
             // with nofFilters filters of filterWidth*filterHeight*nofInputPlanes size
             // resulting in gameboard_width*gameboardHeight*x volume
             // zero padding
-
+            // order for conv weights is filter, input channel, height, width == filters, channels, rows, cols ? 
+            // order for input is input channel, height, width
+            // order for output is filter, height, width
             for (int u = 0; u < output.Length; ++u)
             {
                 output[u] = 0.0f;
@@ -460,7 +462,8 @@ namespace TicTacToe_DL_RL
                                         continue;
                                     }
                                     output[i * gameboardHeight * gameboardWidth + k * gameboardWidth + l] += 
-                                        input[j * gameboardHeight * gameboardWidth + k * gameboardWidth + l] *
+                                        input[j * gameboardHeight * gameboardWidth + k * gameboardWidth + l
+                                        + (x - (filterHeight / 2))*gameboardWidth + y-(filterWidth/2) ] *
                                         convWeights[
                                             index * nofFilters * nofInputPlanes * filterHeight * filterWidth +
                                             i * nofInputPlanes * filterHeight * filterWidth + 
@@ -488,7 +491,7 @@ namespace TicTacToe_DL_RL
                 // go through each plane coming into BN and apply to each element the means and stddev..
                 for (int j = 0; j < input.Length/nofFilters; ++j)
                 {
-                    // we know the size of one plane by dividing input through number of plans (input.length/noffilters)
+                    // we know the size of one plane by dividing input through number of planes (input.length/noffilters)
                     // batch norm/ batch stddev
                     /* see Alg 1: https://arxiv.org/pdf/1502.03167.pdf */
                     float x_til = (float)((input[i * input.Length / nofFilters + j] - BNMeans[index * nofFilters + i])/
@@ -497,7 +500,33 @@ namespace TicTacToe_DL_RL
 
                     // relu
                     if (output[i * input.Length / nofFilters + j] < 0.0f)
-                        output[i* input.Length / nofFilters + j] = 0.01f* output[i * input.Length / nofFilters + j]; // leaky RELU test
+                        output[i * input.Length / nofFilters + j] = 0.3f * output[i * input.Length / nofFilters + j]; // leaky leakyRELU test
+                }
+            }
+        }
+        private void leakyRELU(float[] input)
+        {
+            for (int i = 0; i < input.Length; ++i)
+            {
+                // relu
+                if (input[i] < 0.0f)
+                    input[i] = 0.3f * input[i]; // leaky leakyRELU test
+            }
+        }
+        private void BNNoRELU(float[] input, float[] output, float[] BNMeans, float[] BNStdDev, int nofFilters, int index, float[] BNGammas, float[] BNBetas)
+        {
+            // without residual add
+            for (int i = 0; i < nofFilters; ++i)
+            {
+                // go through each plane coming into BN and apply to each element the means and stddev..
+                for (int j = 0; j < input.Length / nofFilters; ++j)
+                {
+                    // we know the size of one plane by dividing input through number of planes (input.length/noffilters)
+                    // batch norm/ batch stddev
+                    /* see Alg 1: https://arxiv.org/pdf/1502.03167.pdf */
+                    float x_til = (float)((input[i * input.Length / nofFilters + j] - BNMeans[index * nofFilters + i]) /
+                        (BNStdDev[index * nofFilters + i]));
+                    output[i * input.Length / nofFilters + j] = BNGammas[index * nofFilters + i] * x_til + BNBetas[index * nofFilters + i];
                 }
             }
         }
@@ -508,15 +537,15 @@ namespace TicTacToe_DL_RL
                 for (int j = 0; j < gameboardWidth * gameboardHeight; ++j)
                 {
                     // batch norm/ batch stddev
-                    float x_til = (float)((input[i * input.Length / nofFilters + j] + 
-                        residual[i * input.Length / nofFilters + j] - BNMeans[index * nofFilters + i]) /
+                    float x_til = (float)((input[i * input.Length / nofFilters + j] - BNMeans[index * nofFilters + i]) /
                         (BNStdDev[index * nofFilters + i]));
 
-                    output[i * input.Length / nofFilters + j] = BNGammas[index * nofFilters + i] * x_til + BNBetas[index * nofFilters + i];
+                    output[i * input.Length / nofFilters + j] = residual[i * input.Length / nofFilters + j] +
+                        BNGammas[index * nofFilters + i] * x_til + BNBetas[index * nofFilters + i];
 
                     // relu
                     if (output[i * input.Length / nofFilters + j] < 0.0f)
-                        output[i * input.Length / nofFilters + j] = 0.01f * output[i * input.Length / nofFilters + j];
+                        output[i * input.Length / nofFilters + j] = 0.3f * output[i * input.Length / nofFilters + j];
                 }
             }
         }
@@ -537,14 +566,14 @@ namespace TicTacToe_DL_RL
                 output[i] = 0.0f;
                 for (int j = 0; j < input.Length; ++j)
                 {
-                    output[i] += input[j] * connectionWeights[i * input.Length + j];
+                    output[i] += input[j] * connectionWeights[j * output.Length + i];//[i * input.Length + j];//
                 }
-                output[i] /= input.Length;
+                //output[i] /= input.Length;
                 output[i] += outputBiases[i];
 
                 if(rectifier && output[i] < 0.0f)
                 {
-                    output[i] = 0.01f * output[i];
+                    output[i] = 0.3f * output[i];
                 }
             }
         }
@@ -573,7 +602,7 @@ namespace TicTacToe_DL_RL
             { 
                 // relu
                 if (data[i] < 0.0f)
-                    data[i] = 0.01f * data[i];
+                    data[i] = 0.3f * data[i];
             }
         }
         public void ParseWeights()
@@ -797,7 +826,7 @@ namespace TicTacToe_DL_RL
             }
             for (int i = 0; i < BNStddevPolicy.Length; ++i)
             {
-                BNStddevPolicy[i] = weights[count];
+                BNStddevPolicy[i] = (float)Math.Sqrt(Params.EPS + weights[count]);
                 count++;
             }
 
