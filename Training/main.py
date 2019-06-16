@@ -64,15 +64,12 @@ def read_samples(filename):
                 line = line.replace("(","").replace(")","").replace(",", " ")
                 policies = [float(number) for number in line.split()]
 
-                player = 1
                 for move in range(len(moves)):
                     policy = np.zeros((25))
                     for i in range(25):
                         policy[i] = policies[move*25+i]
 
                     output_values.append(np.array([output_value])) # output val is from the view of player X
-
-                    player *= -1
                     output_policies.append(policy)
 
 

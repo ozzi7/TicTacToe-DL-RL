@@ -1493,7 +1493,6 @@ namespace TicTacToe_DL_RL
             float best_winrate = float.NegativeInfinity;
             int best_child_index = -1;
 
-            /* add dirichlet noise to root */
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
                 float winrate_temp = currNode.Children[i].winrate;
@@ -1596,6 +1595,11 @@ namespace TicTacToe_DL_RL
                     //winratesChildren.Add(childWinrateWithVirtualLoss);
 
                     float temp_UCT_score = childWinrateWithVirtualLoss;
+
+                    if(currNode.visitCount == 0)
+                    {
+                        temp_UCT_score += Params.FPU_VALUE;
+                    }
                     if (currNode.nn_policy != null)
                     {
                         temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *

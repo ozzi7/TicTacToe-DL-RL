@@ -174,7 +174,7 @@ namespace TicTacToe_DL_RL
 
             for (int i = 0; i < Params.boardSizeX * Params.boardSizeY; ++i)
             {   // whose turn it is
-                input[Params.boardSizeX * Params.boardSizeY*2 + i] = pos.sideToMove == Player.X ? 1 : -1;
+                input[Params.boardSizeX * Params.boardSizeY*2 + i] = pos.sideToMove == Player.X ? 1 : 0;
             }
 
             Job job = new Job();

@@ -57,7 +57,7 @@ class Trainer():
         layer_outs = functor([input,1.0])
         for layer in layer_outs:
             try:
-                print(np.transpose(layer, (0, 3,1,2)).flatten(order='C'))
+                print(np.transpose(layer, (0, 3, 1, 2)).flatten(order='C'))
             except:
                 print(layer)
 
