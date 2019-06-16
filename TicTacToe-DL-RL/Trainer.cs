@@ -1592,7 +1592,6 @@ namespace TicTacToe_DL_RL
                     // this factors in all virtual losses into the winrate
                     float childWinrateWithVirtualLoss = (currNode.Children[i].winrate * currNode.Children[i].visitCount) /
                         (currNode.Children[i].visitCount + currNode.Children[i].virtualLossCount+1);
-                    //winratesChildren.Add(childWinrateWithVirtualLoss);
 
                     float temp_UCT_score = childWinrateWithVirtualLoss;
 
@@ -1602,14 +1601,34 @@ namespace TicTacToe_DL_RL
                     }
                     if (currNode.nn_policy != null)
                     {
-                        temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *
-                            (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
+                        // we have the policy output
+                        if(currNode.visitCount == 0)
+                        {
+                            temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *
+                            (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1) + Params.FPU_VALUE;
+                        }
+                        else
+                        {
+                            temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *
+                                (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
+                        }
+
                     }
                     else
                     {
-                        // assume policy equal for all children if not found yet
-                        temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * (1.0f/currNode.Children.Count) *
-                            (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
+                        // this only happens with virtual visits
+                        if (currNode.visitCount == 0)
+                        {
+                            // assume policy equal for all children if not found yet (because of virtual visits)
+                            temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * (1.0f / currNode.Children.Count) *
+                                (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1) + Params.FPU_VALUE;
+                        }
+                        else
+                        {
+                            // assume policy equal for all children if not found yet (because of virtual visits)
+                            temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * (1.0f / currNode.Children.Count) *
+                                (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
+                        }
                     }
                     if (temp_UCT_score > bestUCTScore)
                     {
