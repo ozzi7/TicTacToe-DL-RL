@@ -31,6 +31,7 @@ namespace TicTacToe_DL_RL
 
             // -------------------------- KERAS BP LOOP ---------------------------
             NeuralNetwork NN = new NeuralNetwork();
+
             NN.ReadWeightsFromFileKeras("./../../../Training/weights.txt"); // must have been created with python script
             Trainer trainer = new Trainer(NN);
             trainer.TrainKeras();
