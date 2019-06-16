@@ -71,7 +71,7 @@ def read_samples(filename):
                         policy[i] = policies[move*25+i]
 
                     output_values.append(np.array([output_value])) # output val is from the view of player X
-                    
+
                     player *= -1
                     output_policies.append(policy)
 

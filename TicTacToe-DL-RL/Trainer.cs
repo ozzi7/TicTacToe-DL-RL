@@ -311,7 +311,7 @@ namespace TicTacToe_DL_RL
             }
             List<float> scores = new List<float>(nofGames);
             scores.AddRange(Enumerable.Repeat(0.0f, nofGames));
-            Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
+            Params.DIRICHLET_NOISE_WEIGHT = 0.25f;
             Parallel.For(0, nofGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
                 Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z; // doesnt really matter for 2 equal networks

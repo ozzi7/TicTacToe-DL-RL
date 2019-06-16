@@ -11,31 +11,33 @@ from tictactoe_nn import *
 class Trainer():
     def __init__(self):
         self.nnet = TicTacToeNet()
-        self.EPOCHS = 1
-        self.BATCH_SIZE = 100
-        self.EPOCHS_FIT = 30
+        self.BATCH_SIZE = 200
+        self.EPOCHS_FIT = 50
 
         print(K.image_data_format())  # print current format
 
     def save_init_weights(self):
 
+        print("Initializing network weights")
         self.nnet.model.save("best_model.hd5f")
         self.nnet.dump_weights()
 
     def train(self, inputs, output_values, output_policies):
 
+        try:
+            with open('./best_model.hd5f', 'r') as fh:
+                pass
+        except FileNotFoundError:
+            self.save_init_weights()
+
+        print("====================================================================================")
+
+        self.nnet.model.load_weights("best_model.hd5f")
+        self.nnet.model.fit(np.array(inputs), [np.array(output_policies), np.array(output_values)],
+                                 batch_size=self.BATCH_SIZE,
+                                 epochs=self.EPOCHS_FIT,
+                                 verbose=1)
         self.nnet.model.save("best_model.hd5f")
-
-        for eps in range(self.EPOCHS):
-            print("Episode %d" % (eps))
-            print("====================================================================================")
-
-            self.nnet.model.load_weights("best_model.hd5f")
-            self.nnet.model.fit(np.array(inputs), [np.array(output_policies), np.array(output_values)],
-                                     batch_size=self.BATCH_SIZE,
-                                     epochs=self.EPOCHS_FIT,
-                                     verbose=1)
-            self.nnet.model.save("best_model.hd5f")
 
         self.nnet.dump_weights()
 
@@ -44,8 +46,7 @@ class Trainer():
 
         #self.nnet.dump_weights()
 
-        print("Prediction for: ")
-        print(input)
+        print("Prediction for: " + str(input))
 
         inp = self.nnet.model.input  # input placeholder
         outputs = [layer.output for layer in  self.nnet.model.layers][1:]  # all layer outputs except first (input) layer
