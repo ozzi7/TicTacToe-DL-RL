@@ -224,8 +224,8 @@ namespace TicTacToe_DL_RL
         }
         public void CheckPerformanceVsRandomKeras(NeuralNetwork nn, int nofGames)
         {
-            List<NeuralNetwork>  nns = new List<NeuralNetwork>();
-            List<NeuralNetwork>  currnns = new List<NeuralNetwork>();
+            List<NeuralNetwork> nns = new List<NeuralNetwork>();
+            List<NeuralNetwork> currnns = new List<NeuralNetwork>();
 
             for (int i = 0; i < nofGames; ++i)
             {
@@ -311,7 +311,7 @@ namespace TicTacToe_DL_RL
             }
             List<float> scores = new List<float>(nofGames);
             scores.AddRange(Enumerable.Repeat(0.0f, nofGames));
-            Params.DIRICHLET_NOISE_WEIGHT = 0.25f;
+            Params.DIRICHLET_NOISE_WEIGHT = 0.3f;
             Parallel.For(0, nofGames, new ParallelOptions { MaxDegreeOfParallelism = Params.MAX_THREADS_CPU }, i =>
             {
                 Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z; // doesnt really matter for 2 equal networks
@@ -459,7 +459,7 @@ namespace TicTacToe_DL_RL
                             history.Clear();
                             Player evaluationNetworkPlayer = (j % 2) == 0 ? Player.X : Player.Z;
 
-                            int result = PlayOneGameGPU(history, evaluationNetworkPlayer, nns[jk], currnns[jk], true, evaluationNetworkPlayer);
+                            int result = PlayOneGameGPU(history, evaluationNetworkPlayer, nns[jk], currnns[jk], true);
 
                             if (evaluationNetworkPlayer == Player.X && result == 1 ||
                                 evaluationNetworkPlayer == Player.Z && result == -1)
@@ -627,7 +627,7 @@ namespace TicTacToe_DL_RL
                         List<Tuple<int, int>> history = new List<Tuple<int, int>>();
                         Player evaluationNetworkPlayer = (jk % 2) == 0 ? Player.X : Player.Z;
 
-                        int result = PlayOneGameGPU(history, evaluationNetworkPlayer, currnns[jk], nns[jk], false, evaluationNetworkPlayer);
+                        int result = PlayOneGameGPU(history, evaluationNetworkPlayer, currnns[jk], nns[jk], false);
 
                         if (result == 1)
                             winsX[jk]++;
@@ -916,13 +916,11 @@ namespace TicTacToe_DL_RL
                 if (MCTSRootNodeNN1.nn_policy == null)
                 {
                     calculateNNOutputWithNoise(MCTSRootNodeNN1, NN1, curr_ply);
-                    backpropagateScore(MCTSRootNodeNN1, MCTSRootNodeNN1.nn_value, aEvaluationNetworkPlayer);
                 }
                 createChildren(MCTSRootNodeNN2);
                 if (MCTSRootNodeNN2.nn_policy == null)
                 {
                     calculateNNOutputWithNoise(MCTSRootNodeNN2, NN2, curr_ply);
-                    backpropagateScore(MCTSRootNodeNN2, MCTSRootNodeNN2.nn_value, nonEvalPlayer);
                 }
                 int nofSimsPerMove = train ? Params.NOF_SIMS_PER_MOVE_TRAINING : Params.NOF_SIMS_PER_MOVE_TESTING;
 
@@ -1007,14 +1005,12 @@ namespace TicTacToe_DL_RL
                 /* find value, policy */
                 if (MCTSRootNodeNN1.nn_policy == null)
                 {
-                    calculateNNOutputWithNoise(MCTSRootNodeNN1, NN1, curr_ply);
-                    backpropagateScore(MCTSRootNodeNN1, MCTSRootNodeNN1.nn_value, aEvaluationNetworkPlayer);
+                    calculateNNOutputWithNoise(MCTSRootNodeNN1, NN1, curr_ply); // ignore root value
                 }
                 createChildren(MCTSRootNodeNN2);
                 if (MCTSRootNodeNN2.nn_policy == null)
                 {
                     calculateNNOutputWithNoise(MCTSRootNodeNN2, NN2, curr_ply);
-                    backpropagateScore(MCTSRootNodeNN2, MCTSRootNodeNN2.nn_value, nonEvalPlayer);
                 }
                 int nofSimsPerMove = train ? Params.NOF_SIMS_PER_MOVE_TRAINING : Params.NOF_SIMS_PER_MOVE_TESTING;
 
@@ -1028,7 +1024,8 @@ namespace TicTacToe_DL_RL
                     // show last simulation tree
                     if (simulation == nofSimsPerMove - 1 && curr_ply == 0)
                     {
-                        //DisplayMCTSTree(MCTSRootNode);
+                        //DisplayMCTSTree(MCTSRootNodeNN1);
+                        //DisplayMCTSTree(MCTSRootNodeNN2);
                     }
                 }
 
@@ -1099,14 +1096,25 @@ namespace TicTacToe_DL_RL
 
             return game.position.score;
         }
-        public int PlayOneGameGPU(List<Tuple<int, int>> history, Player aEvaluationNetworkPlayer, NeuralNetwork NN1, NeuralNetwork NN2, bool train, Player playerOfTree)
+        public int PlayOneGameGPU(List<Tuple<int, int>> history, Player aEvaluationNetworkPlayer, NeuralNetwork NN1, NeuralNetwork NN2, bool train)
         {
+
             TicTacToeGame game = new TicTacToeGame();
             Node<TicTacToePosition> MCTSRootNodeNN1 = new Node<TicTacToePosition>(null);
             Node<TicTacToePosition> MCTSRootNodeNN2 = new Node<TicTacToePosition>(null);
 
             Queue<Node<TicTacToePosition>> pendingNN1Requests = new Queue<Node<TicTacToePosition>>();
             Queue<Node<TicTacToePosition>> pendingNN2Requests = new Queue<Node<TicTacToePosition>>();
+
+            Player nonEvalPlayer;
+            if (aEvaluationNetworkPlayer == Player.X)
+            {
+                nonEvalPlayer = Player.Z;
+            }
+            else
+            {
+                nonEvalPlayer = Player.X;
+            }
 
             for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
             {
@@ -1136,7 +1144,7 @@ namespace TicTacToe_DL_RL
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
-                            backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, playerOfTree);
+                            backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, aEvaluationNetworkPlayer);
 
                             result = NN1.GetResultAsync(); // try to get a result, if there is one, try to get more
                         }
@@ -1149,9 +1157,9 @@ namespace TicTacToe_DL_RL
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
-                            backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, playerOfTree);
+                            backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, aEvaluationNetworkPlayer);
                         }
-                        SearchUsingNNGPU(MCTSRootNodeNN1, NN1, pendingNN1Requests, playerOfTree); // expand tree and improve accuracy at MCTSRootNode
+                        SearchUsingNNGPU(MCTSRootNodeNN1, NN1, pendingNN1Requests, nonEvalPlayer); // expand tree and improve accuracy at MCTSRootNode
                     }
                     else
                     {
@@ -1163,7 +1171,7 @@ namespace TicTacToe_DL_RL
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
-                            backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, playerOfTree);
+                            backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, nonEvalPlayer);
 
                             result = NN2.GetResultAsync(); // try to get a result, if there is one, try to get more
                         }
@@ -1176,9 +1184,9 @@ namespace TicTacToe_DL_RL
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
-                            backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, playerOfTree);
+                            backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, nonEvalPlayer);
                         }
-                        SearchUsingNNGPU(MCTSRootNodeNN2, NN2, pendingNN2Requests, playerOfTree); // expand tree and improve accuracy at MCTSRootNode
+                        SearchUsingNNGPU(MCTSRootNodeNN2, NN2, pendingNN2Requests, nonEvalPlayer); // expand tree and improve accuracy at MCTSRootNode
                     }
 
                     // show last simulation tree
@@ -1197,7 +1205,7 @@ namespace TicTacToe_DL_RL
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
                     removeVirtualLoss(nodeToUpdate);
-                    backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, playerOfTree);
+                    backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, aEvaluationNetworkPlayer);
                 }
                 while (pendingNN2Requests.Count > 0)
                 {
@@ -1208,7 +1216,7 @@ namespace TicTacToe_DL_RL
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
                     removeVirtualLoss(nodeToUpdate);
-                    backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, playerOfTree);
+                    backpropagateScore(nodeToUpdate, nodeToUpdate.nn_value, nonEvalPlayer);
                 }
 
                 int best_child_index = -1;
@@ -1525,23 +1533,38 @@ namespace TicTacToe_DL_RL
             }
             return noiseWeight;
         }
-        private int findBestChildWinrate(Node<TicTacToePosition> currNode)
-        {
-            float best_winrate = float.NegativeInfinity;
-            int best_child_index = -1;
+        //private int findBestChildWinrate(Node<TicTacToePosition> currNode, Player playerOfTree, int depth)
+        //{
+        //    int best_child_index = -1;
+        //    if (playerOfTree == Player.X && depth % 2 == 0)
+        //    {
+        //        for (int i = 0; i < currNode.Children.Count; ++i)
+        //        {
+        //            float best_winrate = float.NegativeInfinity;
+        //            float winrate_temp = currNode.Children[i].winrate;
+        //            if (winrate_temp > best_winrate)
+        //            {
+        //                best_winrate = winrate_temp;
+        //                best_child_index = i;
+        //            }
+        //        }
+        //    }
+        //    if (playerOfTree == Player.X && depth % 2 == 1)
+        //    {
+        //        for (int i = 0; i < currNode.Children.Count; ++i)
+        //        {
+        //            float best_winrate = float.PositiveInfinity;
+        //            float winrate_temp = currNode.Children[i].winrate;
+        //            if (winrate_temp < best_winrate)
+        //            {
+        //                best_winrate = winrate_temp;
+        //                best_child_index = i;
+        //            }
+        //        }
+        //    }
 
-            for (int i = 0; i < currNode.Children.Count; ++i)
-            {
-                float winrate_temp = currNode.Children[i].winrate;
-                if (winrate_temp > best_winrate)
-                {
-                    best_winrate = winrate_temp;
-                    best_child_index = i;
-                }
-            }
-
-            return best_child_index;
-        }
+        //    return best_child_index;
+        //}
         private int findBestChildVisitCount(Node<TicTacToePosition> currNode)
         {
             float best_visit_count = 0;
@@ -1610,6 +1633,7 @@ namespace TicTacToe_DL_RL
         }
         private Node<TicTacToePosition> findMostPromisingLeafNode(Node<TicTacToePosition> currNode)
         {
+            //bool findMax = (playerOfTree == Player.X && depth % 2 == 0 || playerOfTree == Player.Z && depth % 2 == 1);
             while (currNode.HasChild)
             {
                 /* create the game from the TicTacToePosition */
@@ -1626,40 +1650,43 @@ namespace TicTacToe_DL_RL
                 // if nnpolicy is null then also all children have no nn output, but possibly a score from endgame position
                 for (int i = 0; i < currNode.Children.Count; ++i)
                 {
-                    // this factors in all virtual losses into the winrate
-                    float childWinrateWithVirtualLoss = (currNode.Children[i].winrate * currNode.Children[i].visitCount) /
-                        (currNode.Children[i].visitCount + currNode.Children[i].virtualLossCount+1);
+                    float temp_UCT_score = float.NegativeInfinity;
 
-                    float temp_UCT_score = 0.0f;
+                    // this factors in all virtual losses into the winrate
+                    float childWinrateWithVirtualLoss = 0.0f;
+                    if (currNode.Children[i].visitCount != 0)
+                    {
+                        childWinrateWithVirtualLoss = (currNode.Children[i].winrate * currNode.Children[i].visitCount) /
+                        (currNode.Children[i].visitCount + currNode.Children[i].virtualLossCount);
+                    }
 
                     if (currNode.nn_policy != null)
                     {
                         // we have the policy output
-                        if(currNode.visitCount == 0)
+                        if(currNode.Children[i].visitCount == 0)
                         {
-                            temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *
-                            (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1) + Params.FPU_VALUE;
+                            temp_UCT_score = Params.FPU_VALUE + Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *
+                                (float)Math.Sqrt(currNode.visitCount + 1) / (float)(currNode.Children[i].visitCount + 1);
                         }
                         else
                         {
                             temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *
-                                (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
+                                (float)Math.Sqrt(currNode.visitCount+1) / (float)(currNode.Children[i].visitCount + 1);
                         }
                     }
                     else
                     {
                         // this only happens with virtual visits
-                        if (currNode.visitCount == 0)
+                        if (currNode.Children[i].visitCount == 0)
                         {
                             // assume policy equal for all children if not found yet (because of virtual visits)
-                            temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * (1.0f / currNode.Children.Count) *
-                                (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1) + Params.FPU_VALUE;
+                            temp_UCT_score = Params.FPU_VALUE;
                         }
                         else
                         {
                             // assume policy equal for all children if not found yet (because of virtual visits)
                             temp_UCT_score = childWinrateWithVirtualLoss + Params.C_PUCT * (1.0f / currNode.Children.Count) *
-                                (float)Math.Sqrt(currNode.visitCount) / (float)(currNode.Children[i].visitCount + 1);
+                                (float)Math.Sqrt(currNode.visitCount+1) / (float)(currNode.Children[i].visitCount + 1);
                         }
                     }
                     if (temp_UCT_score > bestUCTScore)
@@ -1676,15 +1703,15 @@ namespace TicTacToe_DL_RL
         }
         private void backpropagateScore(Node<TicTacToePosition> currNode, float score, Player playerOfTree)
         {
+            // argument score is from the view of player X always
             // we store the winrate for the opposite player in the node, during search we look at the next level
-            // Player X maximizes the tree, Player Z minimizes the tree
             while (currNode != null)
             {
                 if (playerOfTree == Player.X)
                 {
                     if (currNode.Value.sideToMove == Player.X)
                     {
-                        currNode.winrate = (currNode.visitCount * currNode.winrate + 1.0f - score) / (currNode.visitCount + 1);
+                        currNode.winrate = (currNode.visitCount * currNode.winrate + (1.0f - score)) / (currNode.visitCount + 1);
                     }
                     else if (currNode.Value.sideToMove == Player.Z)
                     {
@@ -1695,11 +1722,11 @@ namespace TicTacToe_DL_RL
                 {
                     if (currNode.Value.sideToMove == Player.X)
                     {
-                        currNode.winrate = (currNode.visitCount * currNode.winrate + score) / (currNode.visitCount + 1);
+                        currNode.winrate = (currNode.visitCount * currNode.winrate + 1.0f -score) / (currNode.visitCount + 1);
                     }
                     else if (currNode.Value.sideToMove == Player.Z)
                     {
-                        currNode.winrate = (currNode.visitCount * currNode.winrate + 1 - score) / (currNode.visitCount + 1);
+                        currNode.winrate = (currNode.visitCount * currNode.winrate + score) / (currNode.visitCount + 1);
                     }
                 }
 

@@ -572,7 +572,6 @@ namespace TicTacToe_DL_RL
                 {
                     output[i] += input[j] * connectionWeights[j * output.Length + i];//[i * input.Length + j];//
                 }
-                //output[i] /= input.Length;
                 output[i] += outputBiases[i];
 
                 if(rectifier && output[i] < 0.0f)

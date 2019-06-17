@@ -19,14 +19,14 @@ namespace TicTacToe_DL_RL
         {
             // ---------------------- NEUROEVOLUTION LOOP ----------------------
             //NeuralNetwork NN = new NeuralNetwork();
-            //NN.InitializeWeights(0.5f);
-            //NN.InitializeWeightsTo0();
+            //NN.InitializeWeights(1.0f);
+            ////NN.InitializeWeightsTo0();
             //NN.CalculateVirtualBNs();
             //NN.SaveWeightsToFile("weights_start.txt");
             //NN.ReadWeightsFromFile("weights_start.txt");
             //Trainer trainer = new Trainer(NN);
             //trainer.Train();
-       
+
             //NN.ReadWeightsFromFile("weights_net_14_longgpurun.txt");
 
             // -------------------------- KERAS BP LOOP ---------------------------

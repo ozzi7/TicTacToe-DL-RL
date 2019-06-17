@@ -11,10 +11,10 @@ from tictactoe_nn import *
 class Trainer():
     def __init__(self):
         self.nnet = TicTacToeNet()
-        self.BATCH_SIZE = 200
+        self.BATCH_SIZE = 100
         self.EPOCHS_FIT = 50
 
-        print(K.image_data_format())  # print current format
+        #print(K.image_data_format())  # print current format
 
     def save_init_weights(self):
 

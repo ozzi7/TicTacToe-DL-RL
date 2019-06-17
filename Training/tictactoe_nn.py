@@ -29,7 +29,7 @@ NOF_VALUE_FILTERS=1
 NOF_POLICY_FILTERS=8
 NOF_FC_NEURONS_VAL_LAYER=32
 NOF_RES_LAYERS=4
-LEARNING_RATE=0.01 # was 0.001
+LEARNING_RATE=0.001 # was 0.001
 
 class TicTacToeNet():
     def __init__(self):
@@ -49,7 +49,7 @@ class TicTacToeNet():
 
         self.model = Model(inputs=[self.input_boards], outputs=[self.policy_head, self.value_head])
         self.model.compile(loss=['categorical_crossentropy', 'mean_squared_error'], optimizer=Adam(LEARNING_RATE))
-        self.model.summary()
+        #self.model.summary()
 
     def conv_layer(self, x, filters, kernel_size):
         x = Conv2D(
