@@ -80,7 +80,7 @@ if __name__ == '__main__':
 
     os.chdir(os.path.dirname(sys.argv[0]))
     trainer = Trainer()
-    trainer.save_init_weights()
+    #trainer.save_init_weights()
     trainer.train(*read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1]))
     #(inputs, output_values, output_policies) = read_samples()
     #trainer.predict([inputs[0]])
