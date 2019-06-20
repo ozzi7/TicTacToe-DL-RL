@@ -18,12 +18,13 @@ namespace TicTacToe_DL_RL
          * N_p visit count of parent
          * c >= 0, low c = choose lucrative nodes, else explore
         */
-        public float visitCount = 0;
+        public float visits = 0;
         public List<float> nn_policy = null;
         public float nn_value;
         public int moveIndex = -1; // from 0 to 24 
-        public float winrate = 0.0f; // from 0 to 1, 1 means the other player (of the node before this) always wins in this node
-        public int virtualLossCount = 0; // a visit which needs a NN eval increases this
+        public float scoreSum = 0.0f; // from -inf to inf, where high values = X is winning
+        public float winrate = 0.0f;
+        public int virtualLosses = 0; // a visit which needs a NN eval increases this
         public bool waitingForGPUPrediction = false; // if this node is already waiting for a GPU eval
 
         public Node<TValue> parent = null;
@@ -48,7 +49,7 @@ namespace TicTacToe_DL_RL
         {
             string resultString = "Node in MCTS Tree\n\n";
 
-            resultString += "Visit count: " + visitCount + "\n";
+            resultString += "Visit count: " + visits + "\n";
             resultString += "Winrate: " + winrate + "\n";
             resultString += "NN Value: " + nn_value + "\n";
 

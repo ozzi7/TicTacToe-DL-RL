@@ -23,10 +23,10 @@ namespace TicTacToe_DL_RL
         const int nofInputPlanes = 3; // = input channels, 2 plane is board 5x5 for each player + 1 plane color 5x5
         const int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
         const int nofOutputValues = 1; // value head has 1 output
-        const int nofFilters = 16; //64- the convolution layer has 64 filters
+        const int nofFilters = 10; //64- the convolution layer has 64 filters
         const int nofConvLayers = 17; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
         const int nofResidualLayers = 8; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
-        const int nofPolicyFilters = 16; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
+        const int nofPolicyFilters = 10; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
         const int nofValueFilters = 1; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
         const int valueHiddenLayerSize = 32; // was 128
         const float softmaxTemperature = 1.0f;
@@ -100,7 +100,12 @@ namespace TicTacToe_DL_RL
             weights = new List<float>(aWeights);
             ParseWeightsKeras();
         }
-       
+        public NeuralNetwork(List<float> aWeights, List<float> aUntrainableWeights)
+        {
+            weights = new List<float>(aWeights);
+            untrainable_weights = new List<float>(aUntrainableWeights);
+            ParseWeights();
+        }
         public NeuralNetwork(String file)
         {
             ReadWeightsFromFile(file);
@@ -111,12 +116,6 @@ namespace TicTacToe_DL_RL
             writer = OpenCL.InputChannel.Writer;
             reader = OpenCL.ResponseChannels[globalID].Reader;
             OpenCL.EnqueueWeights(this);
-        }
-        public NeuralNetwork(List<float> aWeights, List<float> aUntrainableWeights)
-        {
-            weights = new List<float>(aWeights);
-            untrainable_weights = new List<float>(aUntrainableWeights);
-            ParseWeights();
         }
         public Tuple<float[], float> Predict(TicTacToePosition pos)
         {
@@ -413,7 +412,7 @@ namespace TicTacToe_DL_RL
             BN(outputValueData, outputValueData, BNMeansValue, BNStddevValue, nofValueFilters, 0, BNGammaValue, BNBetaValue);
             FCLayer(outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true); // with rectifier
             FCLayer(temporaryValueData, winrateOut, valueConnectionWeights2, valueBiasLast, false); // 1 output, 1 bias
-            winrateSigOut = (1.0f+(float)Math.Tanh(winrateOut[0]))/2.0f; // TODO check
+            winrateSigOut = (float)Math.Tanh(winrateOut[0]);
 
             /*policy head*/
             Convolution(inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, nofFilters, nofPolicyFilters, 1, 1, 0);
@@ -479,12 +478,6 @@ namespace TicTacToe_DL_RL
                     }
                 }
             }
-           // });
-            // after summing all values, divide by number of summed up fields
-            //for (int u = 0; u < output.Length; ++u)
-            //{
-            //    output[u] /= nofInputPlanes * filterHeight * filterWidth;
-            //}
         }
         private void BN(float[] input, float[] output, float[] BNMeans, float[] BNStdDev, int nofFilters, int index, float[] BNGammas, float[] BNBetas)
         {
