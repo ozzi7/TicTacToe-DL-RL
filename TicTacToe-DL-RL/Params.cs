@@ -28,7 +28,7 @@ namespace TicTacToe_DL_RL
         public static int NOF_OFFSPRING = 20; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
         public static int NOF_GAMES_PER_OFFSPRING = 10;
         public static int NOF_GAMES_TEST = 64; // must be 2n for equal tests of player X and player Z, multiple of threads
-        public static int NOF_GAMES_VS_RANDOM = 10;
+        public static int NOF_GAMES_VS_RANDOM = 20;
         public static int NOF_SIMS_PER_MOVE_TRAINING = 100; // could/should be time
         public static int NOF_SIMS_PER_MOVE_TESTING = 40; // could/should be time
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;

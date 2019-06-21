@@ -161,7 +161,7 @@ namespace TicTacToe_DL_RL
             List<NeuralNetwork> nns = new List<NeuralNetwork>();
             List<NeuralNetwork> currnns = new List<NeuralNetwork>();
 
-            for (int i = 0; i < Params.NOF_CPU_THREADS; ++i)
+            for (int i = 0; i < nofGames; ++i)
             {
                 nns.Add(new NeuralNetwork(oldNN.weights));
                 currnns.Add(new NeuralNetwork(newNN.weights));
@@ -174,7 +174,7 @@ namespace TicTacToe_DL_RL
                 ID.ResetGlobalID();
                 OpenCL.ClearWeights();
 
-                for (int i = 0; i < Params.NOF_CPU_THREADS; ++i)
+                for (int i = 0; i < nofGames; ++i)
                 {
                     nns[i].OpenCLInit(ID.GetGlobalID());
                     currnns[i].OpenCLInit(ID.GetGlobalID());
@@ -194,50 +194,47 @@ namespace TicTacToe_DL_RL
                 {
                     long sharedLoopCounter = 0;
 
-                    ThreadPool.SetMinThreads(Params.NOF_CPU_THREADS, Params.NOF_CPU_THREADS);
-                    for (int j = 0; j < nofGames / Params.NOF_CPU_THREADS; ++j)
-                    {
-                        // process batches of games to re-use neural networks
-                        Parallel.For(j * Params.NOF_CPU_THREADS, j * Params.NOF_CPU_THREADS + Params.NOF_CPU_THREADS,
-                            new ParallelOptions { MaxDegreeOfParallelism = Params.NOF_CPU_THREADS }, i =>
+                    ThreadPool.SetMinThreads(nofGames, nofGames);
+                    // process batches of games to re-use neural networks
+                    Parallel.For(0, nofGames,
+                        new ParallelOptions { MaxDegreeOfParallelism = nofGames }, i =>
+                        {
+                            List<Tuple<int, int>> history = new List<Tuple<int, int>>();
+                            Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
+
+                            int result = PlayOneGameGPU(history, evaluationNetworkPlayer, 
+                                currnns[i], nns[i], false);
+
+                            if (result == 1)
+                                winsX[i]++;
+                            else if (result == -1)
+                                winsZ[i]++;
+
+                            if (evaluationNetworkPlayer == Player.X && result == 1 ||
+                                evaluationNetworkPlayer == Player.Z && result == -1)
+                                wins[i]++;
+                            else if (result == 0)
+                                draws[i]++;
+                            else
+                                losses[i]++;
+
+                            movecount[i] += history.Count;
+
+                            /* to display some games */
+                            if (i >= nofGames - 2)
                             {
-                                List<Tuple<int, int>> history = new List<Tuple<int, int>>();
-                                Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
-
-                                int result = PlayOneGameGPU(history, evaluationNetworkPlayer, 
-                                    currnns[i % Params.NOF_CPU_THREADS], nns[i % Params.NOF_CPU_THREADS], false);
-
-                                if (result == 1)
-                                    winsX[i]++;
-                                else if (result == -1)
-                                    winsZ[i]++;
-
-                                if (evaluationNetworkPlayer == Player.X && result == 1 ||
-                                    evaluationNetworkPlayer == Player.Z && result == -1)
-                                    wins[i]++;
-                                else if (result == 0)
-                                    draws[i]++;
+                                if ((i % 2) == 0)
+                                    Console.WriteLine("Eval player playing as Player X");
                                 else
-                                    losses[i]++;
-
-                                movecount[i] += history.Count;
-
-                                /* to display some games */
-                                if (i >= nofGames - 2)
-                                {
-                                    if ((i % 2) == 0)
-                                        Console.WriteLine("Eval player playing as Player X");
-                                    else
-                                        Console.WriteLine("Eval player playing as Player Z");
-                                    TicTacToeGame game = new TicTacToeGame();
-                                    game.DisplayHistory(history);
-                                }
-                                Interlocked.Add(ref sharedLoopCounter, 1);
-                                progress.Report((double)Interlocked.Read(ref sharedLoopCounter) / nofGames);
-                            });
+                                    Console.WriteLine("Eval player playing as Player Z");
+                                TicTacToeGame game = new TicTacToeGame();
+                                game.DisplayHistory(history);
+                            }
+                            Interlocked.Add(ref sharedLoopCounter, 1);
+                            progress.Report((double)Interlocked.Read(ref sharedLoopCounter) / nofGames);
+                        });
                     }
                     thread.Abort();
-                }
             }
             else
             {
@@ -245,17 +242,17 @@ namespace TicTacToe_DL_RL
                 {
                     long sharedLoopCounter = 0;
 
-                    ThreadPool.SetMinThreads(Params.NOF_CPU_THREADS, Params.NOF_CPU_THREADS);
+                    ThreadPool.SetMinThreads(nofGames, nofGames);
                     for (int j = 0; j < nofGames / Params.NOF_CPU_THREADS; ++j)
                     {
-                        Parallel.For(j * Params.NOF_CPU_THREADS, j * Params.NOF_CPU_THREADS + Params.NOF_CPU_THREADS,
-                            new ParallelOptions { MaxDegreeOfParallelism = Params.NOF_CPU_THREADS }, i =>
+                        Parallel.For(0, nofGames,
+                            new ParallelOptions { MaxDegreeOfParallelism = nofGames }, i =>
                             {
                                 List<Tuple<int, int>> history = new List<Tuple<int, int>>();
                             Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z;
 
-                            int result = PlayOneGame(history, evaluationNetworkPlayer, currnns[i % Params.NOF_CPU_THREADS], 
-                                nns[i % Params.NOF_CPU_THREADS], false);
+                            int result = PlayOneGame(history, evaluationNetworkPlayer, currnns[i], 
+                                nns[i], false);
 
                             if (result == 1)
                                 winsX[i]++;
@@ -1272,7 +1269,6 @@ namespace TicTacToe_DL_RL
             Queue<Node<TicTacToePosition>> pendingNN1Requests = new Queue<Node<TicTacToePosition>>();
             Queue<Node<TicTacToePosition>> pendingNN2Requests = new Queue<Node<TicTacToePosition>>();
 
-            int score = 0;
             for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
             {
                 MCTSRootNodeNN1.Value = new TicTacToePosition(game.position);
@@ -1280,7 +1276,6 @@ namespace TicTacToe_DL_RL
 
                 if (game.IsOver())
                 {
-                    score = game.GetScore();
                     break;
                 }
 
