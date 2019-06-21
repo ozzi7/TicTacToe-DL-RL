@@ -13,8 +13,8 @@ from ast import literal_eval as createTuple
 import re
 import sys
 import os
-import warnings
-warnings.filterwarnings("ignore")
+os.environ["TF_CPP_MIN_LOG_LEVEL"]="3"
+
 
 def read_samples(filename):
     # read training data from file
