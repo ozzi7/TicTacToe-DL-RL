@@ -16,3 +16,4 @@ add FPU done
 add weight regularization loss 
 dont re-use the weights which were not accepted ?
 http://blog.lczero.org/2018/12/alphazero-paper-and-lc0-v0191.html
+implement a global hash for BP training

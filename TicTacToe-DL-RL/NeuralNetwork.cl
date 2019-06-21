@@ -196,10 +196,10 @@ kernel void NN(
     private int nofInputPlanes = 3;
 	private int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
 	private int nofOutputValues = 1; // value head has 1 output
-	private int nofFilters = 24; //64- the convolution layer has 64 filters
-	private int nofConvLayers = 33; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
-	private int nofResidualLayers = 16; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
-	private int nofPolicyFilters = 16; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
+	private int nofFilters = 16; //64- the convolution layer has 64 filters
+	private int nofConvLayers = 21; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
+	private int nofResidualLayers = 10; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
+	private int nofPolicyFilters = 25; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
 	private int nofValueFilters = 1; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
 	private int valueHiddenLayerSize = 32; // was 128
 	private float softmaxTemperature = 1.0f;

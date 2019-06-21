@@ -23,10 +23,10 @@ namespace TicTacToe_DL_RL
         const int nofInputPlanes = 3; // = input channels, 2 plane is board 5x5 for each player + 1 plane color 5x5
         const int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
         const int nofOutputValues = 1; // value head has 1 output
-        const int nofFilters = 24; //64- the convolution layer has 64 filters
-        const int nofConvLayers = 33; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
-        const int nofResidualLayers = 16; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
-        const int nofPolicyFilters = 16; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
+        const int nofFilters = 16; //64- the convolution layer has 64 filters
+        const int nofConvLayers = 21; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
+        const int nofResidualLayers = 10; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
+        const int nofPolicyFilters = 25; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
         const int nofValueFilters = 1; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
         const int valueHiddenLayerSize = 32; // was 128
         const float softmaxTemperature = 1.0f;
