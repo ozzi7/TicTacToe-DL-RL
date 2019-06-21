@@ -83,7 +83,7 @@ namespace TicTacToe_DL_RL
                 python = Process.Start(pythonInfo);
 
                 // the old network, we do this while waiting for python
-                CheckPerformanceVsRandomKeras(bestNN, 20, 0.0f);
+                CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM, 0.0f);
 
                 while (!python.StandardOutput.EndOfStream)
                 {
@@ -101,13 +101,17 @@ namespace TicTacToe_DL_RL
 
                 // #################################### CREATE NEW BEST NETWORK ##########################################
 
+                if(!newBestFound)
+                {
+                    printPolicy(bestNN);
+                }
+                else
+                {
+                    printPolicy(currentNN);
 
-                if (newBestFound)
-                {  
+                    Console.WriteLine("New best network found!");
                     bestNN.weights = new List<float>(currentNN.weights);
                     bestNN.ParseWeightsKeras();
-
-                    printPolicy(bestNN);
                 }
 
                 WritePlotStatistics();
