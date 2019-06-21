@@ -27,7 +27,7 @@ namespace TicTacToe_DL_RL
         public static int NOF_EPOCHS = 10000000;
         public static int NOF_OFFSPRING = 20; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
         public static int NOF_GAMES_PER_OFFSPRING = 10;
-        public static int NOF_GAMES_TEST = 24; // must be 2n for equal tests of player X and player Z
+        public static int NOF_GAMES_TEST = 64; // must be 2n for equal tests of player X and player Z, multiple of threads
         public static int NOF_GAMES_VS_RANDOM = 10;
         public static int NOF_SIMS_PER_MOVE_TRAINING = 100; // could/should be time
         public static int NOF_SIMS_PER_MOVE_TESTING = 40; // could/should be time
@@ -48,7 +48,7 @@ namespace TicTacToe_DL_RL
         public static float FPU_VALUE = 0.2f; // first play urgency, between [0,1], added to the puct score of unvisited children, this is needed if policy is 0 otherwise the children cannot be visited
 
         // BP only
-        public static int NOF_GAMES_TRAIN_KERAS = 1024;
+        public static int NOF_GAMES_TRAIN_KERAS = 1024; // multiple of threads
 
         // GAME SPECIFIC 
         public static int MAXIMUM_PLYS = 100; // when to stop playing a game completely and declare draw (in tic tac toe game is always finished in 100 moves)

@@ -182,7 +182,6 @@ namespace TicTacToe_DL_RL
 
             if (Params.GPU_ENABLED)
             {
-
                 Thread thread = new Thread(OpenCL.Run);
                 thread.Priority = ThreadPriority.Highest;
                 thread.Start();
@@ -220,7 +219,7 @@ namespace TicTacToe_DL_RL
                                 movecount[i] += history.Count;
 
                                 /* to display some games */
-                                if (i >= Params.NOF_GAMES_TEST - 2)
+                                if (i >= nofGames - 2)
                                 {
                                     if ((i % 2) == 0)
                                         Console.WriteLine("Eval player playing as Player X");
@@ -1456,7 +1455,6 @@ namespace TicTacToe_DL_RL
             Queue<Node<TicTacToePosition>> pendingNN1Requests = new Queue<Node<TicTacToePosition>>();
             Queue<Node<TicTacToePosition>> pendingNN2Requests = new Queue<Node<TicTacToePosition>>();
 
-            int score = 0;
             for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
             {
                 MCTSRootNodeNN1.Value = new TicTacToePosition(game.position);
@@ -1464,7 +1462,6 @@ namespace TicTacToe_DL_RL
 
                 if (game.IsOver())
                 {
-                    score = game.GetScore();
                     break;
                 }
                 createChildren(MCTSRootNodeNN1);
@@ -1753,9 +1750,7 @@ namespace TicTacToe_DL_RL
             // we store the winrate for the opposite player in the node, during search we look at the next level
             while (currNode != null)
             {
-                currNode.virtualLosses += 1;
-                currNode.scoreSum -= 1;
-                currNode.winrate = currNode.scoreSum / (currNode.visits + currNode.virtualLosses);
+                currNode.virtualVisits += 1;
                 currNode = currNode.GetParent();
             }
         }
@@ -1764,9 +1759,7 @@ namespace TicTacToe_DL_RL
             // we store the winrate for the opposite player in the node, during search we look at the next level
             while (currNode != null)
             {
-                currNode.virtualLosses -= 1;
-                currNode.scoreSum += 1;
-                currNode.winrate = currNode.scoreSum / (currNode.visits + currNode.virtualLosses);
+                currNode.virtualVisits -= 1;
                 currNode = currNode.GetParent();
             }
         }
@@ -1983,11 +1976,7 @@ namespace TicTacToe_DL_RL
                     float temp_UCT_score = float.NegativeInfinity;
 
                     // winrate
-                    float childWinrate = 0.0f;
-                    if (currNode.Children[i].visits != 0 || currNode.Children[i].virtualLosses != 0)
-                    {
-                        childWinrate = currNode.Children[i].winrate;
-                    }
+                    float childWinrate = currNode.Children[i].winrate;
 
                     // exploration
                     float explorationTerm = 0.0f;
@@ -1995,13 +1984,15 @@ namespace TicTacToe_DL_RL
                     {
                         // we have the policy output
                         explorationTerm = Params.C_PUCT * currNode.nn_policy[currNode.Children[i].moveIndex] *
-                            (float)Math.Sqrt(currNode.visits) / (float)(currNode.Children[i].visits + 1);
+                            (float)Math.Sqrt(currNode.visits + currNode.virtualVisits) / (float)(currNode.Children[i].visits + 
+                            currNode.Children[i].virtualVisits +1);
                     }
                     else
                     {
                         // assume policy equal for all children if not found yet (because of virtual visits)
                         explorationTerm = Params.C_PUCT * (1.0f / currNode.Children.Count) *
-                            (float)Math.Sqrt(currNode.visits) / (float)(currNode.Children[i].visits + 1);
+                            (float)Math.Sqrt(currNode.visits + currNode.virtualVisits) / (float)(currNode.Children[i].visits +
+                            + currNode.Children[i].virtualVisits + 1);
                     }
 
                     // bonus for unvisited
@@ -2036,7 +2027,7 @@ namespace TicTacToe_DL_RL
             {
                 currNode.scoreSum += score;
                 currNode.visits += 1;
-                currNode.winrate = currNode.scoreSum/ (currNode.visits+currNode.virtualLosses);
+                currNode.winrate = currNode.scoreSum/ (currNode.visits);
                 currNode = currNode.GetParent();
                 score = score * (-1);
             }

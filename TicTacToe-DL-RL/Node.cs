@@ -24,7 +24,7 @@ namespace TicTacToe_DL_RL
         public int moveIndex = -1; // from 0 to 24 
         public float scoreSum = 0.0f; // from -inf to inf, where high values = X is winning
         public float winrate = 0.0f;
-        public int virtualLosses = 0; // a visit which needs a NN eval increases this
+        public int virtualVisits = 0; // a visit which needs a NN eval increases this
         public bool waitingForGPUPrediction = false; // if this node is already waiting for a GPU eval
 
         public Node<TValue> parent = null;
