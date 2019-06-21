@@ -31,7 +31,7 @@
                                 continue;
                             }
                             output[i * 5 * 5 + k * 5 + l] += 
-                                input[j * 5 * 5 + k * 5 + l] *
+                                input[j * 5 * 5 + k * 5 + l + (x - (filterHeight / 2))*5 + y-(filterWidth/2)] *
                                 convWeights[
 									networkOffset +
                                     index * nofFilters * nofInputPlanes * filterHeight * filterWidth +
@@ -45,11 +45,6 @@
             }
         }
     }
-    // after summing all values, divide by number of summed up fields
-    //for (int u = 0; u < sizeOfOutput; ++u)
-    //{
-    //    output[u] /= nofInputPlanes * filterHeight * filterWidth;
-    //}
 }
 static inline void BN(float* input, float* output, constant float* BNMeans, constant float* BNStdDev, 
 	int nofFilters, int index, constant float* BNGammas, constant float* BNBetas, int networkIndex)
@@ -64,13 +59,13 @@ static inline void BN(float* input, float* output, constant float* BNMeans, cons
             // batch norm/ batch stddev
             /* see Alg 1: https://arxiv.org/pdf/1502.03167.pdf */
             float x_til = (float)((input[i * 25 + j] - BNMeans[networkIndex +  index * nofFilters + i])/
-                (BNStdDev[networkIndex +  index * nofFilters + i] + 0.0001f));
+                (BNStdDev[networkIndex +  index * nofFilters + i]));
             output[i * 25 + j] = BNGammas[networkIndex + index * nofFilters + i] *
 					x_til+BNBetas[networkIndex + index * nofFilters + i];
 
             // relu
             if (output[i * 25 + j] < 0.0f)
-                output[i* 25 + j] = 0.0f;
+                output[i* 25 + j] = 0.3f*output[i* 25 + j];
         }
     }
 }
@@ -82,16 +77,15 @@ static inline void BNWithResidual(float* input, float* output, float* residual, 
         for (int j = 0; j < 5 * 5; ++j)
         {
             // batch norm/ batch stddev
-            float x_til = (float)((input[i * 25 + j] + 
-                residual[i * 25 + j] - BNMeans[networkIndex + index * nofFilters + i]) /
-                (BNStdDev[networkIndex +index * nofFilters + i]+ 0.0001f));
+            float x_til = (float)((input[i * 25 + j] - BNMeans[networkIndex + index * nofFilters + i]) /
+                (BNStdDev[networkIndex +index * nofFilters + i]));
 
-            output[i * 25 + j] = BNGammas[networkIndex + index * nofFilters + i] * x_til + 
+            output[i * 25 + j] = residual[i * 25 + j] + BNGammas[networkIndex + index * nofFilters + i] * x_til + 
 																		BNBetas[networkIndex + index * nofFilters + i];
 
             // relu
             if (output[i * 25 + j] < 0.0f)
-                output[i * 25 + j] = 0.0f;
+                output[i * 25 + j] = 0.3f*output[i * 25 + j] ;
         }
     }
 }
@@ -109,7 +103,7 @@ static inline void FCLayer(int sizeofInput, int sizeofOutput, float* input, floa
 
         if(rectifier && output[i] < 0.0f)
         {
-            output[i] = 0.0f;
+            output[i] = 0.3f*output[i];
         }
     }
 }
@@ -143,7 +137,7 @@ static inline void Rectifier(int sizeofData, float* data)
     { 
         // relu
         if (data[i] < 0.0f)
-            data[i] = 0.0f;
+            data[i] = 0.3f*data[i];
     }
 }
 
@@ -195,29 +189,29 @@ kernel void NN(
 	// local variables are shared by all work items of a work group
 	// for now these are hardcoded here.. //
 
-    private int filterWidth = 3;
-    private int filterHeight = 3;
 	private int gameboardWidth = 5;
 	private int gameboardHeight = 5;
+    private int filterWidth = 3;
+    private int filterHeight = 3;
     private int nofInputPlanes = 3;
 	private int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
 	private int nofOutputValues = 1; // value head has 1 output
-	private int nofFilters = 8; //64- the convolution layer has 64 filters
-	private int nofConvLayers = 9; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
-	private int nofResidualLayers = 4; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
-	private int nofPolicyFilters = 32; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
-	private int nofValueFilters = 8; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
+	private int nofFilters = 10; //64- the convolution layer has 64 filters
+	private int nofConvLayers = 17; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
+	private int nofResidualLayers = 8; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
+	private int nofPolicyFilters = 10; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
+	private int nofValueFilters = 1; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
 	private int valueHiddenLayerSize = 32; // was 128
 	private float softmaxTemperature = 1.0f;
 
 	// private array to work on, could re-use some later
-    private float outputConvFilter[8 * 5 * 5]; // nofFilters *..
-    private float outputResidualLayer[8 * 5 * 5]; // nofFilters *..
-    private float temporary[8 * 5 * 5]; // nofFilters *..
-    private float inputResidualLayer[8 * 5 * 5]; // nofFilters *..
+    private float outputConvFilter[10 * 5 * 5]; // nofFilters *..
+    private float outputResidualLayer[10 * 5 * 5]; // nofFilters *..
+    private float temporary[10 * 5 * 5]; // nofFilters *..
+    private float inputResidualLayer[10 * 5 * 5]; // nofFilters *..
 	private float inputFCLayerPolicy[32 * 5* 5]; // nofPolicyFilters * ..
-	private float outputValueData[8 * 5 * 5]; // nofValueFilters* ..
-	private float outputPolicyData[25]; // nofPolicies* ..
+	private float outputValueData[10 * 5 * 5]; // nofValueFilters* ..
+	private float outputPolicyData[25]; // nofPolicies
 	private float localInput[5*5*3]; // input size  
 	private float temporaryValueData[32]; // valueHiddenLayerSize
 
@@ -249,7 +243,7 @@ kernel void NN(
         BNWithResidual(temporary, outputResidualLayer, inputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+2, BNGammas, BNBetas, networkIndex);
                 
         // temporary holds result
-		for(int z = 0; z < 8 * 5 * 5; ++z) {
+		for(int z = 0; z < nofFilters * 5 * 5; ++z) {
 			inputResidualLayer[z] = outputResidualLayer[z];
 		}
     }
@@ -264,13 +258,13 @@ kernel void NN(
 	private int networkOffsetFCLayer = networkIndex * gameboardHeight * gameboardWidth*nofValueFilters * valueHiddenLayerSize;
 	private int networkOffsetFCLayer2 = networkIndex * valueHiddenLayerSize;
 
-    FCLayer(8 * 5 * 5, valueHiddenLayerSize, outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true, networkOffsetFCLayer, networkOffsetFCLayer2); // with rectifier
+    FCLayer(nofFilters * 5 * 5, valueHiddenLayerSize, outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true, networkOffsetFCLayer, networkOffsetFCLayer2); // with rectifier
 
 	networkOffsetFCLayer = networkIndex * valueHiddenLayerSize;
 	networkOffsetFCLayer2 = networkIndex;
 
     FCLayer(valueHiddenLayerSize, 1, temporaryValueData, winrateOut, valueConnectionWeights2, valueBiasLast, false, networkOffsetFCLayer, networkOffsetFCLayer2); // 1 output, 1 bias
-    float winrateSig = (1.0f + tanh(winrateOut[0])) / 2.0f;
+    float winrateSig = tanh(winrateOut[0]);
 
     /*policy head*/
 	networkOffsetBN = networkIndex*nofPolicyFilters; 
@@ -281,7 +275,7 @@ kernel void NN(
 	networkOffsetFCLayer = networkIndex * gameboardHeight * gameboardWidth* nofPolicyFilters * nofOutputPolicies;
 	networkOffsetFCLayer2 = networkIndex*nofOutputPolicies;
 
-    FCLayer(32*5*5, 5*5, inputFCLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false, networkOffsetFCLayer, networkOffsetFCLayer2); // without rectifier
+    FCLayer(valueHiddenLayerSize*5*5, 5*5, inputFCLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false, networkOffsetFCLayer, networkOffsetFCLayer2); // without rectifier
     Softmax(outputPolicyData, softmaxPolicy, softmaxTemperature);
 
 	////////////////////////////////////////////// end of network eval //////////////////////////////////////////////

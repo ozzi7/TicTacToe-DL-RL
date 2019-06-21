@@ -147,7 +147,7 @@ namespace TicTacToe_DL_RL
                 nofProcessedNets += nofInputsFound;
                 if (nofProcessedNets > nextOutput)
                 {
-                    Console.WriteLine("OpenCL: Received a total of " + nofProcessedNets + " NN inputs");
+                    //Console.WriteLine("OpenCL: Received a total of " + nofProcessedNets + " NN inputs");
                     nextOutput += 100000;
                 }
 

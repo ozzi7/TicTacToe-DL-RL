@@ -13,7 +13,8 @@ from ast import literal_eval as createTuple
 import re
 import sys
 import os
-
+import warnings
+warnings.filterwarnings("ignore")
 
 def read_samples(filename):
     # read training data from file
