@@ -1109,9 +1109,15 @@ namespace TicTacToe_DL_RL
 
                 int best_child_index = -1;
                 if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
-                    best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN1);
+                    if (train)
+                        best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN1);
+                    else
+                        best_child_index = findBestChildVisitCount(MCTSRootNodeNN1);
                 else
-                    best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN2);
+                    if (train)
+                        best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN2);
+                    else
+                        best_child_index = findBestChildVisitCount(MCTSRootNodeNN2);
 
                 List<Tuple<int, int>> moves = game.GetMoves();
                 Tuple<int, int> move = moves[best_child_index]; // add randomness here
@@ -1233,9 +1239,15 @@ namespace TicTacToe_DL_RL
 
                 int best_child_index = -1;
                 if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
-                    best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN1);
+                    if (train)
+                        best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN1);
+                    else
+                        best_child_index = findBestChildVisitCount(MCTSRootNodeNN1);
                 else
-                    best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN2);
+                    if (train)
+                        best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN2);
+                    else
+                        best_child_index = findBestChildVisitCount(MCTSRootNodeNN2);
 
                 List<Tuple<int, int>> moves = game.GetMoves();
                 Tuple<int, int> move = moves[best_child_index]; // add randomness here
@@ -1427,9 +1439,15 @@ namespace TicTacToe_DL_RL
 
                 int best_child_index = -1;
                 if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
-                    best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN1);
+                    if (train)
+                        best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN1);
+                    else
+                        best_child_index = findBestChildVisitCount(MCTSRootNodeNN1);
                 else
-                    best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN2);
+                    if (train)
+                        best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN2);
+                    else
+                        best_child_index = findBestChildVisitCount(MCTSRootNodeNN2);
 
                 List<Tuple<int, int>> moves = game.GetMoves();
                 Tuple<int, int> move = moves[best_child_index];
@@ -1563,9 +1581,19 @@ namespace TicTacToe_DL_RL
 
                 int best_child_index = -1;
                 if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
-                    best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN1);
+                {
+                    if (train)
+                        best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN1);
+                    else
+                        best_child_index = findBestChildVisitCount(MCTSRootNodeNN1);
+                }
                 else
-                    best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN2);
+                {
+                    if (train)
+                        best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN2);
+                    else
+                        best_child_index = findBestChildVisitCount(MCTSRootNodeNN2);
+                }
 
                 List<Tuple<int, int>> moves = game.GetMoves();
                 Tuple<int, int> move = moves[best_child_index];
