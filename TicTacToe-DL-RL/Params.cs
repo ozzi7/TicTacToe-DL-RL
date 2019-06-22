@@ -15,7 +15,7 @@ namespace TicTacToe_DL_RL
 
         // set this to a even number
         public static int NOF_CPU_THREADS = 64; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
-        public static int MAX_PENDING_NN_EVALS = 40; // should be lower than sims per move 
+        public static int MAX_PENDING_NN_EVALS = 10; // should be lower than sims per move 
         // = how many NN evals are queued up in the MCTS tree before the CPU thread must wait for results
         // the MCTS search becomes less useful if it continues with fake data while waiting for the real outputs
         // it is better to keep this low and increase parallel trees (increasing number of CPU threads)
@@ -26,7 +26,7 @@ namespace TicTacToe_DL_RL
         // NEUROEVOLUTION + BP PARAMS
         public static int NOF_EPOCHS = 10000000;
         public static int NOF_OFFSPRING = 20; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
-        public static int NOF_GAMES_PER_OFFSPRING = 10;
+        public static int NOF_GAMES_PER_OFFSPRING = 20;
         public static int NOF_GAMES_TEST = 64; // must be 2n for equal tests of player X and player Z, multiple of threads
         public static int NOF_GAMES_VS_RANDOM = 20;
         public static int NOF_SIMS_PER_MOVE_TRAINING = 100; // could/should be time
@@ -45,7 +45,7 @@ namespace TicTacToe_DL_RL
         public static int SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH = 20;
         public static int SAVE_WEIGHT_EVERY_XTH_EPOCH = 20;
         public static String PLOT_FILENAME = "plotdata.txt";
-        public static float FPU_VALUE = 0.2f; // first play urgency, between [0,1], added to the puct score of unvisited children, this is needed if policy is 0 otherwise the children cannot be visited
+        public static float FPU_VALUE = -0.1f; // first play urgency, between [-1,1], added to the puct score of unvisited children, this is needed if policy is 0 otherwise the children cannot be visited
 
         // BP only
         public static int NOF_GAMES_TRAIN_KERAS = 256; // multiple of threads
