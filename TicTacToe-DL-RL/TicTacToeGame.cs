@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TicTacToe_DL_RL
 {
-    // X always starts, X leads to winrate 1, Z to winrate -1 win X is 1, draw 0, win Z -1 
+    // X always starts, X leads to q_value 1, Z to q_value -1 win X is 1, draw 0, win Z -1 
     // Value head in NN is -1 for win Z, 0.0 for draw and 1 for win X
     public enum Player { X, Z };
 

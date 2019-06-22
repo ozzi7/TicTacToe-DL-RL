@@ -1,6 +1,6 @@
 ﻿/*
  * Used for MCTS
- * Nodes have a board TicTacToePosition and some metadata such as upper confidence winrate
+ * Nodes have a board TicTacToePosition and some metadata such as upper confidence q_value
 */
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ namespace TicTacToe_DL_RL
 {
     public class Node<TValue>
     {
-        /* UCT (upper confidence tree) winrate
+        /* UCT (upper confidence tree) q_value
          * = U_i = W_i/N_i + c * sqrt(ln(N_p)/N_i)
          * N_i visit count of child i
          * N_p visit count of parent
@@ -22,8 +22,8 @@ namespace TicTacToe_DL_RL
         public List<float> nn_policy = null;
         public float nn_value;
         public int moveIndex = -1; // from 0 to 24 
-        public float scoreSum = 0.0f; // from -inf to inf, where high values = X is winning
-        public float winrate = 0.0f;
+        public float score_sum = 0.0f; // from -inf to inf, where high values = X is winning
+        public float q_value = 0.0f;
         public int virtualVisits = 0; // a visit which needs a NN eval increases this
         public bool waitingForGPUPrediction = false; // if this node is already waiting for a GPU eval
 
@@ -50,7 +50,7 @@ namespace TicTacToe_DL_RL
             string resultString = "Node in MCTS Tree\n\n";
 
             resultString += "Visit count: " + visits + "\n";
-            resultString += "Winrate: " + winrate + "\n";
+            resultString += "Winrate: " + q_value + "\n";
             resultString += "NN Value: " + nn_value + "\n";
 
             if (Value != null)

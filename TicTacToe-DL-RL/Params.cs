@@ -29,8 +29,8 @@ namespace TicTacToe_DL_RL
         public static int NOF_GAMES_PER_OFFSPRING = 20;
         public static int NOF_GAMES_TEST = 64; // must be 2n for equal tests of player X and player Z, multiple of threads
         public static int NOF_GAMES_VS_RANDOM = 20;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 100; // could/should be time
-        public static int NOF_SIMS_PER_MOVE_TESTING = 100; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 30; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TESTING = 30; // could/should be time
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;
@@ -45,10 +45,10 @@ namespace TicTacToe_DL_RL
         public static int SHOW_SAMPLE_MATCHES_EVERY_XTH_EPOCH = 20;
         public static int SAVE_WEIGHT_EVERY_XTH_EPOCH = 20;
         public static String PLOT_FILENAME = "plotdata.txt";
-        public static float FPU_VALUE = -0.1f; // first play urgency, between [-1,1], added to the puct score of unvisited children, this is needed if policy is 0 otherwise the children cannot be visited
+        public static float FPU_VALUE = -1.0f; // first play urgency, between [-1,1], added to the puct score of unvisited children, this is needed if policy is 0 otherwise the children cannot be visited
 
         // BP only
-        public static int NOF_GAMES_TRAIN_KERAS = 256; // multiple of threads
+        public static int NOF_GAMES_TRAIN_KERAS = 128; // multiple of threads
 
         // GAME SPECIFIC 
         public static int MAXIMUM_PLYS = 100; // when to stop playing a game completely and declare draw (in tic tac toe game is always finished in 100 moves)

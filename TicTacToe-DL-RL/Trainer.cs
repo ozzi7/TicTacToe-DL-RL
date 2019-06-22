@@ -82,9 +82,6 @@ namespace TicTacToe_DL_RL
                 Console.WriteLine("Invoking python script...");
                 python = Process.Start(pythonInfo);
 
-                // the old network, we do this while waiting for python
-                CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM, 0.0f);
-
                 while (!python.StandardOutput.EndOfStream)
                 {
                     string line = python.StandardOutput.ReadLine();
@@ -97,7 +94,7 @@ namespace TicTacToe_DL_RL
                 // #################################### TEST NEW NETWORK ##########################################
 
                 currentNN.ReadWeightsFromFileKeras("./../../../Training/weights.txt"); // must have been created with python script
-                bool newBestFound = CheckPerformanceVsOldNet(currentNN, bestNN, 0.2f, Params.NOF_GAMES_TEST);
+                bool newBestFound = CheckPerformanceVsOldNet(currentNN, bestNN, 1.0f, Params.NOF_GAMES_TEST);
 
                 // #################################### CREATE NEW BEST NETWORK ##########################################
 
@@ -106,12 +103,15 @@ namespace TicTacToe_DL_RL
                     printPolicy(bestNN);
                 }
                 else
-                {
+                { 
+                    Console.WriteLine("New best network found!");
                     printPolicy(currentNN);
 
-                    Console.WriteLine("New best network found!");
                     bestNN.weights = new List<float>(currentNN.weights);
                     bestNN.ParseWeightsKeras();
+
+                    // the old network, we do this while waiting for python
+                    CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM, 0.0f);
                 }
 
                 WritePlotStatistics();
@@ -1774,7 +1774,7 @@ namespace TicTacToe_DL_RL
         }
         private void propagateVirtualLoss(Node<TicTacToePosition> currNode)
         {
-            // we store the winrate for the opposite player in the node, during search we look at the next level
+            // we store the q_value for the opposite player in the node, during search we look at the next level
             while (currNode != null)
             {
                 currNode.virtualVisits += 1;
@@ -1783,7 +1783,7 @@ namespace TicTacToe_DL_RL
         }
         private void removeVirtualLoss(Node<TicTacToePosition> currNode)
         {
-            // we store the winrate for the opposite player in the node, during search we look at the next level
+            // we store the q_value for the opposite player in the node, during search we look at the next level
             while (currNode != null)
             {
                 currNode.virtualVisits -= 1;
@@ -1962,8 +1962,24 @@ namespace TicTacToe_DL_RL
         private void calculateNNOutput(Node<TicTacToePosition> currNode, NeuralNetwork NN, int depth)
         {
             Tuple<float[], float> prediction = NN.Predict(currNode.Value);
-            currNode.nn_policy = new List<float>(prediction.Item1);
+
             currNode.nn_value = prediction.Item2;
+            currNode.nn_policy = new List<float>(new float[prediction.Item1.Length]);
+
+            /* re-normalize policy vector */
+            float sum = 0;
+            for (int i = 0; i < currNode.Children.Count; ++i)
+            {
+                sum += prediction.Item1[currNode.Children[i].moveIndex];
+            }
+
+            if (sum > 0)
+            {
+                for (int i = 0; i < currNode.Children.Count; ++i)
+                {
+                    currNode.nn_policy[i] = prediction.Item1[currNode.Children[i].moveIndex] / sum;
+                }
+            }
 
             DirichletNoise dn = new DirichletNoise(Params.boardSizeX * Params.boardSizeY);
             for (int i = 0; i < Params.boardSizeX * Params.boardSizeY; ++i)
@@ -2002,8 +2018,8 @@ namespace TicTacToe_DL_RL
                 {
                     float temp_UCT_score = float.NegativeInfinity;
 
-                    // winrate
-                    float childWinrate = currNode.Children[i].winrate;
+                    // q_value
+                    float childWinrate = currNode.Children[i].q_value;
 
                     // exploration
                     float explorationTerm = 0.0f;
@@ -2046,15 +2062,15 @@ namespace TicTacToe_DL_RL
         private void backpropagateScore(Node<TicTacToePosition> currNode, float score)
         {
             // argument score is from the view of player X always
-            // we store the winrate for the opposite player in the node, during search we look at the next level
+            // we store the q_value for the opposite player in the node, during search we look at the next level
             if (currNode.Value.sideToMove == Player.X)
                 score *= -1;
 
             while (currNode != null)
             {
-                currNode.scoreSum += score;
+                currNode.score_sum += score;
                 currNode.visits += 1;
-                currNode.winrate = currNode.scoreSum/ (currNode.visits);
+                currNode.q_value = currNode.score_sum/ (currNode.visits);
                 currNode = currNode.GetParent();
                 score = score * (-1);
             }
