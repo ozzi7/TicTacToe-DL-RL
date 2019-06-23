@@ -1318,7 +1318,7 @@ namespace TicTacToe_DL_RL
                         while (result != null)
                         {
                             Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
-                            nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1331,7 +1331,7 @@ namespace TicTacToe_DL_RL
                             // if we need to wait then wait
                             result = NN1.GetResultSync();
                             Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
-                            nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1346,7 +1346,7 @@ namespace TicTacToe_DL_RL
                         while (result != null)
                         {
                             Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
-                            nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1359,7 +1359,7 @@ namespace TicTacToe_DL_RL
                             // if we need to wait then wait
                             result = NN2.GetResultSync();
                             Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
-                            nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1374,7 +1374,7 @@ namespace TicTacToe_DL_RL
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN1.GetResultSync();
                     Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
-                    nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                    normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
                     removeVirtualLoss(nodeToUpdate);
@@ -1385,7 +1385,7 @@ namespace TicTacToe_DL_RL
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN2.GetResultSync();
                     Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
-                    nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                    normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
                     removeVirtualLoss(nodeToUpdate);
@@ -1426,11 +1426,11 @@ namespace TicTacToe_DL_RL
                     for (int i = 0; i < MCTSRootNodeNN2.Children.Count; ++i)
                     {
                         policy[MCTSRootNodeNN2.Children[i].moveIndex] /= totalVisits;
-                        if (policy[MCTSRootNodeNN1.Children[i].moveIndex] == float.NaN ||
-                            policy[MCTSRootNodeNN1.Children[i].moveIndex] == float.NegativeInfinity ||
-                            policy[MCTSRootNodeNN1.Children[i].moveIndex] == float.PositiveInfinity)
+                        if (policy[MCTSRootNodeNN2.Children[i].moveIndex] == float.NaN ||
+                            policy[MCTSRootNodeNN2.Children[i].moveIndex] == float.NegativeInfinity ||
+                            policy[MCTSRootNodeNN2.Children[i].moveIndex] == float.PositiveInfinity)
                         {
-                            policy[MCTSRootNodeNN1.Children[i].moveIndex] = 0.0f;
+                            policy[MCTSRootNodeNN2.Children[i].moveIndex] = 0.0f;
                         }
                     }
 
@@ -1506,7 +1506,7 @@ namespace TicTacToe_DL_RL
                         while (result != null)
                         {
                             Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
-                            nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1519,7 +1519,7 @@ namespace TicTacToe_DL_RL
                             // if we need to wait then wait
                             result = NN1.GetResultSync();
                             Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
-                            nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1533,7 +1533,7 @@ namespace TicTacToe_DL_RL
                         while (result != null)
                         {
                             Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
-                            nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1546,7 +1546,7 @@ namespace TicTacToe_DL_RL
                             // if we need to wait then wait
                             result = NN2.GetResultSync();
                             Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
-                            nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1561,7 +1561,7 @@ namespace TicTacToe_DL_RL
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN1.GetResultSync();
                     Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
-                    nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                    normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
                     removeVirtualLoss(nodeToUpdate);
@@ -1572,7 +1572,7 @@ namespace TicTacToe_DL_RL
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN2.GetResultSync();
                     Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
-                    nodeToUpdate.nn_policy = new List<float>(result.Item1);
+                    normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
                     removeVirtualLoss(nodeToUpdate);
@@ -1775,19 +1775,33 @@ namespace TicTacToe_DL_RL
         private void propagateVirtualLoss(Node<TicTacToePosition> currNode)
         {
             // we store the q_value for the opposite player in the node, during search we look at the next level
+            float score = -1.0f;
+            if (currNode.Value.sideToMove == Player.X)
+                score *= -1;
+
             while (currNode != null)
             {
                 currNode.virtualVisits += 1;
+                currNode.score_sum += score;
+                currNode.q_value = currNode.score_sum / (currNode.visits + currNode.virtualVisits);
                 currNode = currNode.GetParent();
+                score = score * (-1);
             }
         }
         private void removeVirtualLoss(Node<TicTacToePosition> currNode)
         {
             // we store the q_value for the opposite player in the node, during search we look at the next level
+            float score = 1.0f;
+            if (currNode.Value.sideToMove == Player.X)
+                score *= -1;
+
             while (currNode != null)
             {
                 currNode.virtualVisits -= 1;
+                currNode.score_sum += score;
+                currNode.q_value = currNode.score_sum / (currNode.visits + currNode.virtualVisits);
                 currNode = currNode.GetParent();
+                score = score * (-1);
             }
         }
         private void printPolicy(NeuralNetwork nn)
@@ -1959,6 +1973,31 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
+        private void normalizePolicy(Node<TicTacToePosition> currNode, float[] rawPolicy, int depth)
+        {
+            currNode.nn_policy = new List<float>(new float[rawPolicy.Length]);
+
+            /* re-normalize policy vector */
+            float sum = 0;
+            for (int i = 0; i < currNode.Children.Count; ++i)
+            {
+                sum += rawPolicy[currNode.Children[i].moveIndex];
+            }
+
+            if (sum > 0)
+            {
+                for (int i = 0; i < currNode.Children.Count; ++i)
+                {
+                    currNode.nn_policy[i] = rawPolicy[currNode.Children[i].moveIndex] / sum;
+                }
+            }
+            DirichletNoise dn = new DirichletNoise(Params.boardSizeX * Params.boardSizeY);
+            for (int i = 0; i < Params.boardSizeX * Params.boardSizeY; ++i)
+            {
+                float noise = dn.GetNoise(i);
+                currNode.nn_policy[i] = currNode.nn_policy[i] * (1 - getNoiseWeight(depth)) + getNoiseWeight(depth) * noise;
+            }
+        }
         private void calculateNNOutput(Node<TicTacToePosition> currNode, NeuralNetwork NN, int depth)
         {
             Tuple<float[], float> prediction = NN.Predict(currNode.Value);
@@ -2053,6 +2092,7 @@ namespace TicTacToe_DL_RL
                         bestChildIndex = i;
                         bestUCTScore = temp_UCT_score;
                     }
+                    //Console.WriteLine("winrate " + childWinrate + " exploration " + explorationTerm + " total " + temp_UCT_score);
                 }
 
                 currNode = currNode.Children[bestChildIndex];
@@ -2070,7 +2110,7 @@ namespace TicTacToe_DL_RL
             {
                 currNode.score_sum += score;
                 currNode.visits += 1;
-                currNode.q_value = currNode.score_sum/ (currNode.visits);
+                currNode.q_value = currNode.score_sum / (currNode.visits + currNode.virtualVisits);
                 currNode = currNode.GetParent();
                 score = score * (-1);
             }

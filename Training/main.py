@@ -36,6 +36,10 @@ def read_samples(filename):
                 input = np.zeros((5, 5, 3))
                 input[:, :, 2].fill(1)
                 inputs.append(input)
+                # add rotated boards
+                # inputs.append(np.rot90(np.copy(input), axes=(1,0),k=1))
+                # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=2))
+                # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=3))
 
                 pattern = '\((\d+, \d+)\)'
                 data = re.findall(pattern, line)
@@ -58,6 +62,11 @@ def read_samples(filename):
                         input[:, :,2].fill(0)
 
                     inputs.append(np.copy(input))
+                    # add rotated boards
+                    # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=1))
+                    # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=2))
+                    # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=3))
+
                     player *= -1
 
             # read policy
@@ -71,10 +80,17 @@ def read_samples(filename):
                         policy[i] = policies[move*25+i]
 
                     output_values.append(np.array([output_value])) # output val is from the view of player X
-                    output_policies.append(policy)
+                    # output_values.append(np.array([output_value]))  # output val is from the view of player X
+                    # output_values.append(np.array([output_value]))  # output val is from the view of player X
+                    # output_values.append(np.array([output_value]))  # output val is from the view of player X
 
+                    output_policies.append(policy)
+                    # output_policies.append((np.rot90(np.reshape(np.copy(policy), (5,5)),k=1)).flatten())
+                    # output_policies.append((np.rot90(np.reshape(np.copy(policy), (5, 5)), k=2)).flatten())
+                    # output_policies.append((np.rot90(np.reshape(np.copy(policy), (5, 5)), k=3)).flatten())
 
             line_count += 1
+
     return (inputs,output_values, output_policies)
 
 if __name__ == '__main__':
