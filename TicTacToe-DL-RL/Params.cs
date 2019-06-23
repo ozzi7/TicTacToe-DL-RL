@@ -15,7 +15,7 @@ namespace TicTacToe_DL_RL
 
         // set this to a even number
         public static int NOF_CPU_THREADS = 64; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
-        public static int MAX_PENDING_NN_EVALS = 1; // should be lower than sims per move 
+        public static int MAX_PENDING_NN_EVALS = 50; // should be lower than sims per move 
         // = how many NN evals are queued up in the MCTS tree before the CPU thread must wait for results
         // the MCTS search becomes less useful if it continues with fake data while waiting for the real outputs
         // it is better to keep this low and increase parallel trees (increasing number of CPU threads)
