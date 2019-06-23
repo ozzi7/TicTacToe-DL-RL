@@ -2105,7 +2105,7 @@ namespace TicTacToe_DL_RL
                 if (draws.Count != 0)
                 {
                     currNode = currNode.Children[draws[RandomGen2.Next(0,draws.Count)]];
-                    Console.WriteLine("There was a draw on choosing most promising child node");
+                    //Console.WriteLine("There was a draw on choosing most promising child node");
                 }
                 else
                 {
