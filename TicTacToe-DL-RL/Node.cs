@@ -26,7 +26,7 @@ namespace TicTacToe_DL_RL
         public float q_value = 0.0f;
         public int virtualVisits = 0; // a visit which needs a NN eval increases this
         public bool waitingForGPUPrediction = false; // if this node is already waiting for a GPU eval
-
+        public int depth = 0;
         public Node<TValue> parent = null;
 
         public TValue Value { get; set; }
