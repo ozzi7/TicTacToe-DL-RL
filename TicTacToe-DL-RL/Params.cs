@@ -13,8 +13,9 @@ namespace TicTacToe_DL_RL
         //public static int GPU_THREADS_AND_QUEUES = 2;
         public static int MAX_PARALLEL_KERNEL_EXECUTIONS = 2000; // opencl calls at most MAX_PARALLEL_KERNEL_EXECUTIONS and less if not enough data arrived from CPU //2304
 
-        // set this to a even number
+        // set this to a even number, this also increases the quality of the tree search with higher threads because there are less virtual losses
         public static int NOF_CPU_THREADS_GPU_WORKLOAD = 64; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
+
         public static int NOF_CPU_THREADS_CPU_WORKLOAD = 4;
         public static int MAX_PENDING_NN_EVALS = 20; // should be lower than sims per move 
         // = how many NN evals are queued up in the MCTS tree before the CPU thread must wait for results
@@ -30,8 +31,8 @@ namespace TicTacToe_DL_RL
         public static int NOF_GAMES_PER_OFFSPRING = 20;
         public static int NOF_GAMES_TEST = 64; // must be 2n for equal tests of player X and player Z, multiple of threads
         public static int NOF_GAMES_VS_RANDOM = 20;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 400; // could/should be time
-        public static int NOF_SIMS_PER_MOVE_TESTING = 400; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 300; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TESTING = 300; // could/should be time
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;
@@ -49,7 +50,7 @@ namespace TicTacToe_DL_RL
         public static float FPU_VALUE = 0.1f; // first play urgency, between [-1,1], added to the puct score of unvisited children, this is needed if policy is 0 otherwise the children cannot be visited
 
         // BP only
-        public static int NOF_GAMES_TRAIN_KERAS = 512; // multiple of threads
+        public static int NOF_GAMES_TRAIN_KERAS = 128; // multiple of threads
 
         // GAME SPECIFIC 
         public static int MAXIMUM_PLYS = 100; // when to stop playing a game completely and declare draw (in tic tac toe game is always finished in 100 moves)

@@ -125,7 +125,6 @@ namespace TicTacToe_DL_RL
                 int inputIndex = 0;
                 int networkIndexIndex = 0;
                 int nofInputsFound = 0;
-                Thread.Sleep(1000);
                 for (int i = 0; i < Params.MAX_PARALLEL_KERNEL_EXECUTIONS; ++i)
                 {
                     Job job = null;

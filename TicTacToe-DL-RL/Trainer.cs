@@ -516,7 +516,7 @@ namespace TicTacToe_DL_RL
                         {
                             Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z; // doesnt really matter for 2 equal networks
                         scores[i] = RecordOneGameGPU(moves[i], policies[i], evaluationNetworkPlayer,
-                                currnns[i % Params.NOF_CPU_THREADS_GPU_WORKLOAD], nns[i % Params.NOF_CPU_THREADS_GPU_WORKLOAD], false);
+                                currnns[i % Params.NOF_CPU_THREADS_GPU_WORKLOAD], nns[i % Params.NOF_CPU_THREADS_GPU_WORKLOAD], true);
                             Interlocked.Add(ref sharedLoopCounter, 1);
                             progress.Report((double)Interlocked.Read(ref sharedLoopCounter) / nofGames);
                         });
@@ -1856,8 +1856,8 @@ namespace TicTacToe_DL_RL
             while (currNode != null)
             {
                 currNode.virtualVisits += 1;
-                //currNode.score_sum -= 1.0f;
-                //currNode.q_value = currNode.score_sum / (currNode.visits + currNode.virtualVisits);
+                currNode.score_sum -= 1.0f;
+                currNode.q_value = currNode.score_sum / (currNode.visits + currNode.virtualVisits);
                 currNode = currNode.GetParent();
             }
         }
@@ -1867,8 +1867,8 @@ namespace TicTacToe_DL_RL
             while (currNode != null)
             {
                 currNode.virtualVisits -= 1;
-                //currNode.score_sum += 1.0f;
-                //currNode.q_value = currNode.score_sum / (currNode.visits + currNode.virtualVisits);
+                currNode.score_sum += 1.0f;
+                currNode.q_value = currNode.score_sum / (currNode.visits + currNode.virtualVisits);
                 currNode = currNode.GetParent();
             }
         }
@@ -2090,16 +2090,16 @@ namespace TicTacToe_DL_RL
                     currNode.nn_policy[currNode.Children[i].moveIndex] = rawPolicy[currNode.Children[i].moveIndex] / sum;
                 }
             }
-            //if(currNode.Children.Count > 0)
-            //{
-            //    DirichletNoise dn = new DirichletNoise(currNode.Children.Count);
-            //    for (int i = 0; i < currNode.Children.Count; ++i)
-            //    {
-            //        float noise = dn.GetNoise(i);
-            //        currNode.nn_policy[currNode.Children[i].moveIndex] =
-            //            currNode.nn_policy[currNode.Children[i].moveIndex] * (1 - getNoiseWeight(depth, rootNode)) + getNoiseWeight(depth, rootNode) * noise;
-            //    }
-            //}
+            if (currNode.Children.Count > 0)
+            {
+                DirichletNoise dn = new DirichletNoise(currNode.Children.Count);
+                for (int i = 0; i < currNode.Children.Count; ++i)
+                {
+                    float noise = dn.GetNoise(i);
+                    currNode.nn_policy[currNode.Children[i].moveIndex] =
+                        currNode.nn_policy[currNode.Children[i].moveIndex] * (1 - getNoiseWeight(depth, rootNode)) + getNoiseWeight(depth, rootNode) * noise;
+                }
+            }
         }
         private void calculateNNOutput(Node<TicTacToePosition> currNode, NeuralNetwork NN, int depth, bool rootNode)
         {
