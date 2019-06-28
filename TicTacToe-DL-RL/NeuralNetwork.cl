@@ -1,16 +1,17 @@
 ﻿static inline void Convolution(float* input, float* output, constant float* convWeights,
     int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index, int networkOffset)
 {
-    // convolution on gameboard_width*5*depth
+    // convolution on gameboard_width*gameboard_height*depth
     // with nofFilters filters of filterWidth*filterHeight*nofInputPlanes size
-    // resulting in gameboard_width*5*x volume
+    // resulting in gameboard_width*gameboard_height*noffilters volume
     // zero padding
 
-    for (int u = 0; u < nofFilters*5*5; ++u)
+	for (int u = 0; u < nofFilters*5*5; ++u)
     {
         output[u] = 0.0f;
     }
-    for (int i = 0; i < nofFilters; ++i) { 
+    
+	for (int i = 0; i < nofFilters; ++i) { 
         // apply each of the filters to the complete input..
         for (int j = 0; j < nofInputPlanes; ++j)
         {
@@ -89,16 +90,16 @@ static inline void BNWithResidual(float* input, float* output, float* residual, 
         }
     }
 }
-static inline void FCLayer(int sizeofInput, int sizeofOutput, float* input, float* output, constant float* connectionWeights, constant float* outputBiases, bool rectifier, int connectionWeightIndex, int outputBiasesIndex)
+static inline void FCLayer(int sizeofInput, int sizeofOutput, float* input, float* output, constant float* connectionWeights, constant float* outputBiases, bool rectifier, 
+int connectionWeightIndex, int outputBiasesIndex)
 {
     for (int i = 0; i < sizeofOutput; ++i)
     {
 		output[i] = 0.0f;
         for (int j = 0; j < sizeofInput; ++j)
         {
-            output[i] += input[j] * connectionWeights[connectionWeightIndex + i * sizeofInput + j];
+            output[i] += input[j] * connectionWeights[connectionWeightIndex + j*sizeofOutput+i];
         }
-        output[i] /= sizeofInput;
         output[i] += outputBiases[outputBiasesIndex + i];
 
         if(rectifier && output[i] < 0.0f)
@@ -181,8 +182,8 @@ kernel void NN(
 // identify the run
 	constant int* _networkIndex) // which NN weights to use from global memory
 {
-	private int globId = get_global_id(0);
-	private int networkIndex = _networkIndex[globId];
+	private int globId = get_global_id(0);//
+	private int networkIndex = _networkIndex[globId]; //
 	private int inputIndex = globId*3*25;
 	private int outputIndex = globId*26;
 
@@ -197,19 +198,19 @@ kernel void NN(
 	private int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
 	private int nofOutputValues = 1; // value head has 1 output
 	private int nofFilters = 16; //64- the convolution layer has 64 filters
-	private int nofConvLayers = 21; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
-	private int nofResidualLayers = 10; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
+	private int nofConvLayers = 13; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
+	private int nofResidualLayers = 6; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
 	private int nofPolicyFilters = 25; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
 	private int nofValueFilters = 1; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
 	private int valueHiddenLayerSize = 32; // was 128
 	private float softmaxTemperature = 1.0f;
 
 	// private array to work on, could re-use some later
-    private float outputConvFilter[24 * 5 * 5]; // nofFilters *..
-    private float outputResidualLayer[24 * 5 * 5]; // nofFilters *..
-    private float temporary[24 * 5 * 5]; // nofFilters *..
-    private float inputResidualLayer[24 * 5 * 5]; // nofFilters *..
-	private float inputFCLayerPolicy[16 * 5* 5]; // nofPolicyFilters * ..
+    private float outputConvFilter[16 * 5 * 5]; // nofFilters *..
+    private float outputResidualLayer[16 * 5 * 5]; // nofFilters *..
+    private float temporary[16 * 5 * 5]; // nofFilters *..
+    private float inputResidualLayer[16 * 5 * 5]; // nofFilters *..
+	private float inputFCLayerPolicy[25 * 5* 5]; // nofPolicyFilters * ..
 	private float outputValueData[1 * 5 * 5]; // nofValueFilters* ..
 	private float outputPolicyData[25]; // nofPolicies
 	private float localInput[5*5*3]; // input size  
@@ -220,27 +221,28 @@ kernel void NN(
 
 	// copy input to inputreslayer because of access specifiers which may not change and because the input output is 
 	// swapped to conv function call we also cant change the specifier in the argument, plus should be faster anyway
-	for(int i = inputIndex; i < inputIndex + 3*25; ++i) {
-		localInput[i] = input[i];	
+	for(int i = 0; i < 3*25; ++i) {
+		localInput[i] = input[inputIndex + i];	
 	}
 
 	////////////////////////////////////////////// start of network eval //////////////////////////////////////////////
 	
 	/*Conv layer */
-	private int networkOffsetConv = networkIndex*nofFilters* nofInputPlanes * filterHeight * filterWidth; 
-    Convolution(localInput, outputConvFilter, firstConvFilterWeights, nofInputPlanes, nofFilters, filterWidth, filterHeight, 0, networkOffsetConv);
+	private int networkOffsetConv = networkIndex*nofFilters* nofInputPlanes * filterHeight * filterWidth;  //correct
 
-	private int networkOffsetBN = networkIndex*nofConvLayers * nofFilters; 
+    Convolution(localInput, outputConvFilter, firstConvFilterWeights, nofInputPlanes, nofFilters, filterWidth, filterHeight, 0, networkOffsetConv);
+	
+	private int networkOffsetBN = networkIndex*nofConvLayers * nofFilters;  //correct
     BN(outputConvFilter, inputResidualLayer, BNMeans, BNStddev, nofFilters, 0, BNGammas, BNBetas, networkOffsetBN);
 
     /*Residual tower*/
-	networkOffsetConv = networkIndex * (2 * nofResidualLayers) * nofFilters * nofFilters * filterHeight * filterWidth;
+	networkOffsetConv = networkIndex * (2 * nofResidualLayers) * nofFilters * nofFilters * filterHeight * filterWidth; //correct
     for (int index = 0; index < nofResidualLayers; index += 1) 
 	{
         Convolution(inputResidualLayer, outputResidualLayer, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2, networkOffsetConv);
-        BN(outputResidualLayer, outputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+1, BNGammas, BNBetas, networkIndex);
+        BN(outputResidualLayer, outputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+1, BNGammas, BNBetas, networkOffsetBN);
         Convolution(outputResidualLayer, temporary, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2+1, networkOffsetConv);
-        BNWithResidual(temporary, outputResidualLayer, inputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+2, BNGammas, BNBetas, networkIndex);
+        BNWithResidual(temporary, outputResidualLayer, inputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+2, BNGammas, BNBetas, networkOffsetBN);
                 
         // temporary holds result
 		for(int z = 0; z < nofFilters * 5 * 5; ++z) {
@@ -249,21 +251,21 @@ kernel void NN(
     }
 
     /*value head*/
-	networkOffsetBN = networkIndex*nofValueFilters; 
-	networkOffsetConv = networkIndex * nofFilters* nofValueFilters;
+	networkOffsetBN = networkIndex*nofValueFilters;  //correct
+	networkOffsetConv = networkIndex * nofFilters* nofValueFilters*1*1; //correct
 
     Convolution(inputResidualLayer, outputValueData, convWeightsValue1, nofFilters, nofValueFilters, 1, 1, 0, networkOffsetConv);
     BN(outputValueData, outputValueData, BNMeansValue, BNStddevValue, nofValueFilters, 0, BNGammaValue, BNBetaValue, networkOffsetBN);
 
-	private int networkOffsetFCLayer = networkIndex * gameboardHeight * gameboardWidth*nofValueFilters * valueHiddenLayerSize;
-	private int networkOffsetFCLayer2 = networkIndex * valueHiddenLayerSize;
+	private int networkOffsetFCLayerBiases = networkIndex * valueHiddenLayerSize;
+	private int networkOffsetFCLayerWeights = networkIndex * gameboardHeight * gameboardWidth*nofValueFilters * valueHiddenLayerSize;
 
-    FCLayer(nofFilters * 5 * 5, valueHiddenLayerSize, outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true, networkOffsetFCLayer, networkOffsetFCLayer2); // with rectifier
+    FCLayer(nofValueFilters * 5 * 5, valueHiddenLayerSize, outputValueData, temporaryValueData, valueConnectionWeights, valueBiases, true, networkOffsetFCLayerWeights, networkOffsetFCLayerBiases); // with rectifier
 
-	networkOffsetFCLayer = networkIndex * valueHiddenLayerSize;
-	networkOffsetFCLayer2 = networkIndex;
+	networkOffsetFCLayerBiases = networkIndex;
+	networkOffsetFCLayerWeights = networkIndex * valueHiddenLayerSize;
 
-    FCLayer(valueHiddenLayerSize, 1, temporaryValueData, winrateOut, valueConnectionWeights2, valueBiasLast, false, networkOffsetFCLayer, networkOffsetFCLayer2); // 1 output, 1 bias
+    FCLayer(valueHiddenLayerSize, 1, temporaryValueData, winrateOut, valueConnectionWeights2, valueBiasLast, false, networkOffsetFCLayerWeights, networkOffsetFCLayerBiases); // 1 output, 1 bias
     float winrateSig = tanh(winrateOut[0]);
 
     /*policy head*/
@@ -272,12 +274,12 @@ kernel void NN(
     Convolution(inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, nofFilters, nofPolicyFilters, 1, 1, 0, networkOffsetConv);
     BN(inputFCLayerPolicy, inputFCLayerPolicy, BNMeansPolicy, BNStddevPolicy, nofPolicyFilters, 0, BNGammaPolicy, BNBetaPolicy, networkOffsetBN);
 
-	networkOffsetFCLayer = networkIndex * gameboardHeight * gameboardWidth* nofPolicyFilters * nofOutputPolicies;
-	networkOffsetFCLayer2 = networkIndex*nofOutputPolicies;
+	networkOffsetFCLayerBiases = networkIndex*nofOutputPolicies; // correct
+	networkOffsetFCLayerWeights = networkIndex * gameboardHeight * gameboardWidth* nofPolicyFilters * nofOutputPolicies; // correct
 
-    FCLayer(valueHiddenLayerSize*5*5, 5*5, inputFCLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false, networkOffsetFCLayer, networkOffsetFCLayer2); // without rectifier
+    FCLayer(nofPolicyFilters*5*5, 25, inputFCLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false, networkOffsetFCLayerWeights, networkOffsetFCLayerBiases); // without rectifier
     Softmax(outputPolicyData, softmaxPolicy, softmaxTemperature);
-
+	
 	////////////////////////////////////////////// end of network eval //////////////////////////////////////////////
 
 	for(int i = 0; i < 25; ++i) 

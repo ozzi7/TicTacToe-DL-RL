@@ -28,8 +28,8 @@ NOF_FILTERS=16
 NOF_VALUE_FILTERS=1
 NOF_POLICY_FILTERS=25
 NOF_FC_NEURONS_VAL_LAYER=32
-NOF_RES_LAYERS=10
-LEARNING_RATE=0.007 # was 0.001
+NOF_RES_LAYERS=6
+LEARNING_RATE=0.001 # was 0.001
 
 
 class TicTacToeNet():
@@ -38,9 +38,10 @@ class TicTacToeNet():
         x = Conv2D(filters=NOF_FILTERS,
                    kernel_size=(3,3),
                    padding='same', activation='linear', use_bias=False,
-                   data_format="channels_last")(self.input_boards)
+                   data_format="channels_last",
+                   kernel_regularizer=regularizers.l2(0.01))(self.input_boards)
 
-        x = BatchNormalization(axis=3)(x) # axis -1 is equal to 3 here, means last dimension
+        x = BatchNormalization(axis=3,gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x) # axis -1 is equal to 3 here, means last dimension
         x = LeakyReLU()(x)
         for _ in range(NOF_RES_LAYERS):
             x = self.residual_layer(x, NOF_FILTERS,
@@ -59,9 +60,10 @@ class TicTacToeNet():
             , padding='same'
             , activation='linear'
             , use_bias=False
+            , kernel_regularizer=regularizers.l2(0.01)
         )(x)
 
-        x = BatchNormalization(axis=3)(x)
+        x = BatchNormalization(axis=3,gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x)
         x = LeakyReLU()(x)
 
         return (x)
@@ -82,9 +84,10 @@ class TicTacToeNet():
             , padding='same'
             , activation='linear'
             , use_bias=False
+            , kernel_regularizer=regularizers.l2(0.01)
         )(x)
 
-        x = BatchNormalization(axis=3)(x)
+        x = BatchNormalization(axis=3,gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x)
         x = add([input_block, x])
         x = LeakyReLU()(x)
 
@@ -103,22 +106,25 @@ class TicTacToeNet():
             , padding='same'
             , activation='linear'
             , use_bias=False
+            , kernel_regularizer=regularizers.l2(0.01)
         )(x)
 
-        x = BatchNormalization(axis=3)(x)
+        x = BatchNormalization(axis=3,gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x)
         x = LeakyReLU()(x)
         x = Permute((3, 1, 2), input_shape=(5, 5, NOF_VALUE_FILTERS))(x)
         x = Flatten()(x)
         x = Dense(
             NOF_FC_NEURONS_VAL_LAYER
-            , activation='linear'
+            , activation='linear',
+            kernel_regularizer=regularizers.l2(0.01)
         )(x)
 
         x = LeakyReLU()(x)
         x = Dense(
             1
             , activation='tanh'
-            , name='value_head'
+            , name='value_head',
+            kernel_regularizer=regularizers.l2(0.01)
         )(x)
 
         return (x)
@@ -134,16 +140,18 @@ class TicTacToeNet():
             filters = NOF_POLICY_FILTERS
             , kernel_size = (1,1)
             , padding = 'same'
-            , activation='linear', use_bias=False)(x)
+            , activation='linear', use_bias=False,
+            kernel_regularizer=regularizers.l2(0.01))(x)
 
-        x = BatchNormalization()(x)
+        x = BatchNormalization(gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x)
         x = LeakyReLU()(x)
         x = Permute((3,1,2), input_shape=(5,5,NOF_POLICY_FILTERS))(x)
         x = Flatten()(x)
         x = Dense( # this is equivalent to dense layer + softmax layer, but combined
             NOF_POLICIES
             , activation='softmax'
-            , name ='policy_head'
+            , name ='policy_head',
+            kernel_regularizer=regularizers.l2(0.01)
             )(x)
 
         return (x)

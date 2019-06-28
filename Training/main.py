@@ -37,9 +37,9 @@ def read_samples(filename):
                 input[:, :, 2].fill(1)
                 inputs.append(input)
                 # add rotated boards
-                # inputs.append(np.rot90(np.copy(input), axes=(1,0),k=1))
-                # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=2))
-                # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=3))
+                inputs.append(np.rot90(np.copy(input), axes=(1,0),k=1))
+                inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=2))
+                inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=3))
 
                 pattern = '\((\d+, \d+)\)'
                 data = re.findall(pattern, line)
@@ -63,9 +63,9 @@ def read_samples(filename):
 
                     inputs.append(np.copy(input))
                     # add rotated boards
-                    # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=1))
-                    # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=2))
-                    # inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=3))
+                    inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=1))
+                    inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=2))
+                    inputs.append(np.rot90(np.copy(input), axes=(1, 0), k=3))
 
                     player *= -1
 
@@ -80,14 +80,14 @@ def read_samples(filename):
                         policy[i] = policies[move*25+i]
 
                     output_values.append(np.array([output_value])) # output val is from the view of player X
-                    # output_values.append(np.array([output_value]))  # output val is from the view of player X
-                    # output_values.append(np.array([output_value]))  # output val is from the view of player X
-                    # output_values.append(np.array([output_value]))  # output val is from the view of player X
+                    output_values.append(np.array([output_value]))  # output val is from the view of player X
+                    output_values.append(np.array([output_value]))  # output val is from the view of player X
+                    output_values.append(np.array([output_value]))  # output val is from the view of player X
 
                     output_policies.append(policy)
-                    # output_policies.append((np.rot90(np.reshape(np.copy(policy), (5,5)),k=1)).flatten())
-                    # output_policies.append((np.rot90(np.reshape(np.copy(policy), (5, 5)), k=2)).flatten())
-                    # output_policies.append((np.rot90(np.reshape(np.copy(policy), (5, 5)), k=3)).flatten())
+                    output_policies.append((np.rot90(np.reshape(np.copy(policy), (5, 5)),k=1)).flatten())
+                    output_policies.append((np.rot90(np.reshape(np.copy(policy), (5, 5)), k=2)).flatten())
+                    output_policies.append((np.rot90(np.reshape(np.copy(policy), (5, 5)), k=3)).flatten())
 
             line_count += 1
 
@@ -99,5 +99,5 @@ if __name__ == '__main__':
     trainer = Trainer()
     #trainer.save_init_weights()
     trainer.train(*read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1]))
-    #(inputs, output_values, output_policies) = read_samples()
+    #(inputs, output_values, output_policies) = read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1])
     #trainer.predict([inputs[0]])

@@ -24,8 +24,8 @@ namespace TicTacToe_DL_RL
         const int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
         const int nofOutputValues = 1; // value head has 1 output
         const int nofFilters = 16; //64- the convolution layer has 64 filters
-        const int nofConvLayers = 21; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
-        const int nofResidualLayers = 10; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
+        const int nofConvLayers = 13; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
+        const int nofResidualLayers = 6; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
         const int nofPolicyFilters = 25; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
         const int nofValueFilters = 1; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
         const int valueHiddenLayerSize = 32; // was 128
@@ -127,6 +127,8 @@ namespace TicTacToe_DL_RL
             // returns array of move evals and V
             /*Not using position history, not using caching*/
 
+            Array.Clear(input,0, input.Length);
+
             // set nn input
             for (int i = 0; i < Params.boardSizeY; ++i)
             {
@@ -154,26 +156,28 @@ namespace TicTacToe_DL_RL
         public void PredictGPU(TicTacToePosition pos)
         {
             /*Not using game history, not using caching*/
-            int[] tmp = new int[pos.gameBoard.GetLength(0) * pos.gameBoard.GetLength(1)];
-            Buffer.BlockCopy(pos.gameBoard, 0, tmp, 0, tmp.Length * sizeof(int));
-            List<int> gameBoard = new List<int>(tmp);
+
+            Array.Clear(input, 0, input.Length);
 
             // set nn input
-            for (int i = 0; i < Params.boardSizeX * Params.boardSizeY; ++i)
-            {   // the board itself
-                if (gameBoard[i] == 1)
+            for (int i = 0; i < Params.boardSizeY; ++i)
+            {
+                for (int j = 0; j < Params.boardSizeX; ++j)
                 {
-                    input[i] = 1;
-                }
-                else if(gameBoard[i] == -1)
-                {
-                    input[Params.boardSizeX * Params.boardSizeY + i] = 1;
+                    if (pos.gameBoard[i, j] == 1)
+                    {
+                        input[i * Params.boardSizeX + j] = 1;
+                    }
+                    else if (pos.gameBoard[i, j] == -1)
+                    {
+                        input[Params.boardSizeY * Params.boardSizeX + i * Params.boardSizeX + j] = 1;
+                    }
                 }
             }
 
-            for (int i = 0; i < Params.boardSizeX * Params.boardSizeY; ++i)
+            for (int i = 0; i < Params.boardSizeY * Params.boardSizeX; ++i)
             {   // whose turn it is
-                input[Params.boardSizeX * Params.boardSizeY*2 + i] = pos.sideToMove == Player.X ? 1 : 0;
+                input[Params.boardSizeY * Params.boardSizeX * 2 + i] = pos.sideToMove == Player.X ? 1 : 0;
             }
 
             Job job = new Job();
@@ -203,7 +207,7 @@ namespace TicTacToe_DL_RL
         {
             Task t = Consume(reader);
             t.Wait();
-            return Tuple.Create(softmaxPolicy, winrateSigOut);
+            return Tuple.Create(softmaxPolicy.ToArray(), winrateSigOut);
         }
         private async Task Consume(ChannelReader<Job> c)
         {
@@ -219,10 +223,6 @@ namespace TicTacToe_DL_RL
                 return;
             }
             catch (ChannelClosedException) { }
-        }
-        public void EnqueueWeights()
-        {
-            OpenCL.EnqueueWeights(this);
         }
         public void CalculateVirtualBNs()
         {
@@ -479,7 +479,8 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
-        private void BN(float[] input, float[] output, float[] BNMeans, float[] BNStdDev, int nofFilters, int index, float[] BNGammas, float[] BNBetas)
+        private void BN(float[] input, float[] output, float[] BNMeans, float[] BNStdDev, int nofFilters, int index, 
+            float[] BNGammas, float[] BNBetas)
         {
             // without residual add
             for (int i = 0; i < nofFilters; ++i)

@@ -27,6 +27,7 @@ namespace TicTacToe_DL_RL
         public static List<float> firstConvFilterWeights = new List<float>();
         public static int[] networkIndex = new int[Params.MAX_PARALLEL_KERNEL_EXECUTIONS];
 
+
         // for residual tower
         public static List<float> convFilterWeights = new List<float>();
 
@@ -121,9 +122,10 @@ namespace TicTacToe_DL_RL
             int nextOutput = 100000;
             while (true)
             {
-                int nofInputsFound = 0;
                 int inputIndex = 0;
                 int networkIndexIndex = 0;
+                int nofInputsFound = 0;
+                Thread.Sleep(1000);
                 for (int i = 0; i < Params.MAX_PARALLEL_KERNEL_EXECUTIONS; ++i)
                 {
                     Job job = null;
@@ -133,7 +135,7 @@ namespace TicTacToe_DL_RL
                         nofInputsFound++;
                         for (int j = 0; j < job.input.Count; ++j)
                         {
-                            input[inputIndex] = job.input[j];
+                            input[inputIndex] =job.input[j];
                             inputIndex++;
                         }
                         networkIndex[networkIndexIndex] = job.globalID;
@@ -145,7 +147,7 @@ namespace TicTacToe_DL_RL
                     }
                 }
                 nofProcessedNets += nofInputsFound;
-                if (nofProcessedNets > nextOutput)
+                if (true)
                 {
                     //Console.WriteLine("OpenCL: Received a total of " + nofProcessedNets + " NN inputs");
                     nextOutput += 100000;
@@ -325,6 +327,7 @@ namespace TicTacToe_DL_RL
             // opencl buffers
 
             // The output buffer doesn't need any data from the host. Only its size is specified res.length.
+            CB_input = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer,input.ToArray());
 
             CB_firstConvFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, firstConvFilterWeights.ToArray());
 
@@ -356,8 +359,7 @@ namespace TicTacToe_DL_RL
             CB_policyBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, policyBiases.ToArray());
             CB_convFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convFilterWeights.ToArray());
 
-            CB_input = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, input);
-            CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, networkIndex);
+            CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, networkIndex.ToArray());
             CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly, Params.MAX_PARALLEL_KERNEL_EXECUTIONS*26); // only specify length?
 
             try
