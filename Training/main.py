@@ -52,7 +52,7 @@ def read_samples(filename):
                 # construct the input
                 player = -1
                 input = np.zeros((5, 5, 3))
-                for i in range(len(moves)-1): # ignore last move, we dont have visit counts there so we dont train it
+                for i in range(len(moves)): # ignore last move, we dont have visit counts there so we dont train it
                     move = moves[i]
 
                     if player == 1:
@@ -76,10 +76,13 @@ def read_samples(filename):
                 line = line.replace("(","").replace(")","").replace(",", " ")
                 policies = [float(number) for number in line.split()]
 
-                for move in range(len(moves)):
-                    policy = np.zeros((25))
-                    for i in range(25):
-                        policy[i] = policies[move*25+i]
+                for move in range(len(moves)+1):
+                    if move != len(moves): # all but the last board we have a policy
+                        policy = np.zeros((25))
+                        for i in range(25):
+                            policy[i] = policies[move*25+i]
+                    else:
+                        policy = np.zeros((25))
 
                     output_values.append(np.array([output_value])) # output val is from the view of player X
                     # output_values.append(np.array([output_value]))  # output val is from the view of player X

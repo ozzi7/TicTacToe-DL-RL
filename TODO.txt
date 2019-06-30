@@ -20,7 +20,7 @@ implement a global hash for BP training
 implement training window to re-use old data
 add plots for keras training loss 
 speedup weight creations 
-
+use localID and globalID to share weights on GPU 
 
 tensorboard
 >python.exe -m tensorboard.main --logdir "Z:\CloudStation\GitHub Projects\TicTacToe-DL-RL\Training\log\"
