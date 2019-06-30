@@ -25,8 +25,8 @@ namespace TicTacToe_DL_RL
         // for input layer
         public static float[] input = new float[Params.MAX_PARALLEL_KERNEL_EXECUTIONS*3*25];
         public static List<float> firstConvFilterWeights = new List<float>();
-        public static int[] networkIndex = new int[Params.MAX_PARALLEL_KERNEL_EXECUTIONS];
-
+        public static int[] weightIDs = new int[Params.MAX_PARALLEL_KERNEL_EXECUTIONS];
+        public static int[] globalIDs = new int[Params.MAX_PARALLEL_KERNEL_EXECUTIONS];
 
         // for residual tower
         public static List<float> convFilterWeights = new List<float>();
@@ -137,7 +137,8 @@ namespace TicTacToe_DL_RL
                             input[inputIndex] =job.input[j];
                             inputIndex++;
                         }
-                        networkIndex[networkIndexIndex] = job.globalID;
+                        weightIDs[networkIndexIndex] = job.weightsID; // to determine network weights in GPU memory to use
+                        globalIDs[networkIndexIndex] = job.globalID; // to identify which NN sent data (channel ID)
                         networkIndexIndex++;
                     }
                     else
@@ -166,7 +167,7 @@ namespace TicTacToe_DL_RL
                             job.output.Add(output[outputCount]);
                             outputCount++;
                         }
-                        writers[networkIndex[i]].TryWrite(job);
+                        writers[globalIDs[i]].TryWrite(job);
                     }
                 }
             }
@@ -287,7 +288,7 @@ namespace TicTacToe_DL_RL
                 ComputeEventList eventList = new ComputeEventList();
 
                 commandQueue1.WriteToBuffer(input, CB_input, false, eventList);
-                commandQueue1.WriteToBuffer(networkIndex, CB_networkIndex, false, eventList);
+                commandQueue1.WriteToBuffer(weightIDs, CB_networkIndex, false, eventList);
 
                 // Execute the kernel "count" times. After this call returns, "eventList" will contain an event associated with this command.
                 // If eventList == null or typeof(eventList) == ReadOnlyCollection<ComputeEventBase>, a new event will not be created.
@@ -358,7 +359,7 @@ namespace TicTacToe_DL_RL
             CB_policyBiases = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, policyBiases.ToArray());
             CB_convFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convFilterWeights.ToArray());
 
-            CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, networkIndex.ToArray());
+            CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, weightIDs.ToArray());
             CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly, Params.MAX_PARALLEL_KERNEL_EXECUTIONS*26); // only specify length?
 
             try
@@ -407,6 +408,7 @@ namespace TicTacToe_DL_RL
     public class Job
     {
         public int globalID;
+        public int weightsID;
 
         public List<float> input = new List<float>();
         public List<float> output = new List<float>();

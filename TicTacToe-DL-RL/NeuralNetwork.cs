@@ -13,6 +13,7 @@ namespace TicTacToe_DL_RL
     class NeuralNetwork
     {
         public int globalID = -1;
+        public int weightsID = -1;
         private Hashtable hashtable = new Hashtable();
 
         // params
@@ -110,12 +111,62 @@ namespace TicTacToe_DL_RL
         {
             ReadWeightsFromFile(file);
         }
-        public void OpenCLInit(int aGlobalID)
+        public void ChannelInit()
         {
-            globalID = aGlobalID;
             writer = OpenCL.InputChannel.Writer;
             reader = OpenCL.ResponseChannels[globalID].Reader;
+        }
+        public void EnqueueWeights()
+        {
             OpenCL.EnqueueWeights(this);
+        }
+        public void SetIds(int aWeightsID, int aGlobalID)
+        {
+            weightsID = aWeightsID;
+            globalID = aGlobalID;
+        }
+        public void DeleteArrays()
+        {
+            outputConvFilter = null;
+            firstConvFilterWeights = null;
+
+            // for residual tower
+            inputResidualLayer = null;
+            outputResidualLayer = null;
+            temporary = null;
+            convFilterWeights = null;
+
+            // for policy layer
+            convWeightsPolicy = null;
+            BNMeansPolicy = null;
+            BNStddevPolicy = null;
+            BNBetaPolicy = null;
+            BNGammaPolicy = null;
+            policyConnectionWeights = null;
+            policyBiases = null;
+            inputFCLayerPolicy = null;
+            outputPolicyData = null;
+
+            // for value layer
+            convWeightsValue1 = null;
+            valueConnectionWeights2 = null;
+            BNMeansValue = null;
+            BNStddevValue = null;
+            BNBetaValue = null;
+            BNGammaValue = null;
+            valueConnectionWeights = null;
+            valueBiases = null;
+            valueBiasLast = null;
+            inputFCLayerValue = null;
+            outputValueData = null;
+            temporaryValueData = null;
+
+            // for residual tower + input 
+            BNMeans = null;
+            BNStddev = null;
+
+            BNBetas = null;
+            BNGammas = null;
         }
         public Tuple<float[], float> Predict(TicTacToePosition pos)
         {
@@ -183,6 +234,7 @@ namespace TicTacToe_DL_RL
             Job job = new Job();
             job.input = input.ToList();
             job.globalID = globalID;
+            job.weightsID = weightsID;
             writer.TryWrite(job);
         }
         public Tuple<float[], float> GetResultAsync()

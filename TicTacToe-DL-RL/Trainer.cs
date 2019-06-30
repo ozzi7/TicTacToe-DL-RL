@@ -62,7 +62,7 @@ namespace TicTacToe_DL_RL
             bestNN = new NeuralNetwork(currentNN.weights);
             printPolicy(bestNN);
 
-            // the old network, we do this while waiting for python
+            // the old network
             Params.DN_SCALING = DIRICHLET_NOISE_SCALING.FIRST_NODE_ONLY;
             CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM, 0.2f);
 
@@ -135,10 +135,13 @@ namespace TicTacToe_DL_RL
             NeuralNetwork nn2 = new NeuralNetwork(currentNN.weights);
             for (int i = 0; i < 1; ++i)
             {
-                nn1.OpenCLInit(ID.GetGlobalID());
-                nn2.OpenCLInit(ID.GetGlobalID());
+                nn1.SetIds(i,i);
+                nn1.ChannelInit();
+                nn1.EnqueueWeights();
+                nn2.SetIds(i,i);
+                nn2.ChannelInit();
+                nn2.EnqueueWeights();
             }
-            OpenCL.CreateNetworkWeightBuffers();
 
             Thread thread = new Thread(OpenCL.Run);
             //thread.Priority = ThreadPriority.Highest;
@@ -232,11 +235,6 @@ namespace TicTacToe_DL_RL
             List<NeuralNetwork> nns = new List<NeuralNetwork>();
             List<NeuralNetwork> currnns = new List<NeuralNetwork>();
 
-            for (int i = 0; i < nofGames; ++i)
-            {
-                nns.Add(new NeuralNetwork(oldNN.weights));
-                currnns.Add(new NeuralNetwork(newNN.weights));
-            }
 
             // ################################# COPY WEIGHTS TO GPU MEMORY ###########################################
 
@@ -245,11 +243,35 @@ namespace TicTacToe_DL_RL
                 ID.ResetGlobalID();
                 OpenCL.ClearWeights();
 
-                for (int i = 0; i < nofGames; ++i)
+                NeuralNetwork nn1 = new NeuralNetwork(newNN.weights);
+                NeuralNetwork nn2 = new NeuralNetwork(oldNN.weights);
+                nn1.SetIds(0, 0);
+                nn2.SetIds(1, 1);
+
+                nn2.EnqueueWeights();
+                nn1.EnqueueWeights();
+                nn1.ChannelInit();
+                nn2.ChannelInit();
+
+                nns.Add(nn2);
+                currnns.Add(nn1);
+
+                for (int i = 1; i < nofGames; ++i)
                 {
-                    nns[i].OpenCLInit(ID.GetGlobalID());
-                    currnns[i].OpenCLInit(ID.GetGlobalID());
+                    nn1 = new NeuralNetwork();
+                    nn1.DeleteArrays();
+                    nn1.SetIds(0, i*2);
+                    nn1.ChannelInit();
+
+                    nn2 = new NeuralNetwork();
+                    nn1.DeleteArrays();
+                    nn2.SetIds(1, i*2+1);
+                    nn2.ChannelInit();
+
+                    nns.Add(nn2);
+                    currnns.Add(nn1);
                 }
+
                 OpenCL.CreateNetworkWeightBuffers();
             }
 
@@ -310,6 +332,12 @@ namespace TicTacToe_DL_RL
             }
             else
             {
+                for (int i = 0; i < nofGames; ++i)
+                {
+                    nns.Add(new NeuralNetwork(oldNN.weights));
+                    currnns.Add(new NeuralNetwork(newNN.weights));
+                }
+
                 using (var progress = new ProgressBar())
                 {
                     long sharedLoopCounter = 0;
@@ -472,26 +500,47 @@ namespace TicTacToe_DL_RL
             List<NeuralNetwork> nns = new List<NeuralNetwork>();
             List<NeuralNetwork> currnns = new List<NeuralNetwork>();
 
-            for (int i = 0; i < Params.NOF_CPU_THREADS_GPU_WORKLOAD; ++i)
+            if (!Params.GPU_ENABLED)
             {
-                NeuralNetwork playingNNlocal = new NeuralNetwork(nn.weights);
-                nns.Add(playingNNlocal);
+                for (int i = 0; i < Params.NOF_CPU_THREADS_GPU_WORKLOAD; ++i)
+                {
+                    NeuralNetwork playingNNlocal = new NeuralNetwork(nn.weights);
+                    nns.Add(playingNNlocal);
 
-                NeuralNetwork currNNlocal = new NeuralNetwork(nn.weights);
-                currnns.Add(currNNlocal);
+                    NeuralNetwork currNNlocal = new NeuralNetwork(nn.weights);
+                    currnns.Add(currNNlocal);
+                }
             }
+
             // ################################# COPY WEIGHTS TO GPU MEMORY ###########################################
 
             if (Params.GPU_ENABLED)
             {
+
+                for (int i = 0; i < Params.NOF_CPU_THREADS_GPU_WORKLOAD; ++i)
+                {
+                    NeuralNetwork playingNNlocal = new NeuralNetwork();
+                    playingNNlocal.DeleteArrays();
+                    nns.Add(playingNNlocal);
+
+                    NeuralNetwork currNNlocal = new NeuralNetwork();
+                    currNNlocal.DeleteArrays();
+                    currnns.Add(currNNlocal);
+                }
+
+                nns[0] = new NeuralNetwork(nn.weights);
+
                 ID.ResetGlobalID();
                 OpenCL.ClearWeights();
 
                 for (int i = 0; i < Params.NOF_CPU_THREADS_GPU_WORKLOAD; ++i)
                 {
-                    nns[i].OpenCLInit(ID.GetGlobalID());
-                    currnns[i].OpenCLInit(ID.GetGlobalID());
+                    nns[i].SetIds(0, ID.GetGlobalID());
+                    currnns[i].SetIds(0, ID.GetGlobalID());
+                    nns[i].ChannelInit();
+                    currnns[i].ChannelInit();
                 }
+                nns[0].EnqueueWeights();
                 OpenCL.CreateNetworkWeightBuffers();
             }
 
@@ -657,8 +706,13 @@ namespace TicTacToe_DL_RL
 
                 for (int i = 0; i < Params.NOF_OFFSPRING; ++i)
                 {
-                    nns[i].OpenCLInit(ID.GetGlobalID());
-                    currnns[i].OpenCLInit(ID.GetGlobalID());
+                    nns[i].SetIds(i*2, i * 2);
+                    currnns[i].SetIds(i*2+1, i * 2+1);
+
+                    nns[i].EnqueueWeights();
+                    currnns[i].EnqueueWeights();
+                    nns[i].ChannelInit();
+                    currnns[i].ChannelInit();
                 }
                 OpenCL.CreateNetworkWeightBuffers();
             }
@@ -834,9 +888,14 @@ namespace TicTacToe_DL_RL
 
                 for (int i = 0; i < Params.NOF_GAMES_TEST; ++i)
                 {
-                    nns[i].OpenCLInit(ID.GetGlobalID());
-                    currnns[i].OpenCLInit(ID.GetGlobalID());
+                    nns[i].SetIds(i*2, ID.GetGlobalID());
+                    currnns[i].SetIds(i * 2+1, ID.GetGlobalID());
+                    nns[i].ChannelInit();
+                    currnns[i].ChannelInit();
+                    nns[i].EnqueueWeights();
+                    currnns[i].EnqueueWeights();
                 }
+
                 OpenCL.CreateNetworkWeightBuffers();
             }
             sw.Stop();
@@ -1364,13 +1423,11 @@ namespace TicTacToe_DL_RL
                 /* find value, policy */
                 if (MCTSRootNodeNN1.nn_policy == null)
                 {
-                    calculateNNOutput(MCTSRootNodeNN1, NN1, curr_ply, true);
-                    backpropagateScore(MCTSRootNodeNN1, MCTSRootNodeNN1.nn_value);
+                    calculateNNOutputGPU(MCTSRootNodeNN1, NN1, pendingNN1Requests, curr_ply);
                 }
                 if (MCTSRootNodeNN2.nn_policy == null)
                 {
-                    calculateNNOutput(MCTSRootNodeNN2, NN2, curr_ply, true);
-                    backpropagateScore(MCTSRootNodeNN2, MCTSRootNodeNN2.nn_value);
+                    calculateNNOutputGPU(MCTSRootNodeNN2, NN2, pendingNN2Requests, curr_ply);
                 }
                 int nofSimsPerMove = train ? Params.NOF_SIMS_PER_MOVE_TRAINING : Params.NOF_SIMS_PER_MOVE_TESTING;
 
@@ -1551,13 +1608,11 @@ namespace TicTacToe_DL_RL
 
                 if (MCTSRootNodeNN1.nn_policy == null)
                 {
-                    calculateNNOutput(MCTSRootNodeNN1, NN1, curr_ply, true);
-                    backpropagateScore(MCTSRootNodeNN1, MCTSRootNodeNN1.nn_value);
+                    calculateNNOutputGPU(MCTSRootNodeNN1, NN1, pendingNN1Requests, curr_ply);
                 }
                 if (MCTSRootNodeNN2.nn_policy == null)
                 {
-                    calculateNNOutput(MCTSRootNodeNN2, NN2, curr_ply, true);
-                    backpropagateScore(MCTSRootNodeNN2, MCTSRootNodeNN2.nn_value);
+                    calculateNNOutputGPU(MCTSRootNodeNN2, NN2, pendingNN2Requests, curr_ply);
                 }
                 int maxSimulations = train ? Params.NOF_SIMS_PER_MOVE_TRAINING : Params.NOF_SIMS_PER_MOVE_TESTING;
                 

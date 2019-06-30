@@ -14,7 +14,7 @@ namespace TicTacToe_DL_RL
         public static int MAX_PARALLEL_KERNEL_EXECUTIONS = 2000; // opencl calls at most MAX_PARALLEL_KERNEL_EXECUTIONS and less if not enough data arrived from CPU //2304
 
         // set this to a even number, this also increases the quality of the tree search with higher threads because there are less virtual losses
-        public static int NOF_CPU_THREADS_GPU_WORKLOAD = 64; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
+        public static int NOF_CPU_THREADS_GPU_WORKLOAD = 16; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
 
         public static int NOF_CPU_THREADS_CPU_WORKLOAD = 4;
         public static int MAX_PENDING_NN_EVALS = 10; // should be lower than sims per move 
@@ -30,11 +30,11 @@ namespace TicTacToe_DL_RL
         public static int NOF_OFFSPRING = 20; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
         public static int NOF_GAMES_PER_OFFSPRING = 20;
         public static int NOF_GAMES_TEST = 24; // must be 2n for equal tests of player X and player Z, multiple of threads
-        public static int NOF_GAMES_VS_RANDOM = 20;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 400;
-        public static int NOF_SIMS_PER_MOVE_TESTING = 400;
-        public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
-        public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
+        public static int NOF_GAMES_VS_RANDOM = 1;
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 2;
+        public static int NOF_SIMS_PER_MOVE_TESTING = 2;
+        public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 1;
+        public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 1;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;
         public static float PERCENT_GROUND_TRUTH = 100.0f;
         public static float C_PUCT = 2.5f; // in theory sqrt(2), in practice usually higher (=more exploration) for training
@@ -50,7 +50,7 @@ namespace TicTacToe_DL_RL
         public static float FPU_VALUE = 0.1f; // first play urgency, between [-1,1], added to the puct score of unvisited children, this is needed if policy is 0 otherwise the children cannot be visited
 
         // BP only
-        public static int NOF_GAMES_TRAIN_KERAS = 128; // multiple of threads
+        public static int NOF_GAMES_TRAIN_KERAS = 32; // multiple of threads
 
         // GAME SPECIFIC 
         public static int MAXIMUM_PLYS = 100; // when to stop playing a game completely and declare draw (in tic tac toe game is always finished in 100 moves)
