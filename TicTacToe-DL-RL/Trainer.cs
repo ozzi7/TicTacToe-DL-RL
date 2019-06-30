@@ -142,7 +142,7 @@ namespace TicTacToe_DL_RL
                 nn2.ChannelInit();
                 nn2.EnqueueWeights();
             }
-
+            OpenCL.CreateNetworkWeightBuffers();
             Thread thread = new Thread(OpenCL.Run);
             //thread.Priority = ThreadPriority.Highest;
             thread.Start();
