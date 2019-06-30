@@ -40,7 +40,7 @@ namespace TicTacToe_DL_RL
         public static float C_PUCT = 2.5f; // in theory sqrt(2), in practice usually higher (=more exploration) for training
         public static float NOISE_SIGMA = 0.03f;  // noise standard deviation 0.1 (default), 0.01 ok
         public static float LEARNING_RATE = 0.001f;
-        public static float MINIMUM_WIN_PERCENTAGE = 53.0f; // new networks must win at least x percent against old
+        public static float MINIMUM_WIN_PERCENTAGE = 50.0f; // new networks must win at least x percent against old
         public static float WEIGHT_DECAY_FACTOR = 0.995f;
         public static float DIRICHLET_NOISE_WEIGHT;
         public static DIRICHLET_NOISE_SCALING DN_SCALING = DIRICHLET_NOISE_SCALING.ROOT_NODE_ONLY; // as a function of depth in mcts search tree
