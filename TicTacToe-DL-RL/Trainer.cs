@@ -63,7 +63,8 @@ namespace TicTacToe_DL_RL
             printPolicy(bestNN);
 
             // the old network, we do this while waiting for python
-            CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM, 0.0f);
+            Params.DN_SCALING = DIRICHLET_NOISE_SCALING.FIRST_NODE_ONLY;
+            CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM, 0.2f);
 
             WritePlotStatistics();
 
@@ -71,6 +72,7 @@ namespace TicTacToe_DL_RL
             {
                 Console.WriteLine("Main Thread: Epoch start");
 
+                Params.DN_SCALING = DIRICHLET_NOISE_SCALING.ROOT_NODE_ONLY;
                 String filename = ProduceTrainingGamesKeras(bestNN, Params.NOF_GAMES_TRAIN_KERAS);
 
                 ProcessStartInfo pythonInfo = new ProcessStartInfo();
@@ -100,7 +102,8 @@ namespace TicTacToe_DL_RL
                 // #################################### TEST NEW NETWORK ##########################################
 
                 currentNN.ReadWeightsFromFileKeras("./../../../Training/weights.txt"); // must have been created with python script
-                bool newBestFound = CheckPerformanceVsOldNet(currentNN, bestNN, 0.3f, Params.NOF_GAMES_TEST);
+                Params.DN_SCALING = DIRICHLET_NOISE_SCALING.FIRST_NODE_ONLY;
+                bool newBestFound = CheckPerformanceVsOldNet(currentNN, bestNN, 0.2f, Params.NOF_GAMES_TEST);
 
                 // #################################### CREATE NEW BEST NETWORK ##########################################
 
@@ -116,7 +119,8 @@ namespace TicTacToe_DL_RL
                     bestNN = new NeuralNetwork(currentNN.weights);
 
                     // the old network, we do this while waiting for python
-                    CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM, 0.0f);
+                    Params.DN_SCALING = DIRICHLET_NOISE_SCALING.FIRST_NODE_ONLY;
+                    CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM, 0.2f);
                 }
 
                 WritePlotStatistics();
@@ -212,8 +216,10 @@ namespace TicTacToe_DL_RL
         public bool CheckPerformanceVsOldNet(NeuralNetwork newNN, NeuralNetwork oldNN, float noiseWeight, int nofGames)
         {
             Stopwatch sw = new Stopwatch();
+            sw.Start();
             Console.WriteLine("Main Thread: CPU test games starting...");
 
+            Params.PERCENT_GROUND_TRUTH = 0.0f;
             Params.DIRICHLET_NOISE_WEIGHT = noiseWeight;
 
             List<int> wins = new List<int>(new int[nofGames]);
@@ -371,6 +377,8 @@ namespace TicTacToe_DL_RL
                 Math.Round((((totalWins + totalDraws * 0.5) / nofGames) * 100.0f), 2) + "%");
             Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds + "ms");
 
+            Params.PERCENT_GROUND_TRUTH = 100.0f;
+
             return plsReplaceMe;
         }
         public void CheckPerformanceVsRandomKeras(NeuralNetwork nn, int nofGames, float noiseWeight)
@@ -457,7 +465,7 @@ namespace TicTacToe_DL_RL
         /// <returns></returns>
         public String ProduceTrainingGamesKeras(NeuralNetwork nn, int nofGames)
         {
-            Params.DIRICHLET_NOISE_WEIGHT = 0.3f;
+            Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
 
             Console.WriteLine("Main Thread: Creating " + nofGames + " training games...");
 
@@ -2186,7 +2194,7 @@ namespace TicTacToe_DL_RL
                     }
 
                     // bonus for unvisited
-                    if (currNode.Children[i].visits == 0)
+                    if (currNode.Children[i].visits == 0 && currNode.Children[i].virtualVisits == 0)
                     {
                         temp_UCT_score = childWinrate + explorationTerm + Params.FPU_VALUE;
                     }
@@ -2213,8 +2221,8 @@ namespace TicTacToe_DL_RL
                 }
                 if (draws.Count != 0)
                 {
-                    //currNode = currNode.Children[draws[RandomGen2.Next(0,draws.Count)]];
-                    currNode = currNode.Children[draws[0]];
+                    currNode = currNode.Children[draws[RandomGen2.Next(0,draws.Count)]];
+                    //currNode = currNode.Children[draws[0]];
                     //Console.WriteLine("There was a draw on choosing most promising child node");
                 }
                 else

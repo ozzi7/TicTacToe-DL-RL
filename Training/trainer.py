@@ -6,6 +6,8 @@
 import os
 
 from tictactoe_nn import *
+import matplotlib.pyplot as plt
+import time
 
 
 class Trainer():
@@ -13,7 +15,7 @@ class Trainer():
         self.nnet = TicTacToeNet()
         self.BATCH_SIZE = 100
         self.EPOCHS_FIT = 20
-
+        self.EPOCHS = 2
         #print(K.image_data_format())  # print current format
 
     def save_init_weights(self):
@@ -32,14 +34,29 @@ class Trainer():
 
         print("====================================================================================")
 
-        self.nnet.model.load_weights("best_model.hd5f")
-        self.nnet.model.fit(np.array(inputs), [np.array(output_policies), np.array(output_values)],
-                                 batch_size=self.BATCH_SIZE,
-                                 epochs=self.EPOCHS_FIT,
-                                 verbose=1)
-        self.nnet.model.save("best_model.hd5f")
+        for i in range(self.EPOCHS):
+            self.nnet.model.load_weights("best_model.hd5f")
+            self.nnet.model.fit(np.array(inputs), [np.array(output_policies), np.array(output_values)],
+                                     batch_size=self.BATCH_SIZE,
+                                     epochs=self.EPOCHS_FIT,
+                                     verbose=1)
+            self.nnet.model.save("best_model.hd5f")
 
-        self.nnet.dump_weights()
+            self.nnet.dump_weights()
+
+    def test_plot(self, inputs, output_values, output_policies):
+        print("====================================================================================")
+
+        # Create a TensorBoard instance with the path to the logs directory
+        #tensorboard = TensorBoard(log_dir='log/{}'.format(time()))
+
+        for i in range(self.EPOCHS):
+            self.nnet.model.load_weights("best_model.hd5f")
+            history = self.nnet.model.fit(np.array(inputs), [np.array(output_policies), np.array(output_values)],
+                                     batch_size=self.BATCH_SIZE,
+                                     epochs=1,
+                                     verbose=1
+                                     ) #callbacks=[tensorboard]
 
     def predict(self,  input):
         self.nnet.model.load_weights("best_model.hd5f")

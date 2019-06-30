@@ -24,12 +24,12 @@ BOARD_X=5
 BOARD_Y=5
 NOF_INPUT_PLANES=3
 NOF_POLICIES=25
-NOF_FILTERS=16
-NOF_VALUE_FILTERS=1
-NOF_POLICY_FILTERS=25
+NOF_FILTERS=32
+NOF_VALUE_FILTERS=32
+NOF_POLICY_FILTERS=32
 NOF_FC_NEURONS_VAL_LAYER=32
 NOF_RES_LAYERS=6
-LEARNING_RATE=0.001 # was 0.001
+LEARNING_RATE=0.02 # was 0.001
 
 
 class TicTacToeNet():
@@ -177,7 +177,7 @@ class TicTacToeNet():
         self.target_vs = tf.placeholder(tf.float32, shape=[None])
         self.loss_pi =  tf.losses.softmax_cross_entropy(self.target_pis, self.pi)
         self.loss_v = tf.losses.mean_squared_error(self.target_vs, tf.reshape(self.v, shape=[-1,]))
-        self.total_loss = self.loss_pi + self.loss_v
+        self.total_loss = self.loss_pi + 1.3*self.loss_v
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             self.train_step = tf.train.AdamOptimizer(self.args.lr).minimize(self.total_loss)

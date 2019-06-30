@@ -13,8 +13,10 @@ from ast import literal_eval as createTuple
 import re
 import sys
 import os
+import glob
 os.environ["TF_CPP_MIN_LOG_LEVEL"]="3"
 
+MAX_FILES = 10
 
 def read_samples(filename):
     # read training data from file
@@ -94,10 +96,27 @@ def read_samples(filename):
     return (inputs,output_values, output_policies)
 
 if __name__ == '__main__':
-
     os.chdir(os.path.dirname(sys.argv[0]))
+
+    list_of_files = glob.glob('./training_games*.txt')  # * means all if need specific format then *.csv
+    files = sorted(list_of_files, key=lambda file: os.path.getctime(file),reverse=True)
+
+    inputs = []
+    output_values = []
+    output_policies = []
+    count = 0
+    for file in files:
+        if count < MAX_FILES:
+            print(file)
+            inputs_t,output_values_t, output_policies_t = read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + file)
+            inputs.extend(inputs_t)
+            output_values.extend(output_values_t)
+            output_policies.extend(output_policies_t)
+            count = count +1
+
     trainer = Trainer()
     #trainer.save_init_weights()
-    trainer.train(*read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1]))
+    #trainer.test_plot(inputs,output_values,output_policies)
+    trainer.train(inputs,output_values,output_policies)
     #(inputs, output_values, output_policies) = read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1])
     #trainer.predict([inputs[0]])

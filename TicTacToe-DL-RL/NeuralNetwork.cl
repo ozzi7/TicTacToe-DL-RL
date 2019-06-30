@@ -197,20 +197,20 @@ kernel void NN(
     private int nofInputPlanes = 3;
 	private int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
 	private int nofOutputValues = 1; // value head has 1 output
-	private int nofFilters = 16; //64- the convolution layer has 64 filters
+	private int nofFilters = 32; //64- the convolution layer has 64 filters
 	private int nofConvLayers = 13; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
 	private int nofResidualLayers = 6; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
-	private int nofPolicyFilters = 25; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
-	private int nofValueFilters = 1; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
+	private int nofPolicyFilters = 32; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
+	private int nofValueFilters = 32; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
 	private int valueHiddenLayerSize = 32; // was 128
 	private float softmaxTemperature = 1.0f;
 
 	// private array to work on, could re-use some later
-    private float outputConvFilter[16 * 5 * 5]; // nofFilters *..
-    private float outputResidualLayer[16 * 5 * 5]; // nofFilters *..
-    private float temporary[16 * 5 * 5]; // nofFilters *..
-    private float inputResidualLayer[16 * 5 * 5]; // nofFilters *..
-	private float inputFCLayerPolicy[25 * 5* 5]; // nofPolicyFilters * ..
+    private float outputConvFilter[32 * 5 * 5]; // nofFilters *..
+    private float outputResidualLayer[32 * 5 * 5]; // nofFilters *..
+    private float temporary[32 * 5 * 5]; // nofFilters *..
+    private float inputResidualLayer[32 * 5 * 5]; // nofFilters *..
+	private float inputFCLayerPolicy[32 * 5* 5]; // nofPolicyFilters * ..
 	private float outputValueData[1 * 5 * 5]; // nofValueFilters* ..
 	private float outputPolicyData[25]; // nofPolicies
 	private float localInput[5*5*3]; // input size  

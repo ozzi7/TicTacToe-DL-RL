@@ -17,7 +17,7 @@ namespace TicTacToe_DL_RL
         public static int NOF_CPU_THREADS_GPU_WORKLOAD = 64; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL max 64
 
         public static int NOF_CPU_THREADS_CPU_WORKLOAD = 4;
-        public static int MAX_PENDING_NN_EVALS = 20; // should be lower than sims per move 
+        public static int MAX_PENDING_NN_EVALS = 10; // should be lower than sims per move 
         // = how many NN evals are queued up in the MCTS tree before the CPU thread must wait for results
         // the MCTS search becomes less useful if it continues with fake data while waiting for the real outputs
         // it is better to keep this low and increase parallel trees (increasing number of CPU threads)
@@ -29,10 +29,10 @@ namespace TicTacToe_DL_RL
         public static int NOF_EPOCHS = 10000000;
         public static int NOF_OFFSPRING = 20; // must be 2n because half of NOF_OFFSPRING share same weight mutation but in opposite direction
         public static int NOF_GAMES_PER_OFFSPRING = 20;
-        public static int NOF_GAMES_TEST = 64; // must be 2n for equal tests of player X and player Z, multiple of threads
+        public static int NOF_GAMES_TEST = 24; // must be 2n for equal tests of player X and player Z, multiple of threads
         public static int NOF_GAMES_VS_RANDOM = 20;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 300; // could/should be time
-        public static int NOF_SIMS_PER_MOVE_TESTING = 300; // could/should be time
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 400;
+        public static int NOF_SIMS_PER_MOVE_TESTING = 400;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;

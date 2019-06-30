@@ -13,7 +13,14 @@ virtual visits for MCTS to OpenCL port DONE
 what about loops in MCTS tree? should re-use stats
 change cpuct value (its not a constant)
 add FPU done
-add weight regularization loss 
+add weight regularization loss DONE
 dont re-use the weights which were not accepted ?
 http://blog.lczero.org/2018/12/alphazero-paper-and-lc0-v0191.html
 implement a global hash for BP training
+implement training window to re-use old data
+add plots for keras training loss 
+speedup weight creations 
+
+
+tensorboard
+>python.exe -m tensorboard.main --logdir "Z:\CloudStation\GitHub Projects\TicTacToe-DL-RL\Training\log\"
