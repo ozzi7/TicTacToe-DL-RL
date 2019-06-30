@@ -33,8 +33,8 @@ namespace TicTacToe_DL_RL
 
             NN.ReadWeightsFromFileKeras("./../../../Training/weights.txt"); // must have been created with python script
             Trainer trainer = new Trainer(NN);
-            trainer.ValidateOuputGPU();
-           // trainer.TrainKeras();
+            //trainer.ValidateOuputGPU();
+            trainer.TrainKeras();
         }
     }
 }
