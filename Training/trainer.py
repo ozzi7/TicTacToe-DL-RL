@@ -14,7 +14,7 @@ class Trainer():
     def __init__(self):
         self.nnet = TicTacToeNet()
         self.BATCH_SIZE = 100
-        self.EPOCHS_FIT = 20
+        self.EPOCHS_FIT = 30
         self.EPOCHS = 2
         #print(K.image_data_format())  # print current format
 

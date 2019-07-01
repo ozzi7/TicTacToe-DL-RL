@@ -495,37 +495,46 @@ namespace TicTacToe_DL_RL
             {
                 output[u] = 0.0f;
             }
-            for (int i = 0; i < nofFilters; ++i) { 
-                // apply each of the filters to the complete input..
-                for (int j = 0; j < nofInputPlanes; ++j)
+
+            for (int j = 0; j < nofInputPlanes; ++j)
+            {
+                for (int k = 0; k < gameboardHeight; ++k)
                 {
-                    for (int k = 0; k < gameboardHeight; ++k)
+                    for (int l = 0; l < gameboardWidth; ++l)
                     {
-                        for (int l = 0; l < gameboardWidth; ++l)
+                        // looking at a 1x1x1 of the input here, we sum up the 3x3 neighbors (depending on filter size)
+                        int x = Math.Max(filterHeight / 2 - k, 0);
+                        for (; x < filterHeight; ++x)
                         {
-                            // looking at a 1x1x1 of the input here, we sum up the 3x3 neighbors (depending on filter size)
-                            for (int x = 0; x < filterHeight; ++x)
+                            for (int y = 0; y < filterWidth; ++y)
                             {
-                                for (int y = 0; y < filterWidth; ++y)
+                                for (int i = 0; i < nofFilters; ++i)
                                 {
+
                                     // going through the neighbors
                                     if (k - filterHeight / 2 + x < 0 || k - filterHeight / 2 + x >= gameboardHeight ||
-                                        l - filterWidth / 2 + y < 0 || l - filterWidth / 2 + y >= gameboardWidth)
+                                    l - filterWidth / 2 + y < 0 || l - filterWidth / 2 + y >= gameboardWidth)
                                     {
                                         // the filter is out of bounds, set to 0 (0 padding)
                                         continue;
                                     }
-                                    output[i * gameboardHeight * gameboardWidth + k * gameboardWidth + l] += 
+                                    // when input value is 0 skip all filters
+                                    if (input[j * gameboardHeight * gameboardWidth + k * gameboardWidth + l
+                                        + (x - (filterHeight / 2)) * gameboardWidth + y - (filterWidth / 2)] == 0.0f)
+                                    {
+                                        break;
+                                    }
+
+                                    output[i * gameboardHeight * gameboardWidth + k * gameboardWidth + l] +=
                                         input[j * gameboardHeight * gameboardWidth + k * gameboardWidth + l
-                                        + (x - (filterHeight / 2))*gameboardWidth + y-(filterWidth/2) ] *
+                                        + (x - (filterHeight / 2)) * gameboardWidth + y - (filterWidth / 2)] *
                                         convWeights[
                                             index * nofFilters * nofInputPlanes * filterHeight * filterWidth +
-                                            i * nofInputPlanes * filterHeight * filterWidth + 
+                                            i * nofInputPlanes * filterHeight * filterWidth +
                                             j * filterHeight * filterWidth +
                                             x * filterWidth + y];
                                 }
                             }
-                            // add the bias in BN to the means
                         }
                     }
                 }

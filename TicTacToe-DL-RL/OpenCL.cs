@@ -187,24 +187,76 @@ namespace TicTacToe_DL_RL
             devices.Add(platform.Devices[0]);
             context = new ComputeContext(devices, properties, null, IntPtr.Zero);
 
-            // Create and build the opencl program.
-            StreamReader streamReader = new StreamReader("../../NeuralNetwork.cl");
-            string openClCode = streamReader.ReadToEnd();
-            streamReader.Close();
-            program = new ComputeProgram(context, openClCode);
 
-            ComputeProgramBuildStatus error = program.GetBuildStatus(context.Devices[0]);
-            try
+            /* if binary file was saved load it */
+            if (File.Exists("./KernelBinary.bin"))
             {
-                program.Build(null, null, null, IntPtr.Zero);
+                try
+                {
+                    // Create a new stream to write to the file
+                    byte[] binaryIn = File.ReadAllBytes("KernelBinary.bin");
+                    List<byte[]> binaries = new List<byte[]>();
+                    binaries.Add(binaryIn);
+
+                    program = new ComputeProgram(context, binaries, devices);
+
+                    ComputeProgramBuildStatus error = program.GetBuildStatus(context.Devices[0]);
+                    try
+                    {
+                        program.Build(null, null, null, IntPtr.Zero);
+                    }
+                    catch
+                    {
+                        Console.WriteLine(program.GetBuildLog(devices[0]));
+                        throw;
+                    }
+                }
+                catch
+                {
+                    Console.WriteLine("Could not binary opencl kernel to file ");
+                }
             }
-            catch
+            else
             {
-                Console.WriteLine(program.GetBuildLog(devices[0]));
-                throw;
+                // Create and build the opencl program.
+                StreamReader streamReader = new StreamReader("../../NeuralNetwork.cl");
+                string openClCode = streamReader.ReadToEnd();
+                streamReader.Close();
+                program = new ComputeProgram(context, openClCode);
+
+                ComputeProgramBuildStatus error = program.GetBuildStatus(context.Devices[0]);
+                try
+                {
+                    program.Build(null, null, null, IntPtr.Zero);
+                }
+                catch
+                {
+                    Console.WriteLine(program.GetBuildLog(devices[0]));
+                    throw;
+                }
+
+                try
+                {
+                    byte[] binaryOut = program.Binaries[0];
+                    BinaryWriter Writer = null;
+
+                    // Create a new stream to write to the file
+                    Writer = new BinaryWriter(File.OpenWrite("./KernelBinary.bin"));
+
+                    // Writer raw data                
+                    Writer.Write(binaryOut);
+                    Writer.Flush();
+                    Writer.Close();
+                }
+                catch
+                {
+                    Console.WriteLine("Could not binary opencl kernel to file ");
+                }
             }
+
             // Create the kernel function and set its arguments.
             kernel = program.CreateKernel("NN");
+
             // Create the command queue. This is used to control kernel execution and manage read/write/copy operations.
             commandQueue1 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
             //commandQueue2 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
