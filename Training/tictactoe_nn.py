@@ -29,19 +29,18 @@ NOF_VALUE_FILTERS=32
 NOF_POLICY_FILTERS=32
 NOF_FC_NEURONS_VAL_LAYER=32
 NOF_RES_LAYERS=6
-LEARNING_RATE=0.005 # was 0.001
+LEARNING_RATE=0.002 # was 0.001
 
 
-class TicTacToeNet():
+class TicTacToeNet:
     def __init__(self):
         self.input_boards = Input(shape=(BOARD_X, BOARD_Y, NOF_INPUT_PLANES))  # s: batch_size x board_x x board_y
         x = Conv2D(filters=NOF_FILTERS,
                    kernel_size=(3,3),
                    padding='same', activation='linear', use_bias=False,
-                   data_format="channels_last",
-                   kernel_regularizer=regularizers.l2(0.01))(self.input_boards)
+                   data_format="channels_last")(self.input_boards)
 
-        x = BatchNormalization(axis=3,gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x) # axis -1 is equal to 3 here, means last dimension
+        x = BatchNormalization(axis=3)(x) # axis -1 is equal to 3 here, means last dimension
         x = LeakyReLU()(x)
         for _ in range(NOF_RES_LAYERS):
             x = self.residual_layer(x, NOF_FILTERS,
@@ -60,10 +59,10 @@ class TicTacToeNet():
             , padding='same'
             , activation='linear'
             , use_bias=False
-            , kernel_regularizer=regularizers.l2(0.01)
+
         )(x)
 
-        x = BatchNormalization(axis=3,gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x)
+        x = BatchNormalization(axis=3)(x)
         x = LeakyReLU()(x)
 
         return (x)
@@ -84,10 +83,10 @@ class TicTacToeNet():
             , padding='same'
             , activation='linear'
             , use_bias=False
-            , kernel_regularizer=regularizers.l2(0.01)
+
         )(x)
 
-        x = BatchNormalization(axis=3,gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x)
+        x = BatchNormalization(axis=3)(x)
         x = add([input_block, x])
         x = LeakyReLU()(x)
 
@@ -106,26 +105,26 @@ class TicTacToeNet():
             , padding='same'
             , activation='linear'
             , use_bias=False
-            , kernel_regularizer=regularizers.l2(0.01)
+
         )(x)
 
-        x = BatchNormalization(axis=3,gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x)
+        x = BatchNormalization(axis=3)(x)
         x = LeakyReLU()(x)
         x = Permute((3, 1, 2), input_shape=(5, 5, NOF_VALUE_FILTERS))(x)
         x = Flatten()(x)
+        # noinspection PyPackageRequirements
         x = Dense(
             NOF_FC_NEURONS_VAL_LAYER
-            , activation='linear',
-            kernel_regularizer=regularizers.l2(0.01)
+            , activation='linear'
         )(x)
 
         x = LeakyReLU()(x)
         x = Dense(
             1
             , activation='tanh'
-            , name='value_head',
-            kernel_regularizer=regularizers.l2(0.01)
+            , name='value_head'
         )(x)
+        x = Dropout(0.1)(x)
 
         return (x)
 
@@ -140,19 +139,19 @@ class TicTacToeNet():
             filters = NOF_POLICY_FILTERS
             , kernel_size = (1,1)
             , padding = 'same'
-            , activation='linear', use_bias=False,
-            kernel_regularizer=regularizers.l2(0.01))(x)
+            , activation='linear', use_bias=False)(x)
 
-        x = BatchNormalization(gamma_regularizer=regularizers.l2(0.01), beta_regularizer=regularizers.l2(0.01))(x)
+        x = BatchNormalization()(x)
         x = LeakyReLU()(x)
         x = Permute((3,1,2), input_shape=(5,5,NOF_POLICY_FILTERS))(x)
         x = Flatten()(x)
         x = Dense( # this is equivalent to dense layer + softmax layer, but combined
             NOF_POLICIES
             , activation='softmax'
-            , name ='policy_head',
-            kernel_regularizer=regularizers.l2(0.01)
+            , name ='policy_head'
             )(x)
+
+        x = Dropout(0.1)(x)
 
         return (x)
 
@@ -177,7 +176,7 @@ class TicTacToeNet():
         self.target_vs = tf.placeholder(tf.float32, shape=[None])
         self.loss_pi =  tf.losses.softmax_cross_entropy(self.target_pis, self.pi)
         self.loss_v = tf.losses.mean_squared_error(self.target_vs, tf.reshape(self.v, shape=[-1,]))
-        self.total_loss = self.loss_pi + 1.3*self.loss_v
+        self.total_loss = self.loss_pi + self.loss_v
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             self.train_step = tf.train.AdamOptimizer(self.args.lr).minimize(self.total_loss)

@@ -13,8 +13,9 @@ namespace TicTacToe_DL_RL
         private double[] dirichletNoise;
         public DirichletNoise(int nofChildren)
         {
-            // assume 10 random games, 9 potential moves => 10/9
-            float init = 10.0f / nofChildren;
+            // assume 10 random sims, 25 potential moves => 10/25
+            //float init = 10.0f / nofChildren;
+            float init = 10.0f / 25.0f;
             double[] alphaInit = new double[nofChildren];
 
             for (int i = 0; i < nofChildren; ++i)

@@ -103,6 +103,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="NeuralNetwork_train.cl" />
     <None Include="NeuralNetwork.cl" />
     <None Include="packages.config" />
   </ItemGroup>

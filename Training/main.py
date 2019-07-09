@@ -16,7 +16,8 @@ import os
 import glob
 os.environ["TF_CPP_MIN_LOG_LEVEL"]="3"
 
-MAX_FILES = 10
+MAX_FILES = 6
+
 
 def read_samples(filename):
     # read training data from file
@@ -52,7 +53,7 @@ def read_samples(filename):
                 # construct the input
                 player = -1
                 input = np.zeros((5, 5, 3))
-                for i in range(len(moves)): # ignore last move, we dont have visit counts there so we dont train it
+                for i in range(len(moves)):
                     move = moves[i]
 
                     if player == 1:

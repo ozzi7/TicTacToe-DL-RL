@@ -189,11 +189,10 @@ namespace TicTacToe_DL_RL
 
 
             /* if binary file was saved load it */
-            if (File.Exists("./KernelBinary.bin"))
+            if (File.Exists("./KernelBinary.bin") && !Params.FORCE_KERNEL_RECOMPILE)
             {
                 try
                 {
-                    // Create a new stream to write to the file
                     byte[] binaryIn = File.ReadAllBytes("KernelBinary.bin");
                     List<byte[]> binaries = new List<byte[]>();
                     binaries.Add(binaryIn);
@@ -213,7 +212,7 @@ namespace TicTacToe_DL_RL
                 }
                 catch
                 {
-                    Console.WriteLine("Could not binary opencl kernel to file ");
+                    Console.WriteLine("Could not read binary opencl kernel ");
                 }
             }
             else
@@ -250,7 +249,7 @@ namespace TicTacToe_DL_RL
                 }
                 catch
                 {
-                    Console.WriteLine("Could not binary opencl kernel to file ");
+                    Console.WriteLine("Could not write binary opencl kernel to file ");
                 }
             }
 

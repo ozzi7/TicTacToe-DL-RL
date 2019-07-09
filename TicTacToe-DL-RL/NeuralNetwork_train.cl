@@ -1,5 +1,4 @@
-﻿
-static inline void Convolution(float* input, float* output, constant float* convWeights,
+﻿static inline void Convolution(float* input, float* output, local float* convWeights,
     int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index, int networkOffset)
 {
     // convolution on gameboard_width*gameboard_height*depth
@@ -225,19 +224,26 @@ kernel void NN(
 
     private float softmaxPolicy[25]; // nofOutputPolicies
     private float winrateOut[1];
+	local float convFilterWeights_local[32 * 32 * 3 * 3]; // for one res layer conv, 36KByte should easily fit local memory, filters filters filterwidth filterheight
 
 	// copy input to inputreslayer because of access specifiers which may not change and because the input output is 
 	// swapped to conv function call we also cant change the specifier in the argument, plus should be faster anyway
 	for(int i = 0; i < 3*25; ++i) {
 		localInput[i] = input[inputIndex + i];	
 	}
-	
+
 	////////////////////////////////////////////// start of network eval //////////////////////////////////////////////
 	
 	/*Conv layer */
 	private int networkOffsetConv = networkIndex*nofFilters* nofInputPlanes * filterHeight * filterWidth;  //correct
 
-    Convolution(localInput, outputConvFilter, firstConvFilterWeights, nofInputPlanes, nofFilters, filterWidth, filterHeight, 0, networkOffsetConv);
+	
+	for(int i = 0; i < 32*32*3*3; ++i) {
+		convFilterWeights_local[i] = firstConvFilterWeights[networkIndex*(32*32*3*3)+32*32*3*3];
+	}
+	
+
+    Convolution(localInput, outputConvFilter, convFilterWeights_local, nofInputPlanes, nofFilters, filterWidth, filterHeight, 0, 0);
 	
 	private int networkOffsetBN = networkIndex*nofConvLayers * nofFilters;  //correct
     BN(outputConvFilter, inputResidualLayer, BNMeans, BNStddev, nofFilters, 0, BNGammas, BNBetas, networkOffsetBN);
@@ -246,9 +252,22 @@ kernel void NN(
 	networkOffsetConv = networkIndex * (2 * nofResidualLayers) * nofFilters * nofFilters * filterHeight * filterWidth; //correct
     for (int index = 0; index < nofResidualLayers; index += 1) 
 	{
-        Convolution(inputResidualLayer, outputResidualLayer, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2, networkOffsetConv);
+		
+		for(int i = 0; i < 32*32*3*3; ++i) {
+			convFilterWeights_local[i] = convFilterWeights[networkIndex*(12*32*32*3*3)+32*32*3*3*(index*2)];
+		}
+		
+
+        Convolution(inputResidualLayer, outputResidualLayer, convFilterWeights_local, nofFilters, nofFilters, filterWidth, filterHeight, index*2, 0);
         BN(outputResidualLayer, outputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+1, BNGammas, BNBetas, networkOffsetBN);
-        Convolution(outputResidualLayer, temporary, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2+1, networkOffsetConv);
+
+		
+		for(int i = 0; i < 32*32*3*3; ++i) {
+			convFilterWeights_local[i] = convFilterWeights[networkIndex*(12*32*32*3*3)+32*32*3*3*(index*2+1)];
+		}
+		
+
+        Convolution(outputResidualLayer, temporary, convFilterWeights_local, nofFilters, nofFilters, filterWidth, filterHeight, index*2+1, 0);
         BNWithResidual(temporary, outputResidualLayer, inputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+2, BNGammas, BNBetas, networkOffsetBN);
                 
         // temporary holds result
@@ -261,7 +280,13 @@ kernel void NN(
 	networkOffsetBN = networkIndex*nofValueFilters;  //correct
 	networkOffsetConv = networkIndex * nofFilters* nofValueFilters*1*1; //correct
 
-    Convolution(inputResidualLayer, outputValueData, convWeightsValue1, nofFilters, nofValueFilters, 1, 1, 0, networkOffsetConv);
+		
+		for(int i = 0; i < 32*32*3*3; ++i) {
+			convFilterWeights_local[i] = convWeightsValue1[networkIndex*(32*32*1*1)+32*32*1*1];
+		}
+		
+
+    Convolution(inputResidualLayer, outputValueData, convFilterWeights_local, nofFilters, nofValueFilters, 1, 1, 0, 0);
     BN(outputValueData, outputValueData, BNMeansValue, BNStddevValue, nofValueFilters, 0, BNGammaValue, BNBetaValue, networkOffsetBN);
 
 	private int networkOffsetFCLayerBiases = networkIndex * valueHiddenLayerSize;
@@ -278,7 +303,14 @@ kernel void NN(
     /*policy head*/
 	networkOffsetBN = networkIndex*nofPolicyFilters; 
 	networkOffsetConv = networkIndex * nofPolicyFilters* nofFilters;
-    Convolution(inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, nofFilters, nofPolicyFilters, 1, 1, 0, networkOffsetConv);
+
+		
+		for(int i = 0; i < 32*32*3*3; ++i) {
+			convFilterWeights_local[i] = convWeightsPolicy[networkIndex*(32*32*1*1)+32*32*1*1];
+		}
+		
+
+    Convolution(inputResidualLayer, inputFCLayerPolicy, convFilterWeights_local, nofFilters, nofPolicyFilters, 1, 1, 0, 0);
     BN(inputFCLayerPolicy, inputFCLayerPolicy, BNMeansPolicy, BNStddevPolicy, nofPolicyFilters, 0, BNGammaPolicy, BNBetaPolicy, networkOffsetBN);
 
 	networkOffsetFCLayerBiases = networkIndex*nofOutputPolicies; // correct

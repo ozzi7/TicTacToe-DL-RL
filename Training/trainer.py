@@ -14,7 +14,7 @@ class Trainer():
     def __init__(self):
         self.nnet = TicTacToeNet()
         self.BATCH_SIZE = 100
-        self.EPOCHS_FIT = 30
+        self.EPOCHS_FIT = 3
         self.EPOCHS = 2
         #print(K.image_data_format())  # print current format
 
@@ -39,7 +39,8 @@ class Trainer():
             self.nnet.model.fit(np.array(inputs), [np.array(output_policies), np.array(output_values)],
                                      batch_size=self.BATCH_SIZE,
                                      epochs=self.EPOCHS_FIT,
-                                     verbose=1)
+                                     verbose=1,
+                                     shuffle=True)
             self.nnet.model.save("best_model.hd5f")
 
             self.nnet.dump_weights()

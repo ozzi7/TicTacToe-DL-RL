@@ -510,7 +510,6 @@ namespace TicTacToe_DL_RL
                             {
                                 for (int i = 0; i < nofFilters; ++i)
                                 {
-
                                     // going through the neighbors
                                     if (k - filterHeight / 2 + x < 0 || k - filterHeight / 2 + x >= gameboardHeight ||
                                     l - filterWidth / 2 + y < 0 || l - filterWidth / 2 + y >= gameboardWidth)
@@ -948,6 +947,7 @@ namespace TicTacToe_DL_RL
             StreamReader streamReader = new StreamReader(filename);
             string text = null;
             String[] tokens;
+            weights.Clear();
 
             while ((text = streamReader.ReadLine()) != null)
             {
