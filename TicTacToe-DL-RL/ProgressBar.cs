@@ -12,7 +12,7 @@ namespace TicTacToe_DL_RL
     /// </summary>
     public class ProgressBar : IDisposable, IProgress<double>
     {
-        private const int blockCount = 30;
+        private const int blockCount = 40;
         private readonly TimeSpan animationInterval = TimeSpan.FromSeconds(1.0 / 8);
         private const string animation = @"|/-\";
 

@@ -1,7 +1,7 @@
 filepath = ".\\bin\\Release\\plotdata.txt"
 set terminal wxt size 1000,1000
 
-while (1) {
+while (3) {
 	set key opaque
 	set key left top
 	set key box
