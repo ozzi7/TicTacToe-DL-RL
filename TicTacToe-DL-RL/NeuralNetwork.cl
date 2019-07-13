@@ -11,8 +11,8 @@
 #define VALUE_FILTERS 32
 #define POLICY_FILTERS 32
 #define VALUE_HEAD_HIDDEN_LAYER_SIZE 32
-#define OUTPUTS_VALUE_HEAD 1
-#define OUTPUTS_POLICY_HEAD 25
+#define VALUE_HEAD_OUTPUTS 1
+#define POLICY_HEAD_OUTPUTS 25
 
 static inline void Convolution(float* input, float* output, constant float* convWeights,
     int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index, int networkOffset)
@@ -131,7 +131,7 @@ static inline void Softmax(float* input, float* output, float temperature)
 {
     // must be input length == output length
 	float alpha = -FLT_MAX;	
-	for(int i = 0; i < OUTPUTS_POLICY_HEAD; ++i) {
+	for(int i = 0; i < POLICY_HEAD_OUTPUTS; ++i) {
 		if(input[i] >= alpha) {
 			alpha = input[i];
 		}
@@ -139,14 +139,14 @@ static inline void Softmax(float* input, float* output, float temperature)
     alpha /= temperature;
 
     float denom = 0.0f;
-    float helper[OUTPUTS_POLICY_HEAD];
-    for (int i = 0; i < OUTPUTS_POLICY_HEAD; i++) {
+    float helper[POLICY_HEAD_OUTPUTS];
+    for (int i = 0; i < POLICY_HEAD_OUTPUTS; i++) {
         float val = (float)exp((input[i] / temperature) - alpha);
         helper[i] = val;
         denom += val;
     }
 
-    for (int i = 0; i < OUTPUTS_POLICY_HEAD; ++i)
+    for (int i = 0; i < POLICY_HEAD_OUTPUTS; ++i)
     {
         output[i] = helper[i] / denom;
     }
@@ -164,47 +164,47 @@ static inline void Rectifier(int sizeofData, float* data)
 /* ENTRY_POINT */
 kernel void NN(
 // for input layer
-	constant float* input,
-	constant float* firstConvFilterWeights,
+	constant float* restrict input,
+	constant float* restrict firstConvFilterWeights,
 // shared among all layers
-	constant float* BNMeans,
-	constant float* BNStddev,
-	constant float* BNBetas,
-	constant float* BNGammas,
+	constant float* restrict BNMeans,
+	constant float* restrict BNStddev,
+	constant float* restrict BNBetas,
+	constant float* restrict BNGammas,
 // for value layer
-	constant float* convWeightsValue1,
-	constant float* valueConnectionWeights2,
+	constant float* restrict convWeightsValue1,
+	constant float* restrict valueConnectionWeights2,
 
-	constant float* BNMeansValue,
-	constant float* BNStddevValue,
-	constant float* BNBetaValue,
-	constant float* BNGammaValue,
+	constant float* restrict BNMeansValue,
+	constant float* restrict BNStddevValue,
+	constant float* restrict BNBetaValue,
+	constant float* restrict BNGammaValue,
 
-	constant float* valueConnectionWeights,
-	constant float* valueBiases,
-	constant float* valueBiasLast,
+	constant float* restrict valueConnectionWeights,
+	constant float* restrict valueBiases,
+	constant float* restrict valueBiasLast,
 
 // for policy layer
-	constant float* convWeightsPolicy,
+	constant float* restrict convWeightsPolicy,
 
-	constant float* BNMeansPolicy,
-	constant float* BNStddevPolicy,
-	constant float* BNBetaPolicy,
-	constant float* BNGammaPolicy,
+	constant float* restrict BNMeansPolicy,
+	constant float* restrict BNStddevPolicy,
+	constant float* restrict BNBetaPolicy,
+	constant float* restrict BNGammaPolicy,
 
-	constant float* policyConnectionWeights,
-	constant float* policyBiases,
+	constant float* restrict policyConnectionWeights,
+	constant float* restrict policyBiases,
 // for residual tower
-	constant float* convFilterWeights,
+	constant float* restrict convFilterWeights,
 // output
-	global float* output,
+	global float* restrict output,
  // which NN weights to use from global memory
-	constant int* _networkIndex)
+	constant int* restrict _networkIndex)
 {
 	private int globId = get_global_id(0);
 	private int networkIndex = _networkIndex[globId]; //
 	private int inputIndex = globId*INPUT_PLANES*BOARD_SIZE;
-	private int outputIndex = globId*(OUTPUTS_POLICY_HEAD+OUTPUTS_VALUE_HEAD);
+	private int outputIndex = globId*(POLICY_HEAD_OUTPUTS+VALUE_HEAD_OUTPUTS);
 
 	private float softmaxTemperature = 1.0f;
 
@@ -215,12 +215,12 @@ kernel void NN(
     private float inputResidualLayer[RES_LAYER_FILTERES *BOARD_SIZE];
 	private float inputFCLayerPolicy[POLICY_FILTERS *BOARD_SIZE];
 	private float outputValueData[VALUE_FILTERS *BOARD_SIZE];
-	private float outputPolicyData[OUTPUTS_POLICY_HEAD];
+	private float outputPolicyData[POLICY_HEAD_OUTPUTS];
 	private float localInput[INPUT_PLANES*BOARD_SIZE]; 
 	private float temporaryValueData[VALUE_HEAD_HIDDEN_LAYER_SIZE];
 
-    private float softmaxPolicy[OUTPUTS_POLICY_HEAD]; 
-    private float winrateOut[OUTPUTS_VALUE_HEAD];
+    private float softmaxPolicy[POLICY_HEAD_OUTPUTS]; 
+    private float winrateOut[VALUE_HEAD_OUTPUTS];
 
 	// copy input to inputreslayer because of access specifiers which may not change and because the input output is 
 	// swapped to conv function call we also cant change the specifier in the argument, plus should be faster anyway
@@ -277,19 +277,19 @@ kernel void NN(
     Convolution(inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, RES_LAYER_FILTERES, POLICY_FILTERS, 1, 1, 0, networkOffsetConv);
     BN(inputFCLayerPolicy, inputFCLayerPolicy, BNMeansPolicy, BNStddevPolicy, POLICY_FILTERS, 0, BNGammaPolicy, BNBetaPolicy, networkOffsetBN);
 
-	networkOffsetFCLayerBiases = networkIndex*OUTPUTS_POLICY_HEAD; // correct
-	networkOffsetFCLayerWeights = networkIndex * BOARD_SIZE * POLICY_FILTERS * OUTPUTS_POLICY_HEAD; // correct
+	networkOffsetFCLayerBiases = networkIndex*POLICY_HEAD_OUTPUTS; // correct
+	networkOffsetFCLayerWeights = networkIndex * BOARD_SIZE * POLICY_FILTERS * POLICY_HEAD_OUTPUTS; // correct
 
-    FCLayer(POLICY_FILTERS*BOARD_SIZE, OUTPUTS_POLICY_HEAD, inputFCLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false, networkOffsetFCLayerWeights, networkOffsetFCLayerBiases); // without rectifier
+    FCLayer(POLICY_FILTERS*BOARD_SIZE, POLICY_HEAD_OUTPUTS, inputFCLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false, networkOffsetFCLayerWeights, networkOffsetFCLayerBiases); // without rectifier
     Softmax(outputPolicyData, softmaxPolicy, softmaxTemperature);
 	
 	////////////////////////////////////////////// end of network eval //////////////////////////////////////////////
 
-	for(int i = 0; i < OUTPUTS_POLICY_HEAD; ++i) 
+	for(int i = 0; i < POLICY_HEAD_OUTPUTS; ++i) 
 	{
 		output[outputIndex+i] = softmaxPolicy[i];
 	}
-	output[outputIndex+OUTPUTS_POLICY_HEAD] = winrateSig;	
+	output[outputIndex+POLICY_HEAD_OUTPUTS] = winrateSig;	
 }
 
 /*	See http://developer.amd.com/wordpress/media/2013/07/AMD_Accelerated_Parallel_Processing_OpenCL_Programming_Guide-rev-2.7.pdf
