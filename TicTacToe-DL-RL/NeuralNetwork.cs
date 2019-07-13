@@ -206,7 +206,7 @@ namespace TicTacToe_DL_RL
         }
         public void PredictGPU(TicTacToePosition pos)
         {
-            /*Not using game history, not using caching*/
+            /*Not using position history, not using caching*/
 
             Array.Clear(input, 0, input.Length);
 

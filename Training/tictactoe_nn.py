@@ -6,11 +6,11 @@ Authors: Evgeny Tyurin, github.com/evg-tyurin, github @suragnair @ozzi7, possibl
 
 Based on the OthelloNNet by SourKream and Surag Nair.
 
-conv2d weights
-That's the tensorflow convention, the kernel shape is (kernel_height, kernel_width, input_channels, output_channels).
+conv2d weights order:
+"That's the tensorflow convention, the kernel shape is (kernel_height, kernel_width, input_channels, output_channels).
 (output_channels, input_channels, kernel_height, kernel_width)
 To reverse it, you can always just get the value and transpose it appropriately,
-e.g. with filters = model.get_weights()[0][:, :, 0, :].transpose((2, 1, 0)).
+e.g. with filters = model.get_weights()[0][:, :, 0, :].transpose((2, 1, 0))."
 
 """
 
@@ -29,7 +29,7 @@ NOF_VALUE_FILTERS=32
 NOF_POLICY_FILTERS=32
 NOF_FC_NEURONS_VAL_LAYER=32
 NOF_RES_LAYERS=6
-LEARNING_RATE=0.002 # was 0.001
+LEARNING_RATE=0.001 # was 0.001
 
 
 class TicTacToeNet:

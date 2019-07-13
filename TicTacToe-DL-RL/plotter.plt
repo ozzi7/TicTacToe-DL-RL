@@ -31,7 +31,7 @@ while (3) {
 
 	set size 0.5,0.5
 	set origin 0.5,0.0
-	set key right top
+	set key right bottom
 	unset yrange
 	plot filepath using 5 with lines title "Avg. Game Length" lw 3
 	

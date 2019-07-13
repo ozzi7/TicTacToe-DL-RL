@@ -22,7 +22,7 @@ namespace TicTacToe_DL_RL
         public List<float> nn_policy = null;
         public float nn_value;
         public int moveIndex = -1; // from 0 to 24 
-        public float score_sum = 0.0f; // from -inf to inf, where values > 0 : X is winning
+        public float score_sum = 0.0f; // from -inf to inf, where values > 0 => X is winning
         public float q_value = 0.0f; // ~ winrate
         public int virtualVisits = 0; // a pending NN eval increases this
         public bool waitingForGPUPrediction = false; // if this node is already waiting for a GPU eval

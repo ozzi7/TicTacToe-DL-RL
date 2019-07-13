@@ -16,7 +16,7 @@ import os
 import glob
 os.environ["TF_CPP_MIN_LOG_LEVEL"]="3"
 
-MAX_FILES = 6
+MAX_FILES = 8
 
 
 def read_samples(filename):
