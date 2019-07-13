@@ -27,6 +27,7 @@ namespace TicTacToe_DL_RL
         private float winrateVsRandTotal1 = -1;
         private float winrateVsRandTotal2 = -1;
         private float winrateVsRandTotal3 = -1;
+        private float winLossDiff = 0.0f;
 
         public Trainer(NeuralNetwork aCurrentNN)
         {
@@ -398,6 +399,7 @@ namespace TicTacToe_DL_RL
 
                 currentPseudoELO += (float)(totalWins - (nofGames-totalDraws-totalWins)) / (float)nofGames;
             }
+            winLossDiff += (float)(totalWins - (nofGames - totalDraws - totalWins)) / (float)nofGames;
 
             sw.Stop();
             Console.WriteLine("Main Thread: Vs. previous best: W/D/L : " + totalWins + " " + totalDraws + " " + (nofGames - totalDraws - totalWins) + " - " +
@@ -477,7 +479,8 @@ namespace TicTacToe_DL_RL
                 file.WriteLine(currentPseudoELO + " " + Math.Round(winsAsXMovingAvg.Average, 2) + " " +
                     Math.Round(winsAsZMovingAvg.Average, 2) + " " + Math.Round(drawsMovingAvg.Average, 2) + " " +
                     Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg1.Average, 2)
-                    + " " + Math.Round(winrateVsRandMovingAvg2.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg3.Average, 2));
+                    + " " + Math.Round(winrateVsRandMovingAvg2.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg3.Average, 2)
+                    + " " + Math.Round(winLossDiff, 2));
             }
         }
         /// <summary>
@@ -1180,6 +1183,7 @@ namespace TicTacToe_DL_RL
                 }
 
                 createChildren(MCTSRootNodeNN1);
+                
                 /* find value, policy */
                 if (MCTSRootNodeNN1.nn_policy == null)
                 {

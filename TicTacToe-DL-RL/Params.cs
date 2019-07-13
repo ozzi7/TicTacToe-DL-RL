@@ -10,7 +10,7 @@ namespace TicTacToe_DL_RL
     {
         // HARDWARE SETTINGS
         public static bool GPU_ENABLED = true;
-        public static bool FORCE_KERNEL_RECOMPILE = false; // if false the kernel binary is loaded from file
+        public static bool FORCE_KERNEL_RECOMPILE = true; // if false the kernel binary is loaded from file
         //public static int GPU_THREADS_AND_QUEUES = 2;
         public static int MAX_PARALLEL_KERNEL_EXECUTIONS = 2000; // opencl calls at most MAX_PARALLEL_KERNEL_EXECUTIONS and less if not enough data arrived from CPU //2304
 
@@ -43,8 +43,8 @@ namespace TicTacToe_DL_RL
         public static int NOF_EPOCHS = 10000000;
         public static int NOF_GAMES_TEST = 32; // must be 2n for equal tests of player X and player Z, multiple of threads
         public static int NOF_GAMES_VS_RANDOM = 16;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 30;
-        public static int NOF_SIMS_PER_MOVE_TESTING = 30;
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 100;
+        public static int NOF_SIMS_PER_MOVE_TESTING = 300;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;
