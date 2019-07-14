@@ -15,7 +15,7 @@ namespace TicTacToe_DL_RL
         public static int MAX_PARALLEL_KERNEL_EXECUTIONS = 2000; // opencl calls at most MAX_PARALLEL_KERNEL_EXECUTIONS and less if not enough data arrived from CPU //2304
 
         // set this to a even number, this also increases the quality of the tree search with higher threads because there are less virtual losses
-        public static int NOF_CPU_THREADS_GPU_WORKLOAD = 512; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL
+        public static int NOF_CPU_THREADS_GPU_WORKLOAD = 1024; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL
 
         public static int NOF_CPU_THREADS_CPU_WORKLOAD = 4;
         public static int MAX_PENDING_NN_EVALS = 4; // should be lower than sims per move 
