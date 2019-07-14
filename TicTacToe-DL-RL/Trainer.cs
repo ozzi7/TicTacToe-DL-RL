@@ -1413,7 +1413,8 @@ namespace TicTacToe_DL_RL
             NeuralNetwork NN, Node<TicTacToePosition> rootNode,  bool train)
         {
             TicTacToeGame game = new TicTacToeGame();
-            Node<TicTacToePosition> MCTSRootNode = rootNode;
+            //Node<TicTacToePosition> MCTSRootNode = rootNode; // tree re-use
+            Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
 
             Queue<Node<TicTacToePosition>> pendingNNRequests = new Queue<Node<TicTacToePosition>>();
 
@@ -1508,8 +1509,8 @@ namespace TicTacToe_DL_RL
                 game.DoMove(move);
                 history.Add(move);
 
-                /* tree re-use */
                 MCTSRootNode = MCTSRootNode.Children[best_child_index];
+                MCTSRootNode.parent = null; // comment for tree re-use
             }
 
             return game.position.score;

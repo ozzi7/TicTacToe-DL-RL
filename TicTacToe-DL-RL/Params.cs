@@ -36,7 +36,7 @@ namespace TicTacToe_DL_RL
         public static int SAVE_WEIGHT_EVERY_XTH_EPOCH = 20;
 
         // BP only
-        public static int NOF_GAMES_TRAIN_KERAS = 2048; // multiple of threads
+        public static int NOF_GAMES_TRAIN_KERAS = 512; // multiple of threads
         public static int STOCHASTIC_MOVES_FIRST_X_MOVES = 6;
 
         // NEUROEVOLUTION + BP PARAMS
