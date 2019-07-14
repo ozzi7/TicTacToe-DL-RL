@@ -10,12 +10,12 @@ namespace TicTacToe_DL_RL
     {
         // HARDWARE SETTINGS
         public static bool GPU_ENABLED = true;
-        public static bool FORCE_KERNEL_RECOMPILE = true; // if false the kernel binary is loaded from file
+        public static bool FORCE_KERNEL_RECOMPILE = false; // if false the kernel binary is loaded from file
         //public static int GPU_THREADS_AND_QUEUES = 2;
         public static int MAX_PARALLEL_KERNEL_EXECUTIONS = 2000; // opencl calls at most MAX_PARALLEL_KERNEL_EXECUTIONS and less if not enough data arrived from CPU //2304
 
         // set this to a even number, this also increases the quality of the tree search with higher threads because there are less virtual losses
-        public static int NOF_CPU_THREADS_GPU_WORKLOAD = 64; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL
+        public static int NOF_CPU_THREADS_GPU_WORKLOAD = 512; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL
 
         public static int NOF_CPU_THREADS_CPU_WORKLOAD = 4;
         public static int MAX_PENDING_NN_EVALS = 4; // should be lower than sims per move 
@@ -36,7 +36,7 @@ namespace TicTacToe_DL_RL
         public static int SAVE_WEIGHT_EVERY_XTH_EPOCH = 20;
 
         // BP only
-        public static int NOF_GAMES_TRAIN_KERAS = 256; // multiple of threads
+        public static int NOF_GAMES_TRAIN_KERAS = 2048; // multiple of threads
         public static int STOCHASTIC_MOVES_FIRST_X_MOVES = 6;
 
         // NEUROEVOLUTION + BP PARAMS

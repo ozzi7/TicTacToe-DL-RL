@@ -65,9 +65,9 @@ namespace TicTacToe_DL_RL
 
             // the old network
             Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
-            CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM);
+            //CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM);
 
-            WritePlotStatistics();
+            //WritePlotStatistics();
 
             for (int i = 0; i < Params.NOF_EPOCHS; ++i)
             {

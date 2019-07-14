@@ -12,6 +12,7 @@ using Cloo;
 using System.IO;
 using System.Threading;
 using System.Threading.Channels;
+using System.Diagnostics;
 
 namespace TicTacToe_DL_RL
 {
@@ -99,7 +100,7 @@ namespace TicTacToe_DL_RL
         static private ComputeContextPropertyList properties;
         static private ComputeKernel kernel;
         static private ComputeCommandQueue commandQueue1;
-        //static private ComputeCommandQueue commandQueue2;
+        static private ComputeCommandQueue commandQueue2;
 
         public static void Init(int maxChannels)
         {
@@ -118,8 +119,13 @@ namespace TicTacToe_DL_RL
 
         public static void Run()
         {
+            long outputPeriod = 10; // [s]
+            long startTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            long elapsedTime = 0;
+            Stopwatch sw = new Stopwatch();
+
             int nofProcessedNets = 0;
-            int nextOutput = 100000;
             while (true)
             {
                 int inputIndex = 0;
@@ -147,15 +153,19 @@ namespace TicTacToe_DL_RL
                     }
                 }
                 nofProcessedNets += nofInputsFound;
-                if (true)
+                if (timestamp + outputPeriod < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
                 {
-                    //Console.WriteLine("OpenCL: Received a total of " + nofProcessedNets + " NN inputs");
-                    nextOutput += 100000;
+                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                    Console.WriteLine("OpenCL: Throughput: " + Math.Round((double)nofProcessedNets / (timestamp - startTimestamp), 2)  + 
+                        " Throughput GPU: " + Math.Round(((double)nofProcessedNets/ elapsedTime) *1000,2) + " NN evals/sec");
                 }
 
                 if (nofInputsFound > 0)
                 {
+                    sw.Restart();
                     RunKernels(nofInputsFound);
+                    sw.Stop();
+                    elapsedTime += sw.ElapsedMilliseconds;
 
                     // as long as the output is same order as input we can distribute the output with fifo queues as they came in
                     int outputCount = 0;
@@ -258,7 +268,7 @@ namespace TicTacToe_DL_RL
 
             // Create the command queue. This is used to control kernel execution and manage read/write/copy operations.
             commandQueue1 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
-            //commandQueue2 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
+            commandQueue2 = new ComputeCommandQueue(context, context.Devices[0], ComputeCommandQueueFlags.None);
         }
 
         public static void EnqueueWeights(NeuralNetwork nn)
@@ -411,7 +421,7 @@ namespace TicTacToe_DL_RL
             CB_convFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convFilterWeights.ToArray());
 
             CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, weightIDs.ToArray());
-            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly, Params.MAX_PARALLEL_KERNEL_EXECUTIONS*26); // only specify length?
+            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly, Params.MAX_PARALLEL_KERNEL_EXECUTIONS*26); // only specify length
 
             try
             {
