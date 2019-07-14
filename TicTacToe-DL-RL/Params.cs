@@ -44,7 +44,7 @@ namespace TicTacToe_DL_RL
         public static int NOF_GAMES_TEST = 32; // must be 2n for equal tests of player X and player Z, multiple of threads
         public static int NOF_GAMES_VS_RANDOM = 16;
         public static int NOF_SIMS_PER_MOVE_TRAINING = 100;
-        public static int NOF_SIMS_PER_MOVE_TESTING = 300;
+        public static int NOF_SIMS_PER_MOVE_TESTING = 200;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;

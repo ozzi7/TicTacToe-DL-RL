@@ -199,10 +199,10 @@ kernel void NN(
 // output
 	global float* restrict output,
  // which NN weights to use from global memory
-	constant int* restrict networkIndex)
+	constant int* restrict networkIndices)
 {
 	private int globId = get_global_id(0);
-	private int networkIndex = networkIndex[globId];
+	private int networkIndex = networkIndices[globId];
 	private int inputIndex = globId*INPUT_PLANES*BOARD_SIZE;
 	private int outputIndex = globId*(POLICY_HEAD_OUTPUTS+VALUE_HEAD_OUTPUTS);
 
