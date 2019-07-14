@@ -16,7 +16,7 @@
 
 static inline void Convolution(float* input, float* output, constant float* convWeights,
 	int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index, int networkOffset,
-	local float* weights)
+	float* weights)
 {
 	// zero padding
 	for (int u = 0; u < nofFilters*BOARD_SIZE; ++u)
@@ -32,7 +32,6 @@ static inline void Convolution(float* input, float* output, constant float* conv
 				index * nofFilters * nofInputPlanes * filterHeight * filterWidth +
 				i * nofInputPlanes * filterHeight * filterWidth + u];
 		}
-		barrier(CLK_LOCAL_MEM_FENCE);
 
 		for (int j = 0; j < nofInputPlanes; ++j)
 		{
@@ -219,7 +218,7 @@ kernel void NN(
 	private float localInput[INPUT_PLANES*BOARD_SIZE];
 	private float temporaryValueData[VALUE_HEAD_HIDDEN_LAYER_SIZE];
 
-	local float convWeightsPriv[RES_LAYER_FILTERS * FILTER_HEIGHT * FILTER_WIDTH]; // worst case size
+	private float convWeightsPriv[RES_LAYER_FILTERS * FILTER_HEIGHT * FILTER_WIDTH]; // worst case size
 
 	private float softmaxPolicy[POLICY_HEAD_OUTPUTS];
 	private float winrateOut[VALUE_HEAD_OUTPUTS];
