@@ -578,7 +578,8 @@ namespace TicTacToe_DL_RL
                 Thread thread = new Thread(OpenCL.Run);
                 thread.Priority = ThreadPriority.Highest;
                 thread.Start();
-                WaitHandle[] waitHandles = new WaitHandle[Params.NOF_CPU_THREADS_GPU_WORKLOAD];
+                int numberOfTasks = Params.NOF_CPU_THREADS_GPU_WORKLOAD;
+                ManualResetEvent signal = new ManualResetEvent(false);
                 for (int i = 0; i < Params.NOF_CPU_THREADS_GPU_WORKLOAD; i++)
                 {
                     var jk = i;
@@ -590,12 +591,15 @@ namespace TicTacToe_DL_RL
                     scores[jk] = RecordOneGameGPU(moves[jk], policies[jk], evaluationNetworkPlayer,
                             nns[jk % Params.NOF_CPU_THREADS_GPU_WORKLOAD], rootNodes[jk % Params.NOF_CPU_THREADS_GPU_WORKLOAD], true);
 
-                        handle.Set();
+                        if (Interlocked.Decrement(ref numberOfTasks) == 0)
+                        {
+                            signal.Set();
+                        }
                     });
-                    waitHandles[jk] = handle;
+                    
                     thread2.Start();
                 }
-                WaitHandle.WaitAll(waitHandles);
+                signal.WaitOne();
                 thread.Abort();
             }
             // ...//
