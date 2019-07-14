@@ -65,9 +65,9 @@ namespace TicTacToe_DL_RL
 
             // the old network
             Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
-            //CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM);
+            CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM);
 
-            //WritePlotStatistics();
+            WritePlotStatistics();
 
             for (int i = 0; i < Params.NOF_EPOCHS; ++i)
             {
@@ -546,62 +546,62 @@ namespace TicTacToe_DL_RL
 
             // ###################################### GPU LOOP ##############################################
 
-            //if (Params.GPU_ENABLED)
-            //{
-            //    Thread thread = new Thread(OpenCL.Run);
-            //    thread.Priority = ThreadPriority.Highest;
-            //    thread.Start();
-
-            //    using (var progress = new ProgressBar())
-            //    {
-            //        long sharedLoopCounter = 0;
-            //        ThreadPool.SetMinThreads(Params.NOF_CPU_THREADS_GPU_WORKLOAD, Params.NOF_CPU_THREADS_GPU_WORKLOAD);
-            //        for (int j = 0; j < nofGames / Params.NOF_CPU_THREADS_GPU_WORKLOAD; ++j)
-            //        { // process batches of games to re-use neural networks
-            //            Parallel.For(j* Params.NOF_CPU_THREADS_GPU_WORKLOAD, j * Params.NOF_CPU_THREADS_GPU_WORKLOAD + Params.NOF_CPU_THREADS_GPU_WORKLOAD, 
-            //                new ParallelOptions { MaxDegreeOfParallelism = Params.NOF_CPU_THREADS_GPU_WORKLOAD }, i =>
-            //            {
-            //                Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z; // doesnt really matter for 2 equal networks
-            //                scores[i] = RecordOneGameGPU(moves[i], policies[i], evaluationNetworkPlayer,
-            //                    nns[i % Params.NOF_CPU_THREADS_GPU_WORKLOAD], rootNodes[i % Params.NOF_CPU_THREADS_GPU_WORKLOAD], true);
-            //                Interlocked.Add(ref sharedLoopCounter, 1);
-            //                progress.Report((double)Interlocked.Read(ref sharedLoopCounter) / nofGames);
-            //            });
-            //        }
-            //    }
-            //    thread.Abort();
-            //}
-
             if (Params.GPU_ENABLED)
             {
-                // TEST CODE; REMOVE
                 Thread thread = new Thread(OpenCL.Run);
                 thread.Priority = ThreadPriority.Highest;
                 thread.Start();
-                int numberOfTasks = Params.NOF_CPU_THREADS_GPU_WORKLOAD;
-                ManualResetEvent signal = new ManualResetEvent(false);
-                for (int i = 0; i < Params.NOF_CPU_THREADS_GPU_WORKLOAD; i++)
-                {
-                    var jk = i;
-                    // Or you can use AutoResetEvent/ManualResetEvent
-                    var handle = new EventWaitHandle(false, EventResetMode.ManualReset);
-                    var thread2 = new Thread(() =>
-                    {
-                        Player evaluationNetworkPlayer = (jk % 2) == 0 ? Player.X : Player.Z; // doesnt really matter for 2 equal networks
-                    scores[jk] = RecordOneGameGPU(moves[jk], policies[jk], evaluationNetworkPlayer,
-                            nns[jk % Params.NOF_CPU_THREADS_GPU_WORKLOAD], rootNodes[jk % Params.NOF_CPU_THREADS_GPU_WORKLOAD], true);
 
-                        if (Interlocked.Decrement(ref numberOfTasks) == 0)
+                using (var progress = new ProgressBar())
+                {
+                    long sharedLoopCounter = 0;
+                    ThreadPool.SetMinThreads(Params.NOF_CPU_THREADS_GPU_WORKLOAD, Params.NOF_CPU_THREADS_GPU_WORKLOAD);
+                    for (int j = 0; j < nofGames / Params.NOF_CPU_THREADS_GPU_WORKLOAD; ++j)
+                    { // process batches of games to re-use neural networks
+                        Parallel.For(j * Params.NOF_CPU_THREADS_GPU_WORKLOAD, j * Params.NOF_CPU_THREADS_GPU_WORKLOAD + Params.NOF_CPU_THREADS_GPU_WORKLOAD,
+                            new ParallelOptions { MaxDegreeOfParallelism = Params.NOF_CPU_THREADS_GPU_WORKLOAD }, i =>
                         {
-                            signal.Set();
-                        }
-                    });
-                    
-                    thread2.Start();
+                            Player evaluationNetworkPlayer = (i % 2) == 0 ? Player.X : Player.Z; // doesnt really matter for 2 equal networks
+                            scores[i] = RecordOneGameGPU(moves[i], policies[i], evaluationNetworkPlayer,
+                                nns[i % Params.NOF_CPU_THREADS_GPU_WORKLOAD], rootNodes[i % Params.NOF_CPU_THREADS_GPU_WORKLOAD], true);
+                            Interlocked.Add(ref sharedLoopCounter, 1);
+                            progress.Report((double)Interlocked.Read(ref sharedLoopCounter) / nofGames);
+                        });
+                    }
                 }
-                signal.WaitOne();
                 thread.Abort();
             }
+
+            //if (Params.GPU_ENABLED)
+            //{
+            //    // TEST CODE; REMOVE
+            //    Thread thread = new Thread(OpenCL.Run);
+            //    thread.Priority = ThreadPriority.Highest;
+            //    thread.Start();
+            //    int numberOfTasks = Params.NOF_CPU_THREADS_GPU_WORKLOAD;
+            //    ManualResetEvent signal = new ManualResetEvent(false);
+            //    for (int i = 0; i < Params.NOF_CPU_THREADS_GPU_WORKLOAD; i++)
+            //    {
+            //        var jk = i;
+            //        // Or you can use AutoResetEvent/ManualResetEvent
+            //        var handle = new EventWaitHandle(false, EventResetMode.ManualReset);
+            //        var thread2 = new Thread(() =>
+            //        {
+            //            Player evaluationNetworkPlayer = (jk % 2) == 0 ? Player.X : Player.Z; // doesnt really matter for 2 equal networks
+            //        scores[jk] = RecordOneGameGPU(moves[jk], policies[jk], evaluationNetworkPlayer,
+            //                nns[jk % Params.NOF_CPU_THREADS_GPU_WORKLOAD], rootNodes[jk % Params.NOF_CPU_THREADS_GPU_WORKLOAD], true);
+
+            //            if (Interlocked.Decrement(ref numberOfTasks) == 0)
+            //            {
+            //                signal.Set();
+            //            }
+            //        });
+                    
+            //        thread2.Start();
+            //    }
+            //    signal.WaitOne();
+            //    thread.Abort();
+            //}
             // ...//
 
 
