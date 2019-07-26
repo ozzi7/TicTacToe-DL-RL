@@ -17,8 +17,8 @@ namespace TicTacToe_DL_RL
         // set this to a even number, this also increases the quality of the tree search with higher threads because there are less virtual losses
         public static int NOF_CPU_THREADS_GPU_WORKLOAD = 512; // increases also the number of GPU memory used, if GPU used => one extra thread for openCL
 
-        public static int NOF_CPU_THREADS_CPU_WORKLOAD = 10;
-        public static int MAX_PENDING_NN_EVALS = 100; // should be lower than sims per move 
+        public static int NOF_CPU_THREADS_CPU_WORKLOAD = 4;
+        public static int MAX_PENDING_NN_EVALS = 20; // should be lower than sims per move 
         // = how many NN evals are queued up in the MCTS tree before the CPU thread must wait for results
         // the MCTS search becomes less useful if it continues with fake data while waiting for the real outputs
         // it is better to keep this low and increase parallel trees (increasing number of CPU threads)
@@ -36,29 +36,29 @@ namespace TicTacToe_DL_RL
         public static int SAVE_WEIGHT_EVERY_XTH_EPOCH = 20;
 
         // BP only
-        public static int NOF_GAMES_TRAIN_KERAS = 4096; // multiple of threads
-        public static int STOCHASTIC_MOVES_FIRST_X_MOVES = 6;
+        public static int NOF_GAMES_TRAIN_KERAS = 2048; // multiple of threads
+        public static int STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING = 8;
+        public static int STOCHASTIC_MOVES_FIRST_X_MOVES_TESTING = 4;
 
         // NEUROEVOLUTION + BP PARAMS
         public static int NOF_EPOCHS = 10000000;
-        public static int NOF_GAMES_TEST = 32; // must be 2n for equal tests of player X and player Z, multiple of threads
+        public static int NOF_GAMES_TEST = 64; // must be 2n for equal tests of player X and player Z
         public static int NOF_GAMES_VS_RANDOM = 16;
         public static int NOF_SIMS_PER_MOVE_TRAINING = 400;
         public static int NOF_SIMS_PER_MOVE_TESTING = 400;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;
-        public static float C_PUCT = 2.0f; // in theory sqrt(2), in practice usually higher (=more exploration) for training
+        public static float C_PUCT = 1.0f;
 
         public static float MINIMUM_WIN_PERCENTAGE = 52.0f; // new networks must win at least x percent against old
 
         public static float DIRICHLET_NOISE_WEIGHT;
         public static bool USE_REAL_TERMINAL_VALUES = true;
-
         public static String PLOT_FILENAME = "plotdata.txt";
 
         // GAME SPECIFIC 
-        public static int MAXIMUM_PLYS = 100; // when to stop playing a game completely and declare draw (in tic tac toe game is always finished in 100 moves)
+        public static int MAXIMUM_PLYS = 100; // for games which take too long to cut them off, tictactoe is done after <= 25 moves always 
         public static int boardSizeX = 5;
         public static int boardSizeY = 5;
     }

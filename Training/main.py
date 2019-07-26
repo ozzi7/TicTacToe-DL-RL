@@ -16,7 +16,7 @@ import os
 import glob
 os.environ["TF_CPP_MIN_LOG_LEVEL"]="3"
 
-MAX_FILES = 8
+MAX_FILES = 1
 
 
 def read_samples(filename):
@@ -53,7 +53,7 @@ def read_samples(filename):
                 # construct the input
                 player = -1
                 input = np.zeros((5, 5, 3))
-                for i in range(len(moves)):
+                for i in range(len(moves)-1):
                     move = moves[i]
 
                     if player == 1:
@@ -77,13 +77,10 @@ def read_samples(filename):
                 line = line.replace("(","").replace(")","").replace(",", " ")
                 policies = [float(number) for number in line.split()]
 
-                for move in range(len(moves)+1):
-                    if move != len(moves): # all but the last board we have a policy
-                        policy = np.zeros((25))
-                        for i in range(25):
-                            policy[i] = policies[move*25+i]
-                    else:
-                        policy = np.zeros((25))
+                for move in range(len(moves)):
+                    policy = np.zeros((25))
+                    for i in range(25):
+                        policy[i] = policies[move*25+i]
 
                     output_values.append(np.array([output_value])) # output val is from the view of player X
                     # output_values.append(np.array([output_value]))  # output val is from the view of player X
@@ -121,6 +118,7 @@ if __name__ == '__main__':
     trainer = Trainer()
     #trainer.save_init_weights()
     #trainer.test_plot(inputs,output_values,output_policies)
-    trainer.train(inputs,output_values,output_policies)
+    #trainer.train(inputs,output_values,output_policies)
+    input("Press Enter to continue...")
     #(inputs, output_values, output_policies) = read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1])
     #trainer.predict([inputs[0]])

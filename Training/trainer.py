@@ -14,8 +14,8 @@ class Trainer():
     def __init__(self):
         self.nnet = TicTacToeNet()
         self.BATCH_SIZE = 100
-        self.EPOCHS_FIT = 3
         self.EPOCHS = 2
+        self.EPOCHS_FIT = 30
         #print(K.image_data_format())  # print current format
 
     def save_init_weights(self):
@@ -34,16 +34,28 @@ class Trainer():
 
         print("====================================================================================")
 
-        for i in range(self.EPOCHS):
+
+        loss_history = ""
+        for iteration in range(self.EPOCHS):
             self.nnet.model.load_weights("best_model.hd5f")
-            self.nnet.model.fit(np.array(inputs), [np.array(output_policies), np.array(output_values)],
-                                     batch_size=self.BATCH_SIZE,
-                                     epochs=self.EPOCHS_FIT,
-                                     verbose=1,
-                                     shuffle=True)
+
+            result = self.nnet.model.fit(np.array(inputs), [np.array(output_policies), np.array(output_values)],
+                                 batch_size=self.BATCH_SIZE,
+                                 epochs=self.EPOCHS_FIT,
+                                 verbose=2,
+                                 shuffle=True)
+            loss_history += ", ".join(map(str, result.history['loss']))+ ", "  # Now append the loss after the training to the list.
+
+
             self.nnet.model.save("best_model.hd5f")
 
             self.nnet.dump_weights()
+
+        f = open("training_loss.txt", "a+")
+        f.write(loss_history+"\n")
+        f.close()
+
+
 
     def test_plot(self, inputs, output_values, output_policies):
         print("====================================================================================")

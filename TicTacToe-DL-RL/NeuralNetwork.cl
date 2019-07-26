@@ -5,11 +5,11 @@
 
 #define FILTER_HEIGHT 3
 #define FILTER_WIDTH 3
-#define RES_LAYERS 6
-#define CONV_LAYERS 13
-#define RES_LAYER_FILTERS 32
-#define VALUE_FILTERS 32
-#define POLICY_FILTERS 32
+#define RES_LAYERS 12
+#define CONV_LAYERS 25
+#define RES_LAYER_FILTERS 64
+#define VALUE_FILTERS 64
+#define POLICY_FILTERS 64
 #define VALUE_HEAD_HIDDEN_LAYER_SIZE 32
 #define VALUE_HEAD_OUTPUTS 1
 #define POLICY_HEAD_OUTPUTS 25
@@ -316,4 +316,5 @@ TODO: use vload operations
 TODO: add memory fences
 TODO: split kernels
 TODO: use async copies
+TODO: implement winograd transforms for fast conv2d ops
 */

@@ -28,6 +28,10 @@ namespace TicTacToe_DL_RL
         private float winrateVsRandTotal2 = -1;
         private float winrateVsRandTotal3 = -1;
         private float winLossDiff = 0.0f;
+        private float trainingXwins = 0;
+        private float trainingZwins = 0;
+        private float trainingMoves = 0;
+        private float startBoardValue = 0;
 
         public Trainer(NeuralNetwork aCurrentNN)
         {
@@ -64,7 +68,7 @@ namespace TicTacToe_DL_RL
             printNNOutput(bestNN);
 
             // the old network
-            Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
+            Params.DIRICHLET_NOISE_WEIGHT = 0.0f;
             CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM);
 
             WritePlotStatistics();
@@ -73,7 +77,7 @@ namespace TicTacToe_DL_RL
             {
                 Console.WriteLine("Main Thread: Epoch start");
 
-                // #################################### CREATE NEW TRAINING GAMES ##########################################
+                //// #################################### CREATE NEW TRAINING GAMES ##########################################
 
                 Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
                 Params.USE_REAL_TERMINAL_VALUES = true;
@@ -109,7 +113,7 @@ namespace TicTacToe_DL_RL
 
                 currentNN.ReadWeightsFromFileKeras("./../../../Training/weights.txt"); // must have been created with python script
                 Params.DIRICHLET_NOISE_WEIGHT = 0.0f;
-                Params.USE_REAL_TERMINAL_VALUES = false;
+                Params.USE_REAL_TERMINAL_VALUES = true;
                 bool newBestFound = CheckPerformanceVsOldNet(currentNN, bestNN, Params.NOF_GAMES_TEST);
 
                 if (!newBestFound)
@@ -123,7 +127,6 @@ namespace TicTacToe_DL_RL
 
                     bestNN = new NeuralNetwork(currentNN.weights);
 
-                    Params.DIRICHLET_NOISE_WEIGHT = 0.2f;
                     CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM);
                 }
 
@@ -142,7 +145,7 @@ namespace TicTacToe_DL_RL
                 nn1.SetIds(i,i);
                 nn1.ChannelInit();
                 nn1.EnqueueWeights();
-                nn2.SetIds(i,i);
+                nn2.SetIds(i,i); // TODO: 
                 nn2.ChannelInit();
                 nn2.EnqueueWeights();
             }
@@ -194,7 +197,6 @@ namespace TicTacToe_DL_RL
         }
         public void ValidateOutputCPU()
         {
-
             TicTacToeGame game = new TicTacToeGame();
             game.DoMove(Tuple.Create(3, 2));
             game.DoMove(Tuple.Create(0, 1));
@@ -218,13 +220,12 @@ namespace TicTacToe_DL_RL
         /// Keras only, returns whether network should be replaced
         /// </summary>
         /// <param name="nofGames"></param>
-        /// <param name="newNN"></param>
+        /// <param name="NNtoEval"></param>
         /// <param name="oldNN"></param>
-        public bool CheckPerformanceVsOldNet(NeuralNetwork newNN, NeuralNetwork oldNN, int nofGames)
+        public bool CheckPerformanceVsOldNet(NeuralNetwork NNtoEval, NeuralNetwork oldNN, int nofGames)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
-            Console.WriteLine("Main Thread: CPU test games starting...");
 
             List<int> wins = new List<int>(new int[nofGames]);
             List<int> draws = new List<int>(new int[nofGames]);
@@ -244,18 +245,18 @@ namespace TicTacToe_DL_RL
                 ID.ResetGlobalID();
                 OpenCL.ClearWeights();
 
-                NeuralNetwork nn1 = new NeuralNetwork(newNN.weights);
+                NeuralNetwork nn1 = new NeuralNetwork(NNtoEval.weights);
                 NeuralNetwork nn2 = new NeuralNetwork(oldNN.weights);
                 nn1.SetIds(0, 0);
                 nn2.SetIds(1, 1);
 
-                nn2.EnqueueWeights();
                 nn1.EnqueueWeights();
+                nn2.EnqueueWeights();
                 nn1.ChannelInit();
                 nn2.ChannelInit();
 
-                nns.Add(nn2);
                 currnns.Add(nn1);
+                nns.Add(nn2);
 
                 for (int i = 1; i < nofGames; ++i)
                 {
@@ -269,8 +270,8 @@ namespace TicTacToe_DL_RL
                     nn2.SetIds(1, i*2+1);
                     nn2.ChannelInit();
 
-                    nns.Add(nn2);
                     currnns.Add(nn1);
+                    nns.Add(nn2);
                 }
 
                 OpenCL.CreateNetworkWeightBuffers();
@@ -280,6 +281,7 @@ namespace TicTacToe_DL_RL
 
             if (Params.GPU_ENABLED)
             {
+                Console.WriteLine("Main Thread: GPU test games starting...");
                 Thread thread = new Thread(OpenCL.Run);
                 thread.Priority = ThreadPriority.Highest;
                 thread.Start();
@@ -332,10 +334,11 @@ namespace TicTacToe_DL_RL
             }
             else
             {
+                Console.WriteLine("Main Thread: CPU test games starting...");
                 for (int i = 0; i < nofGames; ++i)
                 {
                     nns.Add(new NeuralNetwork(oldNN.weights));
-                    currnns.Add(new NeuralNetwork(newNN.weights));
+                    currnns.Add(new NeuralNetwork(NNtoEval.weights));
                 }
 
                 using (var progress = new ProgressBar())
@@ -397,13 +400,13 @@ namespace TicTacToe_DL_RL
             {
                 plsReplaceMe = true;
 
-                currentPseudoELO += (float)(totalWins - (nofGames-totalDraws-totalWins)) / (float)nofGames;
+                currentPseudoELO += (float)(totalWins - (nofGames-(totalDraws+totalWins))) / (float)nofGames;
             }
-            winLossDiff += (float)(totalWins - (nofGames - totalDraws - totalWins)) / (float)nofGames;
+            winLossDiff += (float)(totalWins - (nofGames - (totalDraws + totalWins))) / (float)nofGames;
 
             sw.Stop();
-            Console.WriteLine("Main Thread: Vs. previous best: W/D/L : " + totalWins + " " + totalDraws + " " + (nofGames - totalDraws - totalWins) + " - " +
-                Math.Round((((totalWins + totalDraws * 0.5) / nofGames) * 100.0f), 2) + "%");
+            Console.WriteLine("Main Thread: Vs. previous best: W/D/L : " + totalWins + " " + totalDraws + " " + (nofGames - (totalDraws + totalWins)) + " - " +
+                Math.Round((((totalWins + totalDraws * 0.5f) / nofGames) * 100.0f), 2) + "%");
             Console.WriteLine("Main Thread: Finished in: " + sw.ElapsedMilliseconds + "ms");
 
             return plsReplaceMe;
@@ -480,7 +483,11 @@ namespace TicTacToe_DL_RL
                     Math.Round(winsAsZMovingAvg.Average, 2) + " " + Math.Round(drawsMovingAvg.Average, 2) + " " +
                     Math.Round(averageMovesMovingAvg.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg1.Average, 2)
                     + " " + Math.Round(winrateVsRandMovingAvg2.Average, 2) + " " + Math.Round(winrateVsRandMovingAvg3.Average, 2)
-                    + " " + Math.Round(winLossDiff, 2));
+                    + " " + Math.Round(winLossDiff, 2)
+                    + " " + Math.Round(trainingXwins, 2)
+                    + " " + Math.Round(trainingZwins, 2)
+                    + " " + Math.Round(trainingMoves, 2)
+                    + " " + Math.Round(startBoardValue, 3));
             }
         }
         /// <summary>
@@ -546,6 +553,10 @@ namespace TicTacToe_DL_RL
 
             // ###################################### GPU LOOP ##############################################
 
+            trainingXwins = 0;
+            trainingZwins = 0;
+            trainingMoves = 0;
+
             if (Params.GPU_ENABLED)
             {
                 Thread thread = new Thread(OpenCL.Run);
@@ -555,6 +566,7 @@ namespace TicTacToe_DL_RL
                 using (var progress = new ProgressBar())
                 {
                     long sharedLoopCounter = 0;
+
                     ThreadPool.SetMinThreads(Params.NOF_CPU_THREADS_GPU_WORKLOAD, Params.NOF_CPU_THREADS_GPU_WORKLOAD);
                     for (int j = 0; j < nofGames / Params.NOF_CPU_THREADS_GPU_WORKLOAD; ++j)
                     { // process batches of games to re-use neural networks
@@ -570,11 +582,23 @@ namespace TicTacToe_DL_RL
                     }
                 }
                 thread.Abort();
+
+                for (int i = 0; i < scores.Count; ++i)
+                {
+                    if (scores[i] == 1.0f)
+                        trainingXwins++;
+                    else if (scores[i] == -1.0f)
+                        trainingZwins++;
+                    trainingMoves += moves[i].Count;
+                }
+                trainingMoves /= nofGames;
+                trainingZwins /= nofGames;
+                trainingXwins /= nofGames;
             }
 
             //if (Params.GPU_ENABLED)
             //{
-            //    // TEST CODE; REMOVE
+            //    // TEST CODE; REMOVE -> test to see if starting more than 1000 threads manually works, it does, parallel.for loop can not handle it 
             //    Thread thread = new Thread(OpenCL.Run);
             //    thread.Priority = ThreadPriority.Highest;
             //    thread.Start();
@@ -1443,7 +1467,7 @@ namespace TicTacToe_DL_RL
                     while (result != null)
                     {
                         Node<TicTacToePosition> nodeToUpdate = pendingNNRequests.Dequeue();
-                        normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
+                        normalizePolicy(nodeToUpdate, result.Item1);
                         nodeToUpdate.nn_value = result.Item2;
                         nodeToUpdate.waitingForGPUPrediction = false;
                         removeVirtualLoss(MCTSRootNode, nodeToUpdate);
@@ -1456,7 +1480,7 @@ namespace TicTacToe_DL_RL
                         // if we need to wait then wait
                         result = NN.GetResultSync();
                         Node<TicTacToePosition> nodeToUpdate = pendingNNRequests.Dequeue();
-                        normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
+                        normalizePolicy(nodeToUpdate, result.Item1);
                         nodeToUpdate.nn_value = result.Item2;
                         nodeToUpdate.waitingForGPUPrediction = false;
                         removeVirtualLoss(MCTSRootNode, nodeToUpdate);
@@ -1470,7 +1494,7 @@ namespace TicTacToe_DL_RL
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN.GetResultSync();
                     Node<TicTacToePosition> nodeToUpdate = pendingNNRequests.Dequeue();
-                    normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
+                    normalizePolicy(nodeToUpdate, result.Item1);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
                     removeVirtualLoss(MCTSRootNode, nodeToUpdate);
@@ -1499,7 +1523,7 @@ namespace TicTacToe_DL_RL
                 policies.Add(policy);
                 
                 int best_child_index = -1;
-                if (train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES)
+                if (train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING)
                     best_child_index = findBestChildVisitCountStochastic(MCTSRootNode);
                 else
                     best_child_index = findBestChildVisitCount(MCTSRootNode);
@@ -1554,7 +1578,7 @@ namespace TicTacToe_DL_RL
                         while (result != null)
                         {
                             Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
-                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
+                            normalizePolicy(nodeToUpdate, result.Item1);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1567,7 +1591,7 @@ namespace TicTacToe_DL_RL
                             // if we need to wait then wait
                             result = NN1.GetResultSync();
                             Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
-                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
+                            normalizePolicy(nodeToUpdate, result.Item1);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1581,7 +1605,7 @@ namespace TicTacToe_DL_RL
                         while (result != null)
                         {
                             Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
-                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
+                            normalizePolicy(nodeToUpdate, result.Item1);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1594,7 +1618,7 @@ namespace TicTacToe_DL_RL
                             // if we need to wait then wait
                             result = NN2.GetResultSync();
                             Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
-                            normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
+                            normalizePolicy(nodeToUpdate, result.Item1);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
                             removeVirtualLoss(nodeToUpdate);
@@ -1609,7 +1633,7 @@ namespace TicTacToe_DL_RL
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN1.GetResultSync();
                     Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
-                    normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
+                    normalizePolicy(nodeToUpdate, result.Item1);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
                     removeVirtualLoss(nodeToUpdate);
@@ -1620,7 +1644,7 @@ namespace TicTacToe_DL_RL
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN2.GetResultSync();
                     Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
-                    normalizePolicy(nodeToUpdate, result.Item1, curr_ply);
+                    normalizePolicy(nodeToUpdate, result.Item1);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
                     removeVirtualLoss(nodeToUpdate);
@@ -1630,14 +1654,14 @@ namespace TicTacToe_DL_RL
                 int best_child_index = -1;
                 if (curr_ply % 2 == 0 && aEvaluationNetworkPlayer == Player.X || curr_ply % 2 == 1 && aEvaluationNetworkPlayer == Player.Z)
                 {
-                    if (train &&curr_ply<6 ||curr_ply<3)
+                    if (train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING || !train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TESTING)
                         best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN1);
                     else
                         best_child_index = findBestChildVisitCount(MCTSRootNodeNN1);
                 }
                 else
                 {
-                    if (train&&curr_ply<6 || curr_ply<3)
+                    if (train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING || !train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TESTING)
                         best_child_index = findBestChildVisitCountStochastic(MCTSRootNodeNN2);
                     else
                         best_child_index = findBestChildVisitCount(MCTSRootNodeNN2);
@@ -1658,7 +1682,7 @@ namespace TicTacToe_DL_RL
             return game.position.score;
         }
         /// <summary>
-        /// The Search uses a tree Nodes<TicTacToePosition> and expands it until it runs out of time
+        /// The Search uses a tree Nodes<TicTacToePosition> and expands it
         /// Nodes which look promising according to the NN are expanded greedily
         /// </summary>
         /// <param name="currNode"></param>
@@ -1673,16 +1697,10 @@ namespace TicTacToe_DL_RL
 
             /* if the leaf node is a game ending state use correct score */
             game = new TicTacToeGame(currNode.Value);
-            if (game.IsOver())
+            if (game.IsOver() && Params.USE_REAL_TERMINAL_VALUES)
             {
                 /* update the tree with the new score and visit counts */
-                if (Params.USE_REAL_TERMINAL_VALUES)
-                    backpropagateScore(currNode, game.GetScore());
-                else
-                {
-                    calculateNNOutput(currNode, NN);
-                    backpropagateScore(currNode, currNode.nn_value);
-                }
+                backpropagateScore(currNode, game.GetScore());
             }
             else
             {
@@ -1700,7 +1718,7 @@ namespace TicTacToe_DL_RL
         }
 
         /// <summary>
-        /// The Search uses a tree Nodes<TicTacToePosition> and expands it until it runs out of time
+        /// The Search uses a tree Nodes<TicTacToePosition> and expands it
         /// Nodes which look promising according to the NN are expanded greedily
         /// </summary>
         /// <param name="currNode"></param>
@@ -1715,27 +1733,12 @@ namespace TicTacToe_DL_RL
 
             /* if the leaf node is a game ending state use correct score */
             game = new TicTacToeGame(currNode.Value);
-            if (game.IsOver())
+            if (game.IsOver() && Params.USE_REAL_TERMINAL_VALUES)
             {
-                if (Params.USE_REAL_TERMINAL_VALUES)
-                    backpropagateScore(currRootNode, currNode, game.GetScore());
-                else
-                {
-                    if (currNode.nn_policy == null)
-                    {
-                        calculateNNOutputGPU(currNode, NN, queue); // todo: duplicate evals
-                    }
-                    else
-                    {
-                        backpropagateScore(currRootNode, currNode, currNode.nn_value);
-                    }
-                }
+                backpropagateScore(currRootNode, currNode, game.GetScore());
             }
             else
             {
-                /* create children if possible */
-                createChildren(currNode);
-
                 if (currNode.nn_policy == null)
                 {
                     calculateNNOutputGPU(currNode, NN, queue); // todo: duplicate evals
@@ -1745,6 +1748,7 @@ namespace TicTacToe_DL_RL
                     backpropagateScore(currRootNode, currNode, currNode.nn_value);
                 }
             }
+            createChildren(currNode);
         }
         /// <summary>
         /// Loss for both players
@@ -1813,6 +1817,7 @@ namespace TicTacToe_DL_RL
                 prediction.Item1[i * 5 + 4].ToString("0.000"));
             }
             Console.WriteLine("Value " + prediction.Item2);
+            startBoardValue = prediction.Item2;
             Console.WriteLine("\n");
 
             game.DoMove(Tuple.Create(3, 3));
@@ -1820,6 +1825,8 @@ namespace TicTacToe_DL_RL
             game.DoMove(Tuple.Create(3, 2));
             game.DoMove(Tuple.Create(4, 4));
             game.DoMove(Tuple.Create(3, 1));
+            game.DoMove(Tuple.Create(3, 4));
+            game.DoMove(Tuple.Create(0, 4));
 
             Console.WriteLine(game.position.ToString());
             prediction = nn.Predict(game.position);
@@ -1834,7 +1841,7 @@ namespace TicTacToe_DL_RL
             Console.WriteLine("Value " + prediction.Item2);
             Console.WriteLine("\n");
 
-            game.DoMove(Tuple.Create(0, 3));
+            game.DoMove(Tuple.Create(1, 4));
 
             Console.WriteLine(game.position.ToString());
             prediction = nn.Predict(game.position);
@@ -1854,6 +1861,10 @@ namespace TicTacToe_DL_RL
             game.DoMove(Tuple.Create(0, 0));
             game.DoMove(Tuple.Create(0, 1));
             game.DoMove(Tuple.Create(0, 2));
+            game.DoMove(Tuple.Create(0, 3));
+            game.DoMove(Tuple.Create(1, 0));
+            game.DoMove(Tuple.Create(1, 2));
+            game.DoMove(Tuple.Create(1, 3));
 
             Console.WriteLine(game.position.ToString());
             prediction = nn.Predict(game.position);
@@ -1869,10 +1880,6 @@ namespace TicTacToe_DL_RL
             Console.WriteLine("Value " + prediction.Item2);
             Console.WriteLine("\n");
         }
-        private float getNoiseWeight()
-        {
-            return 0.0f;
-        }
         private int findBestChildVisitCountStochastic(Node<TicTacToePosition> currNode)
         {
             float randomNr = RandomGen2.NextFloat();
@@ -1881,18 +1888,14 @@ namespace TicTacToe_DL_RL
             float sumVisits = 0.0f;
             List<float> moveProbabilities = new List<float>(new float[currNode.Children.Count]);
 
-            for (int i = 0; i < currNode.Children.Count; ++i)
+            foreach (var childNode in currNode.Children)
             {
-                sumVisits += currNode.Children[i].visits;
+                sumVisits += childNode.visits;
             }
             for (int i = 0; i < currNode.Children.Count; ++i)
             {
-                moveProbabilities[i] = currNode.Children[i].visits/sumVisits;
-            }
-            for (int i = 0; i < currNode.Children.Count; ++i)
-            {
-                probabilitySum += moveProbabilities[i];
-                if(probabilitySum >= randomNr)
+                probabilitySum += currNode.Children[i].visits / sumVisits;
+                if (probabilitySum >= randomNr)
                 {
                     return i;
                 }
@@ -1928,71 +1931,49 @@ namespace TicTacToe_DL_RL
                     game.DoMove(moves[i]);
                     Node<TicTacToePosition> child = new Node<TicTacToePosition>(currNode);
                     child.Value = new TicTacToePosition(game.position);
-                    child.moveIndex = moves[i].Item1 * 5 + moves[i].Item2;
+                    child.moveIndex = moves[i].Item1 * Params.boardSizeX + moves[i].Item2;
+                    child.q_value = -currNode.q_value - 0.1f; // 
                     currNode.AddChild(child);
                 }
             }
         }
-        private void normalizePolicy(Node<TicTacToePosition> currNode, float[] rawPolicy, int depth)
+        private void normalizePolicy(Node<TicTacToePosition> currNode, float[] rawPolicy)
         {
             currNode.nn_policy = new List<float>(new float[rawPolicy.Length]);
 
             /* re-normalize policy vector */
             float sum = 0;
-            for (int i = 0; i < currNode.Children.Count; ++i)
+            foreach (var child in currNode.Children)
             {
-                sum += rawPolicy[currNode.Children[i].moveIndex];
+                sum += rawPolicy[child.moveIndex];
             }
 
             if (sum > 0)
             {
-                for (int i = 0; i < currNode.Children.Count; ++i)
+                foreach (var child in currNode.Children)
                 {
-                    currNode.nn_policy[currNode.Children[i].moveIndex] = rawPolicy[currNode.Children[i].moveIndex] / sum;
+                    currNode.nn_policy[child.moveIndex] = rawPolicy[child.moveIndex] / sum;
                 }
             }
-            if (currNode.Children.Count > 0)
+            else
             {
-                DirichletNoise dn = new DirichletNoise(currNode.Children.Count);
-                for (int i = 0; i < currNode.Children.Count; ++i)
+                // shouldnt happen often
+                foreach (var child in currNode.Children)
                 {
-                    float noise = dn.GetNoise(i);
-                    currNode.nn_policy[currNode.Children[i].moveIndex] =
-                        currNode.nn_policy[currNode.Children[i].moveIndex] * (1 - getNoiseWeight()) + getNoiseWeight() * noise;
+                    currNode.nn_policy[child.moveIndex] = 1.0f/currNode.Children.Count;
                 }
             }
+        }
+        private void applyTemperature(Node<TicTacToePosition> currNode, float temp)
+        {
+            // a constant temp of 1 until a threshold and then 0 doesnt really need this method yet..
         }
         private void calculateNNOutput(Node<TicTacToePosition> currNode, NeuralNetwork NN)
         {
             Tuple<float[], float> prediction = NN.Predict(currNode.Value);
 
             currNode.nn_value = prediction.Item2;
-            currNode.nn_policy = new List<float>(new float[prediction.Item1.Length]);
-
-            /* re-normalize policy vector */
-            float sum = 0;
-            for (int i = 0; i < currNode.Children.Count; ++i)
-            {
-                sum += prediction.Item1[currNode.Children[i].moveIndex];
-            }
-
-            if (sum > 0)
-            {
-                for (int i = 0; i < currNode.Children.Count; ++i)
-                {
-                    currNode.nn_policy[currNode.Children[i].moveIndex] = prediction.Item1[currNode.Children[i].moveIndex] / sum;
-                }
-            }
-            if (currNode.Children.Count > 0)
-            {
-                DirichletNoise dn = new DirichletNoise(currNode.Children.Count);
-                for (int i = 0; i < currNode.Children.Count; ++i)
-                {
-                    float noise = dn.GetNoise(i);
-                    currNode.nn_policy[currNode.Children[i].moveIndex] =
-                        currNode.nn_policy[currNode.Children[i].moveIndex] * (1 - getNoiseWeight()) + getNoiseWeight() * noise;
-                }
-            }
+            normalizePolicy(currNode, prediction.Item1);
         }
         /// <summary>
         /// Sends prediction request to neural network and adds the node to a queue to later fill in the result
@@ -2014,10 +1995,31 @@ namespace TicTacToe_DL_RL
             NN.PredictGPU(currNode.Value);
             queue.Enqueue(currNode);
         }
+        private void addDirichletNoise(Node<TicTacToePosition> currNode)
+        {           
+            if (currNode.Children.Count > 0 && currNode.nn_policy != null && Params.DIRICHLET_NOISE_WEIGHT != 0.0f)
+            {
+                DirichletNoise dn = new DirichletNoise(currNode.Children.Count);
+                for (int i = 0; i < currNode.Children.Count; ++i)
+                {
+                    float noise = dn.GetNoise(i);
+                    currNode.nn_policy[currNode.Children[i].moveIndex] =
+                        currNode.nn_policy[currNode.Children[i].moveIndex] * (1 - Params.DIRICHLET_NOISE_WEIGHT) +
+                        Params.DIRICHLET_NOISE_WEIGHT * noise;
+                }
+                currNode.noiseAdded = true;
+            }
+        }
         private Node<TicTacToePosition> findMostPromisingLeafNode(Node<TicTacToePosition> currNode)
         {
+            bool isRootNode = true; // the current rootNode of the search tree 
             while (currNode.HasChild)
             {
+                if(isRootNode && !currNode.noiseAdded)
+                {
+                    addDirichletNoise(currNode);
+                }
+                isRootNode = false;
                 List<int> draws = new List<int>();
                 /* create the game from the TicTacToePosition */
                 TicTacToeGame game = new TicTacToeGame(currNode.Value);
@@ -2069,8 +2071,6 @@ namespace TicTacToe_DL_RL
                 if (draws.Count != 0)
                 {
                     currNode = currNode.Children[draws[RandomGen2.Next(0,draws.Count)]];
-                    //currNode = currNode.Children[draws[0]];
-                    //Console.WriteLine("There was a draw on choosing most promising child node");
                 }
                 else
                 {

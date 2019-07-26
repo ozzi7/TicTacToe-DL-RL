@@ -152,13 +152,13 @@ namespace TicTacToe_DL_RL
                         break;
                     }
                 }
-                nofProcessedNets += nofInputsFound;
-                if (timestamp + outputPeriod < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
-                {
-                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                //nofProcessedNets += nofInputsFound;
+                //if (timestamp + outputPeriod < DateTimeOffset.UtcNow.ToUnixTimeSeconds())
+                //{
+                //    timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
                     //Console.WriteLine("OpenCL: Throughput: " + Math.Round((double)nofProcessedNets / (timestamp - startTimestamp), 2)  + 
                     //    " Throughput GPU: " + Math.Round(((double)nofProcessedNets/ elapsedTime) *1000,2) + " NN evals/sec");
-                }
+                //}
 
                 if (nofInputsFound > 0)
                 {

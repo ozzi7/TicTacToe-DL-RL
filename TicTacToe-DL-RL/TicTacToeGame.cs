@@ -49,9 +49,9 @@ namespace TicTacToe_DL_RL
         /// <returns></returns>
         public bool IsFullyOccupied()
         {
-            for(int i = 0; i < 5; ++i)
+            for(int i = 0; i < Params.boardSizeY; ++i)
             {
-                for(int j = 0; j < 5; ++j)
+                for(int j = 0; j < Params.boardSizeX; ++j)
                 {
                     if(position.gameBoard[i,j] == 0)
                     {
@@ -184,9 +184,9 @@ namespace TicTacToe_DL_RL
         public TicTacToePosition(TicTacToePosition aPosition)
         {
             //gameBoard = aPosition.gameBoard.Clone() as int[,];
-            for (int i = 0; i < 5; ++i)
+            for (int i = 0; i < Params.boardSizeY; ++i)
             {
-                for (int j = 0; j < 5; ++j)
+                for (int j = 0; j < Params.boardSizeX; ++j)
                 {
                     gameBoard[i, j] = aPosition.gameBoard[i, j];
                 }
@@ -214,9 +214,9 @@ namespace TicTacToe_DL_RL
         {
             int hash = 0;
             int index = 1;
-            for (int i = 0; i < 5; ++i)
+            for (int i = 0; i < Params.boardSizeY; ++i)
             {
-                for (int j = 0; j < 5; ++j)
+                for (int j = 0; j < Params.boardSizeX; ++j)
                 {
                     hash = hash + (gameBoard[i, j]*(int)Math.Pow(index,2)); // convert -1,0,1 to 0,1,2
                 }
