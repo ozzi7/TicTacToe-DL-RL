@@ -1,6 +1,6 @@
 ﻿/*
  * Used for MCTS
- * Nodes have a board TicTacToePosition and some metadata such as upper confidence q_value
+ * Nodes contain a GameState and some variables for MCTS search
 */
 using System;
 using System.Collections.Generic;
@@ -20,14 +20,15 @@ namespace TicTacToe_DL_RL
         */
         public float visits = 0;
         public List<float> nn_policy = null;
-        public float nn_value;
-        public int moveIndex = -1; // from 0 to 24 
+        public float nn_value = 0.0f;
+        public int moveIndex = -1; // to find the correct policy value for this node
         public float score_sum = 0.0f; // from -inf to inf, where values > 0 => X is winning
         public float q_value = 0.0f; // ~ winrate
         public int virtualVisits = 0; // a pending NN eval increases this
         public bool waitingForGPUPrediction = false; // if this node is already waiting for a GPU eval
-        public Node<TValue> parent = null;
         public bool noiseAdded = false;
+
+        public Node<TValue> parent = null;
 
         public TValue Value { get; set; }
         public List<Node<TValue>> Children { get; private set; }

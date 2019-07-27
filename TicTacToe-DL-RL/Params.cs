@@ -8,6 +8,16 @@ namespace TicTacToe_DL_RL
 {
     public static class Params
     {
+        // NN settings
+        public const int FILTER_HEIGHT = 3;
+        public const int FILTER_WIDTH = 3;
+        public const int RES_LAYERS = 6;
+        public const int CONV_LAYERS = 2*RES_LAYERS + 1;
+        public const int FILTERS = 32;
+        public const int VALUE_FILTERS = 32;
+        public const int POLICY_FILTERS = 32;
+        public const int VALUE_HEAD_HIDDEN_LAYER_SIZE = 32;
+
         // HARDWARE SETTINGS
         public static bool GPU_ENABLED = true;
         public static bool FORCE_KERNEL_RECOMPILE = false; // if false the kernel binary is loaded from file

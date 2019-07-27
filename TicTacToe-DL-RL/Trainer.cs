@@ -64,7 +64,7 @@ namespace TicTacToe_DL_RL
         /// </summary>
         public void TrainKeras()
         {
-            bool continuewithpreviousrun = false;
+            bool continuewithpreviousrun = true;
 
             bestNN = new NeuralNetwork(currentNN.weights);
             printNNOutput(bestNN);
@@ -165,7 +165,7 @@ namespace TicTacToe_DL_RL
 
             for (int z = 0; z < 10; ++z)
             {
-                TicTacToeGame game = new TicTacToeGame();
+                Game game = new Game();
                 game.DoMove(Tuple.Create(3, 2));
                 game.DoMove(Tuple.Create(0, 1));
                 game.DoMove(Tuple.Create(0, 4)); // y, x
@@ -206,7 +206,7 @@ namespace TicTacToe_DL_RL
         }
         public void ValidateOutputCPU()
         {
-            TicTacToeGame game = new TicTacToeGame();
+            Game game = new Game();
             game.DoMove(Tuple.Create(3, 2));
             game.DoMove(Tuple.Create(0, 1));
             game.DoMove(Tuple.Create(0, 4)); // y, x
@@ -386,7 +386,7 @@ namespace TicTacToe_DL_RL
                         Console.WriteLine("Eval player playing as Player X");
                     else
                         Console.WriteLine("Eval player playing as Player Z");
-                    TicTacToeGame game = new TicTacToeGame();
+                    Game game = new Game();
                     game.DisplayHistory(histories[i]);
                 }
             }
@@ -505,7 +505,7 @@ namespace TicTacToe_DL_RL
 
             List<NeuralNetwork> nns = new List<NeuralNetwork>();
             List<NeuralNetwork> currnns = new List<NeuralNetwork>();
-            List<Node<TicTacToePosition>> rootNodes = new List<Node<TicTacToePosition>>();
+            List<Node<GameState>> rootNodes = new List<Node<GameState>>();
 
             if (!Params.GPU_ENABLED)
             {
@@ -534,7 +534,7 @@ namespace TicTacToe_DL_RL
                     playingNNlocal.ChannelInit();
 
                     nns.Add(playingNNlocal);
-                    rootNodes.Add(new Node<TicTacToePosition>(null));
+                    rootNodes.Add(new Node<GameState>(null));
                 }
 
                 nns[0] = new NeuralNetwork(nn.weights);
@@ -1005,7 +1005,7 @@ namespace TicTacToe_DL_RL
                             {
                                 Console.WriteLine("Sample game where Evaluation Player is Z");
                             }
-                            TicTacToeGame game = new TicTacToeGame();
+                            Game game = new Game();
                             game.DisplayHistory(history);
                         }
                         handle.Set();
@@ -1055,7 +1055,7 @@ namespace TicTacToe_DL_RL
                                 Console.WriteLine("Eval player playing as Player X");
                             else
                                 Console.WriteLine("Eval player playing as Player Z");
-                            TicTacToeGame game = new TicTacToeGame();
+                            Game game = new Game();
                             game.DisplayHistory(history);
                         }
                         Interlocked.Add(ref sharedLoopCounter, 1);
@@ -1169,19 +1169,19 @@ namespace TicTacToe_DL_RL
         {
             List<Tuple<int, int>> history = new List<Tuple<int, int>>();
 
-            TicTacToeGame game = new TicTacToeGame();
+            Game game = new Game();
 
             float result = 0.0f;
-            Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
+            Node<GameState> MCTSRootNode = new Node<GameState>(null);
 
             for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
             {
-                MCTSRootNode.Value = new TicTacToePosition(game.position);
+                MCTSRootNode.Value = new GameState(game.position);
 
                 if (game.IsOver())
                 {
                     result = game.GetScore();
-                    //TicTacToeGame game4 = new TicTacToeGame();
+                    //Game game4 = new Game();
                     //game4.DisplayHistory(history);
                     if (evaluationNetworkPlayer == Player.X && result == 1 ||
                         evaluationNetworkPlayer == Player.Z && result == -1)
@@ -1229,14 +1229,14 @@ namespace TicTacToe_DL_RL
         /// <returns>Return 0 for draw, win for X 1, win for Z -1 </returns>
         public int PlayOneGame(List<Tuple<int, int>> history, Player aEvaluationNetworkPlayer, NeuralNetwork NN1, NeuralNetwork NN2, bool train)
         {
-            TicTacToeGame game = new TicTacToeGame();
-            Node<TicTacToePosition> MCTSRootNodeNN1 = new Node<TicTacToePosition>(null);
-            Node<TicTacToePosition> MCTSRootNodeNN2 = new Node<TicTacToePosition>(null);
+            Game game = new Game();
+            Node<GameState> MCTSRootNodeNN1 = new Node<GameState>(null);
+            Node<GameState> MCTSRootNodeNN2 = new Node<GameState>(null);
 
             for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
             {
-                MCTSRootNodeNN1.Value = new TicTacToePosition(game.position);
-                MCTSRootNodeNN2.Value = new TicTacToePosition(game.position);
+                MCTSRootNodeNN1.Value = new GameState(game.position);
+                MCTSRootNodeNN2.Value = new GameState(game.position);
 
                 if (game.IsOver()) {
                     return game.GetScore();
@@ -1313,14 +1313,14 @@ namespace TicTacToe_DL_RL
         public int RecordOneGame(List<Tuple<int, int>> history, List<List<float>> policies, Player aEvaluationNetworkPlayer, 
             NeuralNetwork NN1, NeuralNetwork NN2, bool train)
         {
-            TicTacToeGame game = new TicTacToeGame();
-            Node<TicTacToePosition> MCTSRootNodeNN1 = new Node<TicTacToePosition>(null);
-            Node<TicTacToePosition> MCTSRootNodeNN2 = new Node<TicTacToePosition>(null);
+            Game game = new Game();
+            Node<GameState> MCTSRootNodeNN1 = new Node<GameState>(null);
+            Node<GameState> MCTSRootNodeNN2 = new Node<GameState>(null);
 
             for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
             {
-                MCTSRootNodeNN1.Value = new TicTacToePosition(game.position);
-                MCTSRootNodeNN2.Value = new TicTacToePosition(game.position);
+                MCTSRootNodeNN1.Value = new GameState(game.position);
+                MCTSRootNodeNN2.Value = new GameState(game.position);
 
                 if (game.IsOver())
                 {
@@ -1437,17 +1437,17 @@ namespace TicTacToe_DL_RL
         /// <param name="NN2"></param>
         /// <returns>Return 0 for draw, win for X 1, win for Z -1 </returns>
         public int RecordOneGameGPU(List<Tuple<int, int>> history, List<List<float>> policies, Player aEvaluationNetworkPlayer,
-            NeuralNetwork NN, Node<TicTacToePosition> rootNode,  bool train)
+            NeuralNetwork NN, Node<GameState> rootNode,  bool train)
         {
-            TicTacToeGame game = new TicTacToeGame();
-            //Node<TicTacToePosition> MCTSRootNode = rootNode; // tree re-use
-            Node<TicTacToePosition> MCTSRootNode = new Node<TicTacToePosition>(null);
+            Game game = new Game();
+            //Node<GameState> MCTSRootNode = rootNode; // tree re-use
+            Node<GameState> MCTSRootNode = new Node<GameState>(null);
 
-            Queue<Node<TicTacToePosition>> pendingNNRequests = new Queue<Node<TicTacToePosition>>();
+            Queue<Node<GameState>> pendingNNRequests = new Queue<Node<GameState>>();
 
             for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
             {
-                MCTSRootNode.Value = new TicTacToePosition(game.position);
+                MCTSRootNode.Value = new GameState(game.position);
 
                 if (game.IsOver())
                 {
@@ -1469,7 +1469,7 @@ namespace TicTacToe_DL_RL
                     Tuple<float[], float> result = NN.GetResultAsync(); // try to get a result, if there is one, try to get more
                     while (result != null)
                     {
-                        Node<TicTacToePosition> nodeToUpdate = pendingNNRequests.Dequeue();
+                        Node<GameState> nodeToUpdate = pendingNNRequests.Dequeue();
                         normalizePolicy(nodeToUpdate, result.Item1);
                         nodeToUpdate.nn_value = result.Item2;
                         nodeToUpdate.waitingForGPUPrediction = false;
@@ -1482,7 +1482,7 @@ namespace TicTacToe_DL_RL
                     {
                         // if we need to wait then wait
                         result = NN.GetResultSync();
-                        Node<TicTacToePosition> nodeToUpdate = pendingNNRequests.Dequeue();
+                        Node<GameState> nodeToUpdate = pendingNNRequests.Dequeue();
                         normalizePolicy(nodeToUpdate, result.Item1);
                         nodeToUpdate.nn_value = result.Item2;
                         nodeToUpdate.waitingForGPUPrediction = false;
@@ -1496,7 +1496,7 @@ namespace TicTacToe_DL_RL
                 {
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN.GetResultSync();
-                    Node<TicTacToePosition> nodeToUpdate = pendingNNRequests.Dequeue();
+                    Node<GameState> nodeToUpdate = pendingNNRequests.Dequeue();
                     normalizePolicy(nodeToUpdate, result.Item1);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
@@ -1543,17 +1543,17 @@ namespace TicTacToe_DL_RL
         }
         public int PlayOneGameGPU(List<Tuple<int, int>> history, Player aEvaluationNetworkPlayer, NeuralNetwork NN1, NeuralNetwork NN2, bool train)
         {
-            TicTacToeGame game = new TicTacToeGame();
-            Node<TicTacToePosition> MCTSRootNodeNN1 = new Node<TicTacToePosition>(null);
-            Node<TicTacToePosition> MCTSRootNodeNN2 = new Node<TicTacToePosition>(null);
+            Game game = new Game();
+            Node<GameState> MCTSRootNodeNN1 = new Node<GameState>(null);
+            Node<GameState> MCTSRootNodeNN2 = new Node<GameState>(null);
 
-            Queue<Node<TicTacToePosition>> pendingNN1Requests = new Queue<Node<TicTacToePosition>>();
-            Queue<Node<TicTacToePosition>> pendingNN2Requests = new Queue<Node<TicTacToePosition>>();
+            Queue<Node<GameState>> pendingNN1Requests = new Queue<Node<GameState>>();
+            Queue<Node<GameState>> pendingNN2Requests = new Queue<Node<GameState>>();
 
             for (int curr_ply = 0; curr_ply < Params.MAXIMUM_PLYS; ++curr_ply)  // we always finish the game for tic tac toe
             {
-                MCTSRootNodeNN1.Value = new TicTacToePosition(game.position);
-                MCTSRootNodeNN2.Value = new TicTacToePosition(game.position);
+                MCTSRootNodeNN1.Value = new GameState(game.position);
+                MCTSRootNodeNN2.Value = new GameState(game.position);
 
                 if (game.IsOver())
                 {
@@ -1579,7 +1579,7 @@ namespace TicTacToe_DL_RL
                         Tuple<float[], float> result = NN1.GetResultAsync(); // try to get a result, if there is one, try to get more
                         while (result != null)
                         {
-                            Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
+                            Node<GameState> nodeToUpdate = pendingNN1Requests.Dequeue();
                             normalizePolicy(nodeToUpdate, result.Item1);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
@@ -1592,7 +1592,7 @@ namespace TicTacToe_DL_RL
                         {
                             // if we need to wait then wait
                             result = NN1.GetResultSync();
-                            Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
+                            Node<GameState> nodeToUpdate = pendingNN1Requests.Dequeue();
                             normalizePolicy(nodeToUpdate, result.Item1);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
@@ -1606,7 +1606,7 @@ namespace TicTacToe_DL_RL
                         Tuple<float[], float> result = NN2.GetResultAsync(); // try to get a result, if there is one, try to get more
                         while (result != null)
                         {
-                            Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
+                            Node<GameState> nodeToUpdate = pendingNN2Requests.Dequeue();
                             normalizePolicy(nodeToUpdate, result.Item1);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
@@ -1619,7 +1619,7 @@ namespace TicTacToe_DL_RL
                         {
                             // if we need to wait then wait
                             result = NN2.GetResultSync();
-                            Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
+                            Node<GameState> nodeToUpdate = pendingNN2Requests.Dequeue();
                             normalizePolicy(nodeToUpdate, result.Item1);
                             nodeToUpdate.nn_value = result.Item2;
                             nodeToUpdate.waitingForGPUPrediction = false;
@@ -1634,7 +1634,7 @@ namespace TicTacToe_DL_RL
                 {
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN1.GetResultSync();
-                    Node<TicTacToePosition> nodeToUpdate = pendingNN1Requests.Dequeue();
+                    Node<GameState> nodeToUpdate = pendingNN1Requests.Dequeue();
                     normalizePolicy(nodeToUpdate, result.Item1);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
@@ -1645,7 +1645,7 @@ namespace TicTacToe_DL_RL
                 {
                     // if we need to wait then wait
                     Tuple<float[], float> result = NN2.GetResultSync();
-                    Node<TicTacToePosition> nodeToUpdate = pendingNN2Requests.Dequeue();
+                    Node<GameState> nodeToUpdate = pendingNN2Requests.Dequeue();
                     normalizePolicy(nodeToUpdate, result.Item1);
                     nodeToUpdate.nn_value = result.Item2;
                     nodeToUpdate.waitingForGPUPrediction = false;
@@ -1684,20 +1684,20 @@ namespace TicTacToe_DL_RL
             return game.position.score;
         }
         /// <summary>
-        /// The Search uses a tree Nodes<TicTacToePosition> and expands it
+        /// The Search uses a tree Nodes<GameState> and expands it
         /// Nodes which look promising according to the NN are expanded greedily
         /// </summary>
         /// <param name="currNode"></param>
         /// <returns>Eval</returns>
-        private void SearchUsingNN(Node<TicTacToePosition> currNode, NeuralNetwork NN)
+        private void SearchUsingNN(Node<GameState> currNode, NeuralNetwork NN)
         {
-            TicTacToeGame game = new TicTacToeGame(currNode.Value);
+            Game game = new Game(currNode.Value);
 
             /* find the most promising leaf node */
             currNode = findMostPromisingLeafNode(currNode);
 
             /* if the leaf node is a game ending state use correct score */
-            game = new TicTacToeGame(currNode.Value);
+            game = new Game(currNode.Value);
             if (game.IsOver() && Params.USE_REAL_TERMINAL_VALUES)
             {
                 /* update the tree with the new score and visit counts */
@@ -1719,20 +1719,20 @@ namespace TicTacToe_DL_RL
         }
 
         /// <summary>
-        /// The Search uses a tree Nodes<TicTacToePosition> and expands it
+        /// The Search uses a tree Nodes<GameState> and expands it
         /// Nodes which look promising according to the NN are expanded greedily
         /// </summary>
         /// <param name="currNode"></param>
         /// <returns>Eval</returns>
-        private void SearchUsingNNGPU(Node<TicTacToePosition> currRootNode, NeuralNetwork NN, Queue<Node<TicTacToePosition>> queue)
+        private void SearchUsingNNGPU(Node<GameState> currRootNode, NeuralNetwork NN, Queue<Node<GameState>> queue)
         {
-            TicTacToeGame game = new TicTacToeGame(currRootNode.Value);
+            Game game = new Game(currRootNode.Value);
 
             /* find the most promising leaf node */
-            Node<TicTacToePosition> currNode = findMostPromisingLeafNode(currRootNode);
+            Node<GameState> currNode = findMostPromisingLeafNode(currRootNode);
 
             /* if the leaf node is a game ending state use correct score */
-            game = new TicTacToeGame(currNode.Value);
+            game = new Game(currNode.Value);
             if (game.IsOver() && Params.USE_REAL_TERMINAL_VALUES)
             {
                 backpropagateScore(currRootNode, currNode, game.GetScore());
@@ -1754,7 +1754,7 @@ namespace TicTacToe_DL_RL
         /// Loss for both players
         /// </summary>
         /// <param name="currNode"></param>
-        private void propagateVirtualLoss(Node<TicTacToePosition> currRootnode, Node<TicTacToePosition> currNode)
+        private void propagateVirtualLoss(Node<GameState> currRootnode, Node<GameState> currNode)
         {
             while (currNode != currRootnode)
             {
@@ -1767,7 +1767,7 @@ namespace TicTacToe_DL_RL
             currRootnode.score_sum -= 1.0f;
             currRootnode.q_value = currRootnode.score_sum / (currRootnode.visits + currRootnode.virtualVisits);
         }
-        private void propagateVirtualLoss(Node<TicTacToePosition> currNode)
+        private void propagateVirtualLoss(Node<GameState> currNode)
         {
             while (currNode != null)
             {
@@ -1777,7 +1777,7 @@ namespace TicTacToe_DL_RL
                 currNode = currNode.GetParent();
             }
         }
-        private void removeVirtualLoss(Node<TicTacToePosition> currNode)
+        private void removeVirtualLoss(Node<GameState> currNode)
         {
             // we store the q_value for the opposite player in the node, during search we look at the next level
             while (currNode != null)
@@ -1788,7 +1788,7 @@ namespace TicTacToe_DL_RL
                 currNode = currNode.GetParent();
             }
         }
-        private void removeVirtualLoss(Node<TicTacToePosition> currRootnode, Node<TicTacToePosition> currNode)
+        private void removeVirtualLoss(Node<GameState> currRootnode, Node<GameState> currNode)
         {
             while (currNode != currRootnode)
             {
@@ -1804,7 +1804,7 @@ namespace TicTacToe_DL_RL
         private void printNNOutput(NeuralNetwork nn)
         {
             Console.WriteLine("\nPolicy of boards");
-            TicTacToeGame game = new TicTacToeGame();
+            Game game = new Game();
             Console.WriteLine(game.position.ToString());
             Tuple<float[], float> prediction = nn.Predict(game.position);
 
@@ -1857,7 +1857,7 @@ namespace TicTacToe_DL_RL
             Console.WriteLine("Value " + prediction.Item2);
             Console.WriteLine("\n");
 
-            game = new TicTacToeGame();
+            game = new Game();
 
             game.DoMove(Tuple.Create(0, 0));
             game.DoMove(Tuple.Create(0, 1));
@@ -1882,7 +1882,7 @@ namespace TicTacToe_DL_RL
             Console.WriteLine("\n");
 
 
-            game = new TicTacToeGame();
+            game = new Game();
 
             game.DoMove(Tuple.Create(0, 0));
             game.DoMove(Tuple.Create(4, 2));
@@ -1906,7 +1906,7 @@ namespace TicTacToe_DL_RL
             Console.WriteLine("\n");
 
 
-            game = new TicTacToeGame();
+            game = new Game();
 
             game.DoMove(Tuple.Create(2, 0));
             game.DoMove(Tuple.Create(0, 0));
@@ -1931,7 +1931,7 @@ namespace TicTacToe_DL_RL
             Console.WriteLine("\n");
 
 
-            game = new TicTacToeGame();
+            game = new Game();
 
             game.DoMove(Tuple.Create(0, 3));
             game.DoMove(Tuple.Create(2, 2));
@@ -1955,7 +1955,7 @@ namespace TicTacToe_DL_RL
             Console.WriteLine("Value " + prediction.Item2);
             Console.WriteLine("\n");
         }
-        private int findBestChildVisitCountStochastic(Node<TicTacToePosition> currNode)
+        private int findBestChildVisitCountStochastic(Node<GameState> currNode)
         {
             float randomNr = RandomGen2.NextFloat();
 
@@ -1977,7 +1977,7 @@ namespace TicTacToe_DL_RL
             }
             return currNode.Children.Count-1;
         }
-        private int findBestChildVisitCount(Node<TicTacToePosition> currNode)
+        private int findBestChildVisitCount(Node<GameState> currNode)
         {
             float bestVisitCount = -1;
             int bestChildIndex = -1;
@@ -1993,26 +1993,26 @@ namespace TicTacToe_DL_RL
             }
             return bestChildIndex;
         }
-        private void createChildren(Node<TicTacToePosition> currNode)
+        private void createChildren(Node<GameState> currNode)
         {
             if (!currNode.HasChild)
             {
-                TicTacToeGame game = new TicTacToeGame(currNode.Value);
+                Game game = new Game(currNode.Value);
                 List<Tuple<int, int>> moves = game.GetMoves(); // valid moves
 
                 for (int i = 0; i < moves.Count; ++i)
                 {
-                    game = new TicTacToeGame(currNode.Value);
+                    game = new Game(currNode.Value);
                     game.DoMove(moves[i]);
-                    Node<TicTacToePosition> child = new Node<TicTacToePosition>(currNode);
-                    child.Value = new TicTacToePosition(game.position);
+                    Node<GameState> child = new Node<GameState>(currNode);
+                    child.Value = new GameState(game.position);
                     child.moveIndex = moves[i].Item1 * Params.boardSizeX + moves[i].Item2;
                     child.q_value = -currNode.q_value - 0.1f; // 
                     currNode.AddChild(child);
                 }
             }
         }
-        private void normalizePolicy(Node<TicTacToePosition> currNode, float[] rawPolicy)
+        private void normalizePolicy(Node<GameState> currNode, float[] rawPolicy)
         {
             currNode.nn_policy = new List<float>(new float[rawPolicy.Length]);
 
@@ -2039,11 +2039,11 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
-        private void applyTemperature(Node<TicTacToePosition> currNode, float temp)
+        private void applyTemperature(Node<GameState> currNode, float temp)
         {
             // a constant temp of 1 until a threshold and then 0 doesnt really need this method yet..
         }
-        private void calculateNNOutput(Node<TicTacToePosition> currNode, NeuralNetwork NN)
+        private void calculateNNOutput(Node<GameState> currNode, NeuralNetwork NN)
         {
             Tuple<float[], float> prediction = NN.Predict(currNode.Value);
 
@@ -2056,21 +2056,21 @@ namespace TicTacToe_DL_RL
         /// <param name="currNode"></param>
         /// <param name="NN"></param>
         /// <param name="queue"></param>
-        private void calculateNNOutputGPU(Node<TicTacToePosition> currNode, NeuralNetwork NN, Queue<Node<TicTacToePosition>> queue)
+        private void calculateNNOutputGPU(Node<GameState> currNode, NeuralNetwork NN, Queue<Node<GameState>> queue)
         {
             currNode.waitingForGPUPrediction = true;
             propagateVirtualLoss(currNode);
             NN.PredictGPU(currNode.Value);
             queue.Enqueue(currNode);
         }
-        private void calculateNNOutputGPU(Node<TicTacToePosition> currRootnode, Node<TicTacToePosition> currNode, NeuralNetwork NN, Queue<Node<TicTacToePosition>> queue)
+        private void calculateNNOutputGPU(Node<GameState> currRootnode, Node<GameState> currNode, NeuralNetwork NN, Queue<Node<GameState>> queue)
         {
             currNode.waitingForGPUPrediction = true;
             propagateVirtualLoss(currRootnode, currNode);
             NN.PredictGPU(currNode.Value);
             queue.Enqueue(currNode);
         }
-        private void addDirichletNoise(Node<TicTacToePosition> currNode)
+        private void addDirichletNoise(Node<GameState> currNode)
         {           
             if (currNode.Children.Count > 0 && currNode.nn_policy != null && Params.DIRICHLET_NOISE_WEIGHT != 0.0f)
             {
@@ -2085,7 +2085,7 @@ namespace TicTacToe_DL_RL
                 currNode.noiseAdded = true;
             }
         }
-        private Node<TicTacToePosition> findMostPromisingLeafNode(Node<TicTacToePosition> currNode)
+        private Node<GameState> findMostPromisingLeafNode(Node<GameState> currNode)
         {
             bool isRootNode = true; // the current rootNode of the search tree 
             while (currNode.HasChild)
@@ -2096,8 +2096,8 @@ namespace TicTacToe_DL_RL
                 }
                 isRootNode = false;
                 List<int> draws = new List<int>();
-                /* create the game from the TicTacToePosition */
-                TicTacToeGame game = new TicTacToeGame(currNode.Value);
+                /* create the game from the GameState */
+                Game game = new Game(currNode.Value);
                 List<Tuple<int, int>> moves = game.GetMoves(); // valid moves
 
                 /* find best child node (best UCT value) to expand */
@@ -2154,7 +2154,7 @@ namespace TicTacToe_DL_RL
             }
             return currNode;
         }
-        private void backpropagateScore(Node<TicTacToePosition> currNode, float score)
+        private void backpropagateScore(Node<GameState> currNode, float score)
         {
             // argument score is from the view of player X always
             // we store the q_value for the opposite player in the node, during search we look at the next level
@@ -2170,7 +2170,7 @@ namespace TicTacToe_DL_RL
                 score *= -1;
             }
         }
-        private void backpropagateScore(Node<TicTacToePosition> currRootnode, Node<TicTacToePosition> currNode, float score)
+        private void backpropagateScore(Node<GameState> currRootnode, Node<GameState> currNode, float score)
         {
             // argument score is from the view of player X always
             // we store the q_value for the opposite player in the node, during search we look at the next level
@@ -2189,9 +2189,9 @@ namespace TicTacToe_DL_RL
             currRootnode.visits += 1;
             currRootnode.q_value = currRootnode.score_sum / (currRootnode.visits + currRootnode.virtualVisits);
         }
-        private void RegularMCTSSearch(Node<TicTacToePosition> currNode)
+        private void RegularMCTSSearch(Node<GameState> currNode)
         {
-            TicTacToeGame game = new TicTacToeGame(currNode.Value);
+            Game game = new Game(currNode.Value);
             List<Tuple<int, int>> moves = game.GetMoves();
 
             /* find the most promising leaf node */
@@ -2199,7 +2199,7 @@ namespace TicTacToe_DL_RL
 
             /* if the leaf node is a game ending state use correct score */
             float score = 0.0f;
-            game = new TicTacToeGame(currNode.Value);
+            game = new Game(currNode.Value);
             if (game.IsOver())
             {
                 score = game.GetScore();
@@ -2229,9 +2229,9 @@ namespace TicTacToe_DL_RL
         /// </summary>
         /// <param name="currNode"></param>
         /// <returns></returns>
-        private float simulateRandomPlayout(Node<TicTacToePosition> currNode)
+        private float simulateRandomPlayout(Node<GameState> currNode)
         {
-            TicTacToeGame game = new TicTacToeGame(currNode.Value);
+            Game game = new Game(currNode.Value);
 
             while (!game.IsOver())
             {
@@ -2243,17 +2243,17 @@ namespace TicTacToe_DL_RL
             return game.GetScore();
         }
 
-        private void DisplayMCTSTree(Node<TicTacToePosition> roodNode)
+        private void DisplayMCTSTree(Node<GameState> roodNode)
         {
             Console.WriteLine("============================ Displaying MCTS Tree (DF order) ============================\n");
             DisplayMCTSNode(roodNode);
         }
-        private void DisplayMCTSNode(Node<TicTacToePosition> node)
+        private void DisplayMCTSNode(Node<GameState> node)
         {
             if (node.visits != 0)
             {
                 Console.WriteLine(node.ToString());
-                foreach (Node<TicTacToePosition> child in node.Children)
+                foreach (Node<GameState> child in node.Children)
                 {
                     DisplayMCTSNode(child);
                 }

@@ -7,20 +7,26 @@ using System.Threading.Tasks;
 namespace TicTacToe_DL_RL
 {
     // X always starts, X leads to q_value 1, Z to q_value -1 win X is 1, draw 0, win Z -1 
-    // Value head in NN is -1 for win Z, 0.0 for draw and 1 for win X
+    // Value head in NN is -1 for win Z, 0 for draw and 1 for win X
     public enum Player { X, Z };
-
-    class TicTacToeGame
+    public static class GameProperties
     {
-        public TicTacToePosition position;
+        public const int GAMEBOARD_WIDTH = 5;
+        public const int GAMEBOARD_HEIGHT = 5;
+        public const int INPUT_PLANES = 3;
+        public const int OUTPUT_POLICIES = 25;
+    }
+    class Game
+    {
+        public GameState position;
 
-        public TicTacToeGame()
+        public Game()
         {
-            position = new TicTacToePosition();
+            position = new GameState();
         }
-        public TicTacToeGame(TicTacToePosition aPos)
+        public Game(GameState aPos)
         {
-            position = new TicTacToePosition(aPos);
+            position = new GameState(aPos);
         }
         public List<Tuple<int, int>> GetMoves()
         {
@@ -39,18 +45,18 @@ namespace TicTacToe_DL_RL
             return position.score;
         }
         /// <summary>
-        /// Check if the game is in a finished TicTacToePosition (draw or win)
+        /// Check if the game is in a finished GameState (draw or win)
         /// </summary>
         /// <returns></returns>
         public bool IsOver()
         {
-            return (HasWinner() || IsFullyOccupied());
+            return (hasWinner() || isDraw());
         }
         /// <summary>
-        /// Check if the game is fully occupied
+        /// Check if the gameboard is fully occupied (draw)
         /// </summary>
         /// <returns></returns>
-        public bool IsFullyOccupied()
+        private bool isDraw()
         {
             for(int i = 0; i < Params.boardSizeY; ++i)
             {
@@ -69,21 +75,21 @@ namespace TicTacToe_DL_RL
             position.gameBoard[move.Item1, move.Item2] = position.sideToMove == Player.X ? 1 : -1;
             position.sideToMove = position.sideToMove == Player.X ? Player.Z : Player.X;
 
-            if (HasWinner())
+            if (hasWinner())
             {
                 position.score = position.sideToMove == Player.X ? -1 : 1;
             }
-            //else if (IsFullyOccupied())
-            //{
-            //    position.score = 0;
-            //}
+            else
+            {
+                position.score = 0;
+            }
         }
 
         /// <summary>
         /// Check if the game is won by a player
         /// </summary>
         /// <returns></returns>
-        public bool HasWinner()
+        private bool hasWinner()
         {
             // check rows
             for (int row = 0; row < 5; ++row)
@@ -166,7 +172,7 @@ namespace TicTacToe_DL_RL
     /// <summary>
     /// Stores a complete state of the game
     /// </summary>
-    class TicTacToePosition
+    class GameState
     {
         // [Y coord, X coord]
         public int[,] gameBoard = new int[5, 5] { { 0, 0, 0, 0, 0 }, 
@@ -179,12 +185,12 @@ namespace TicTacToe_DL_RL
         // 0 is none/draw, 1 player X (always starts), -1 player Z
         public int score = 0;
 
-        public TicTacToePosition() {}
+        public GameState() {}
         /// <summary>
         /// Create a copy of a position
         /// </summary>
         /// <param name="aPosition"></param>
-        public TicTacToePosition(TicTacToePosition aPosition)
+        public GameState(GameState aPosition)
         {
             //gameBoard = aPosition.gameBoard.Clone() as int[,];
             for (int i = 0; i < Params.boardSizeY; ++i)

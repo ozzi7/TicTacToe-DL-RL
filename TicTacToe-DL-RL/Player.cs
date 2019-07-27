@@ -10,7 +10,7 @@ namespace TicTacToe_DL_RL
     {
         static Random random = new Random();
         RandomPlayer() { }
-        Tuple<int,int> Play(TicTacToeGame game)
+        Tuple<int,int> Play(Game game)
         {
             List<Tuple<int,int>> moves = game.GetMoves();
             return moves[random.Next(0, moves.Count)];

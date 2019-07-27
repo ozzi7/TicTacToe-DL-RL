@@ -16,67 +16,53 @@ namespace TicTacToe_DL_RL
         public int weightsID = -1;
         private Hashtable hashtable = new Hashtable();
 
-        // params
-        const int gameboardWidth = 5;
-        const int gameboardHeight = 5;
-        const int filterWidth = 3;
-        const int filterHeight = 3;
-        const int nofInputPlanes = 3; // = input channels, 2 plane is board 5x5 for each player + 1 plane color 5x5
-        const int nofOutputPolicies = 25; // policy net has 25 outputs (1 per potential move)
-        const int nofOutputValues = 1; // value head has 1 output
-        const int nofFilters = 32; //64- the convolution layer has 64 filters
-        const int nofConvLayers = 13; // 13- currently 13 conv layers, 1 input, 2 in each of 6 residual layers
-        const int nofResidualLayers = 6; // 6- half of (conv-1), 1 conv layer is for input (heads are seperate)
-        const int nofPolicyFilters = 32; // 32- for some reason we only want 32 planes in policy/value heads (the input to is 64 and
-        const int nofValueFilters = 32; //32- conv makes it 32) [cheat sheet alphazero go -> 2]
-        const int valueHiddenLayerSize = 32; // was 128
         const float softmaxTemperature = 1.0f;
 
         // for input layer
-        public float[] input = new float[nofInputPlanes * gameboardHeight * gameboardWidth]; // input to complete NN
-        public float[] outputConvFilter = new float[nofFilters * gameboardHeight * gameboardWidth];
-        public float[] firstConvFilterWeights = new float[nofFilters* nofInputPlanes * filterHeight * filterWidth]; // weights
+        public float[] input = new float[GameProperties.INPUT_PLANES * GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH]; // input to complete NN
+        public float[] outputConvFilter = new float[Params.FILTERS * GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH];
+        public float[] firstConvFilterWeights = new float[Params.FILTERS* GameProperties.INPUT_PLANES * Params.FILTER_HEIGHT * Params.FILTER_WIDTH]; // weights
 
         // for residual tower
-        public float[] inputResidualLayer = new float[nofFilters * gameboardHeight * gameboardWidth]; // input to residual layer
-        public float[] outputResidualLayer = new float[nofFilters * gameboardHeight * gameboardWidth];
-        public float[] temporary = new float[nofFilters * gameboardHeight * gameboardWidth];
-        public float[] convFilterWeights = new float[(nofConvLayers-1) * nofFilters * nofFilters * filterHeight * filterWidth]; // weights
+        public float[] inputResidualLayer = new float[Params.FILTERS * GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH]; // input to residual layer
+        public float[] outputResidualLayer = new float[Params.FILTERS * GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH];
+        public float[] temporary = new float[Params.FILTERS * GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH];
+        public float[] convFilterWeights = new float[(Params.CONV_LAYERS-1) * Params.FILTERS * Params.FILTERS * Params.FILTER_HEIGHT * Params.FILTER_WIDTH]; // weights
 
         // for policy layer
-        public float[] convWeightsPolicy = new float[nofPolicyFilters* nofFilters]; // the filters work on noffilters input layers, they are 1x1 and there are nofpolicyplanes filters
-        public float[] BNMeansPolicy = new float[nofPolicyFilters]; // weights UNTRAINABLE
-        public float[] BNStddevPolicy = new float[nofPolicyFilters]; // weights UNTRAINABLE
-        public float[] BNBetaPolicy = new float[nofPolicyFilters];
-        public float[] BNGammaPolicy = new float[nofPolicyFilters];
-        public float[] policyConnectionWeights = new float[gameboardHeight * gameboardWidth* nofPolicyFilters * nofOutputPolicies]; // weights
-        public float[] policyBiases = new float[nofOutputPolicies]; // weights
-        public float[] inputFCLayerPolicy = new float[nofPolicyFilters * gameboardHeight* gameboardWidth];
-        public float[] outputPolicyData = new float[nofOutputPolicies];
+        public float[] convWeightsPolicy = new float[Params.POLICY_FILTERS* Params.FILTERS]; // the filters work on Params.FILTERS input layers, they are 1x1 and there are nofpolicyplanes filters
+        public float[] BNMeansPolicy = new float[Params.POLICY_FILTERS]; // weights UNTRAINABLE
+        public float[] BNStddevPolicy = new float[Params.POLICY_FILTERS]; // weights UNTRAINABLE
+        public float[] BNBetaPolicy = new float[Params.POLICY_FILTERS];
+        public float[] BNGammaPolicy = new float[Params.POLICY_FILTERS];
+        public float[] policyConnectionWeights = new float[GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH* Params.POLICY_FILTERS * GameProperties.OUTPUT_POLICIES]; // weights
+        public float[] policyBiases = new float[GameProperties.OUTPUT_POLICIES]; // weights
+        public float[] inputFCLayerPolicy = new float[Params.POLICY_FILTERS * GameProperties.GAMEBOARD_HEIGHT* GameProperties.GAMEBOARD_WIDTH];
+        public float[] outputPolicyData = new float[GameProperties.OUTPUT_POLICIES];
 
         // for value layer
-        public float[] convWeightsValue1 = new float[nofValueFilters * nofFilters]; // 1x1 filters, 1 of them for 64 input planes // weights
-        public float[] valueConnectionWeights2 = new float[valueHiddenLayerSize]; // weights
-        public float[] BNMeansValue = new float[nofValueFilters]; // weights UNTRAINABLE
-        public float[] BNStddevValue = new float[nofValueFilters]; // weights UNTRAINABLE
-        public float[] BNBetaValue = new float[nofValueFilters];
-        public float[] BNGammaValue = new float[nofValueFilters];
-        public float[] valueConnectionWeights = new float[gameboardHeight * gameboardWidth*nofValueFilters * valueHiddenLayerSize]; // weights
-        public float[] valueBiases = new float[valueHiddenLayerSize]; // weights
+        public float[] convWeightsValue1 = new float[Params.VALUE_FILTERS * Params.FILTERS]; // 1x1 filters, 1 of them for 64 input planes // weights
+        public float[] valueConnectionWeights2 = new float[Params.VALUE_HEAD_HIDDEN_LAYER_SIZE]; // weights
+        public float[] BNMeansValue = new float[Params.VALUE_FILTERS]; // weights UNTRAINABLE
+        public float[] BNStddevValue = new float[Params.VALUE_FILTERS]; // weights UNTRAINABLE
+        public float[] BNBetaValue = new float[Params.VALUE_FILTERS];
+        public float[] BNGammaValue = new float[Params.VALUE_FILTERS];
+        public float[] valueConnectionWeights = new float[GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH*Params.VALUE_FILTERS * Params.VALUE_HEAD_HIDDEN_LAYER_SIZE]; // weights
+        public float[] valueBiases = new float[Params.VALUE_HEAD_HIDDEN_LAYER_SIZE]; // weights
         public float[] valueBiasLast = new float[1]; // weights
-        public float[] inputFCLayerValue = new float[nofValueFilters *gameboardHeight*gameboardWidth];
-        public float[] outputValueData = new float[nofValueFilters * gameboardHeight * gameboardWidth];
-        public float[] temporaryValueData = new float[valueHiddenLayerSize];
+        public float[] inputFCLayerValue = new float[Params.VALUE_FILTERS *GameProperties.GAMEBOARD_HEIGHT*GameProperties.GAMEBOARD_WIDTH];
+        public float[] outputValueData = new float[Params.VALUE_FILTERS * GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH];
+        public float[] temporaryValueData = new float[Params.VALUE_HEAD_HIDDEN_LAYER_SIZE];
 
         // for residual tower + input 
-        public float[] BNMeans = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
-        public float[] BNStddev = new float[nofConvLayers * nofFilters]; // UNTRAINABLE
+        public float[] BNMeans = new float[Params.CONV_LAYERS * Params.FILTERS]; // UNTRAINABLE
+        public float[] BNStddev = new float[Params.CONV_LAYERS * Params.FILTERS]; // UNTRAINABLE
 
-        public float[] BNBetas = new float[nofConvLayers * nofFilters];
-        public float[] BNGammas = new float[nofConvLayers * nofFilters];
+        public float[] BNBetas = new float[Params.CONV_LAYERS * Params.FILTERS];
+        public float[] BNGammas = new float[Params.CONV_LAYERS * Params.FILTERS];
 
         // output of NN
-        public float[] softmaxPolicy = new float[nofOutputPolicies];
+        public float[] softmaxPolicy = new float[GameProperties.OUTPUT_POLICIES];
         public float[] winrateOut = new float[1];
         public float winrateSigOut;
 
@@ -168,7 +154,7 @@ namespace TicTacToe_DL_RL
             BNBetas = null;
             BNGammas = null;
         }
-        public Tuple<float[], float> Predict(TicTacToePosition pos)
+        public Tuple<float[], float> Predict(GameState pos)
         {
             //if(hashtable[pos] != null)
             //{
@@ -204,7 +190,7 @@ namespace TicTacToe_DL_RL
 
             return resultTuple;
         }
-        public void PredictGPU(TicTacToePosition pos)
+        public void PredictGPU(GameState pos)
         {
             /*Not using position history, not using caching*/
 
@@ -310,26 +296,26 @@ namespace TicTacToe_DL_RL
                 }
 
                 /*Conv layer */
-                Convolution(input, outputConvFilter, firstConvFilterWeights, nofInputPlanes, nofFilters, filterWidth, filterHeight, 0);
+                Convolution(input, outputConvFilter, firstConvFilterWeights, GameProperties.INPUT_PLANES, Params.FILTERS, Params.FILTER_WIDTH, Params.FILTER_HEIGHT, 0);
 
                 /* copy to intermediate */
                 intermediateData[i] = new float[outputConvFilter.Length];
                 outputConvFilter.CopyTo(intermediateData[i], 0);
             }
             /* calculate the means and stddev..*/
-            CalculateBNMeansAndStddev(intermediateData, BNMeans, BNStddev, BATCHSIZE, nofFilters, 0);
+            CalculateBNMeansAndStddev(intermediateData, BNMeans, BNStddev, BATCHSIZE, Params.FILTERS, 0);
 
             // ..apply means and stddev..
             for (int i = 0; i < BATCHSIZE; ++i)
             {
-                BN(intermediateData[i], inputResidualLayer, BNMeans, BNStddev, nofFilters, 0, BNGammas, BNBetas);
+                BN(intermediateData[i], inputResidualLayer, BNMeans, BNStddev, Params.FILTERS, 0, BNGammas, BNBetas);
                 intermediateData[i] = new float[inputResidualLayer.Length];
                 inputResidualLayer.CopyTo(intermediateData[i], 0);
             }
 
             // ---------------------------------- residual tower -------------------------------------------
             // residual tower
-            for (int index = 0; index < nofResidualLayers; index += 1)
+            for (int index = 0; index < Params.RES_LAYERS; index += 1)
             {
                 float[][] residualSave = new float[BATCHSIZE][];
                 for(int i = 0; i < BATCHSIZE; ++i)
@@ -341,18 +327,18 @@ namespace TicTacToe_DL_RL
                 for (int i = 0; i < BATCHSIZE; ++i)
                 {
                     // .. apply the means and stddev..
-                    Convolution(intermediateData[i], outputResidualLayer, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index * 2);
+                    Convolution(intermediateData[i], outputResidualLayer, convFilterWeights, Params.FILTERS, Params.FILTERS, Params.FILTER_WIDTH, Params.FILTER_HEIGHT, index * 2);
 
                     /* copy to intermediate */
                     intermediateData[i] = new float[outputResidualLayer.Length];
                     outputResidualLayer.CopyTo(intermediateData[i], 0);
                 }
-                CalculateBNMeansAndStddev(intermediateData, BNMeans, BNStddev, BATCHSIZE, nofFilters, index * 2+1);
+                CalculateBNMeansAndStddev(intermediateData, BNMeans, BNStddev, BATCHSIZE, Params.FILTERS, index * 2+1);
 
                 // apply the means and stddev
                 for (int i = 0; i < BATCHSIZE; ++i)
                 {
-                    BN(intermediateData[i], outputResidualLayer, BNMeans, BNStddev, nofFilters, index * 2+1, BNGammas, BNBetas);
+                    BN(intermediateData[i], outputResidualLayer, BNMeans, BNStddev, Params.FILTERS, index * 2+1, BNGammas, BNBetas);
 
                     /* copy to intermediate */
                     intermediateData[i] = new float[outputResidualLayer.Length];
@@ -361,18 +347,18 @@ namespace TicTacToe_DL_RL
 
                 for (int i = 0; i < BATCHSIZE; ++i)
                 {
-                    Convolution(intermediateData[i], temporary, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index * 2 + 1);
+                    Convolution(intermediateData[i], temporary, convFilterWeights, Params.FILTERS, Params.FILTERS, Params.FILTER_WIDTH, Params.FILTER_HEIGHT, index * 2 + 1);
 
                     /* copy to intermediate */
                     intermediateData[i] = new float[temporary.Length];
                     temporary.CopyTo(intermediateData[i], 0);
                 }
-                CalculateBNMeansAndStddev(intermediateData, BNMeans, BNStddev, BATCHSIZE, nofFilters, index * 2+2);
+                CalculateBNMeansAndStddev(intermediateData, BNMeans, BNStddev, BATCHSIZE, Params.FILTERS, index * 2+2);
 
                 // apply the means and stddev 
                 for (int i = 0; i < BATCHSIZE; ++i)
                 {
-                    BNNoRELU(intermediateData[i], outputResidualLayer, BNMeans, BNStddev, nofFilters, index * 2 +2, BNGammas, BNBetas);
+                    BNNoRELU(intermediateData[i], outputResidualLayer, BNMeans, BNStddev, Params.FILTERS, index * 2 +2, BNGammas, BNBetas);
                     AddResidual(outputResidualLayer, outputResidualLayer, residualSave[i]);
                     leakyRELU(outputResidualLayer);
 
@@ -386,24 +372,24 @@ namespace TicTacToe_DL_RL
             float[][] intermediateData2 = new float[BATCHSIZE][];
             for (int i = 0; i < BATCHSIZE; ++i)
             {
-                Convolution(intermediateData[i], outputValueData, convWeightsValue1, nofFilters, nofValueFilters, 1, 1, 0);
+                Convolution(intermediateData[i], outputValueData, convWeightsValue1, Params.FILTERS, Params.VALUE_FILTERS, 1, 1, 0);
 
                 /* copy to intermediate */
                 intermediateData2[i] = new float[outputValueData.Length];
                 outputValueData.CopyTo(intermediateData2[i], 0);
             }
-            CalculateBNMeansAndStddev(intermediateData2, BNMeansValue, BNStddevValue, BATCHSIZE, nofValueFilters, 0);
+            CalculateBNMeansAndStddev(intermediateData2, BNMeansValue, BNStddevValue, BATCHSIZE, Params.VALUE_FILTERS, 0);
 
             // ---------------------------------- policy head -------------------------------------------
             for (int i = 0; i < BATCHSIZE; ++i)
             {
-                Convolution(intermediateData[i], inputFCLayerPolicy, convWeightsPolicy, nofFilters, nofPolicyFilters, 1, 1, 0);
+                Convolution(intermediateData[i], inputFCLayerPolicy, convWeightsPolicy, Params.FILTERS, Params.POLICY_FILTERS, 1, 1, 0);
 
                 /* copy to intermediate */
                 intermediateData2[i] = new float[inputFCLayerPolicy.Length];
                 inputFCLayerPolicy.CopyTo(intermediateData2[i], 0);
             }
-            CalculateBNMeansAndStddev(intermediateData2, BNMeansPolicy, BNStddevPolicy, BATCHSIZE, nofPolicyFilters, 0);
+            CalculateBNMeansAndStddev(intermediateData2, BNMeansPolicy, BNStddevPolicy, BATCHSIZE, Params.POLICY_FILTERS, 0);
         }
         private void CalculateBNMeansAndStddev(float[][] intermediateData, float[] BN_means, float[] BN_stddev, int BATCHSIZE, int nofFilters, int index)
         {
@@ -445,30 +431,30 @@ namespace TicTacToe_DL_RL
         public Tuple<float[], float> ForwardPassCPU(float[] input)
         {
             /*Conv layer */
-            Convolution(input, outputConvFilter, firstConvFilterWeights, nofInputPlanes, nofFilters, filterWidth, filterHeight, 0);
-            BN(outputConvFilter, inputResidualLayer, BNMeans, BNStddev, nofFilters, 0, BNGammas, BNBetas);
+            Convolution(input, outputConvFilter, firstConvFilterWeights, GameProperties.INPUT_PLANES, Params.FILTERS, Params.FILTER_WIDTH, Params.FILTER_HEIGHT, 0);
+            BN(outputConvFilter, inputResidualLayer, BNMeans, BNStddev, Params.FILTERS, 0, BNGammas, BNBetas);
 
             /*Residual tower*/
-            for (int index = 0; index < nofResidualLayers; index += 1) {
-                Convolution(inputResidualLayer, outputResidualLayer, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2);
-                BN(outputResidualLayer, outputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+1, BNGammas, BNBetas);
-                Convolution(outputResidualLayer, temporary, convFilterWeights, nofFilters, nofFilters, filterWidth, filterHeight, index*2+1);
-                BNWithResidual(temporary, outputResidualLayer, inputResidualLayer, BNMeans, BNStddev, nofFilters, index*2+2, BNGammas, BNBetas);
+            for (int index = 0; index < Params.RES_LAYERS; index += 1) {
+                Convolution(inputResidualLayer, outputResidualLayer, convFilterWeights, Params.FILTERS, Params.FILTERS, Params.FILTER_WIDTH, Params.FILTER_HEIGHT, index*2);
+                BN(outputResidualLayer, outputResidualLayer, BNMeans, BNStddev, Params.FILTERS, index*2+1, BNGammas, BNBetas);
+                Convolution(outputResidualLayer, temporary, convFilterWeights, Params.FILTERS, Params.FILTERS, Params.FILTER_WIDTH, Params.FILTER_HEIGHT, index*2+1);
+                BNWithResidual(temporary, outputResidualLayer, inputResidualLayer, BNMeans, BNStddev, Params.FILTERS, index*2+2, BNGammas, BNBetas);
                 
                 // temporary holds result
                 Array.Copy(outputResidualLayer, 0, inputResidualLayer, 0, outputResidualLayer.Length);
             }
 
             /*value head*/
-            Convolution(inputResidualLayer, outputValueData, convWeightsValue1, nofFilters, nofValueFilters, 1, 1, 0);
-            BN(outputValueData, outputValueData, BNMeansValue, BNStddevValue, nofValueFilters, 0, BNGammaValue, BNBetaValue);
+            Convolution(inputResidualLayer, outputValueData, convWeightsValue1, Params.FILTERS, Params.VALUE_FILTERS, 1, 1, 0);
+            BN(outputValueData, outputValueData, BNMeansValue, BNStddevValue, Params.VALUE_FILTERS, 0, BNGammaValue, BNBetaValue);
             FCLayer(outputValueData, temporaryValueData, valueConnectionWeights, valueBiases,  true); // with rectifier
             FCLayer(temporaryValueData, winrateOut, valueConnectionWeights2, valueBiasLast, false); // 1 output, 1 bias
             winrateSigOut = (float)Math.Tanh(winrateOut[0]);
 
             /*policy head*/
-            Convolution(inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, nofFilters, nofPolicyFilters, 1, 1, 0);
-            BN(inputFCLayerPolicy, inputFCLayerPolicy, BNMeansPolicy, BNStddevPolicy, nofPolicyFilters, 0, BNGammaPolicy, BNBetaPolicy);
+            Convolution(inputResidualLayer, inputFCLayerPolicy, convWeightsPolicy, Params.FILTERS, Params.POLICY_FILTERS, 1, 1, 0);
+            BN(inputFCLayerPolicy, inputFCLayerPolicy, BNMeansPolicy, BNStddevPolicy, Params.POLICY_FILTERS, 0, BNGammaPolicy, BNBetaPolicy);
             FCLayer(inputFCLayerPolicy, outputPolicyData, policyConnectionWeights, policyBiases, false); // without rectifier
             Softmax(outputPolicyData, softmaxPolicy, softmaxTemperature);
 
@@ -482,11 +468,11 @@ namespace TicTacToe_DL_RL
             }
         }
         private void Convolution(float[] input, float[] output, float[] convWeights,
-            int nofInputPlanes, int nofFilters, int filterWidth, int filterHeight, int index)
+            int inputPlanes, int nofFilters, int filterWidth, int filterHeight, int index)
         {
-            // convolution on gameboard_width*gameboardHeight*depth
-            // with nofFilters filters of filterWidth*filterHeight*nofInputPlanes size
-            // resulting in gameboard_width*gameboardHeight*x volume
+            // convolution on GAMEBOARD_WIDTH*GAMEBOARD_HEIGHT*depth
+            // with nofFilters filters of filterWidth*filterHeight*inputPlanes size
+            // resulting in GAMEBOARD_WIDTH*GAMEBOARD_HEIGHT*x volume
             // zero padding
             // order for conv weights is filter, input channel, height, width == filters, channels, rows, cols ? 
             // order for input is input channel, height, width
@@ -496,11 +482,11 @@ namespace TicTacToe_DL_RL
                 output[u] = 0.0f;
             }
 
-            for (int j = 0; j < nofInputPlanes; ++j)
+            for (int j = 0; j < inputPlanes; ++j)
             {
-                for (int k = 0; k < gameboardHeight; ++k)
+                for (int k = 0; k < GameProperties.GAMEBOARD_HEIGHT; ++k)
                 {
-                    for (int l = 0; l < gameboardWidth; ++l)
+                    for (int l = 0; l < GameProperties.GAMEBOARD_WIDTH; ++l)
                     {
                         // looking at a 1x1x1 of the input here, we sum up the 3x3 neighbors (depending on filter size)
                         int x = Math.Max(filterHeight / 2 - k, 0);
@@ -511,25 +497,25 @@ namespace TicTacToe_DL_RL
                                 for (int i = 0; i < nofFilters; ++i)
                                 {
                                     // going through the neighbors
-                                    if (k - filterHeight / 2 + x < 0 || k - filterHeight / 2 + x >= gameboardHeight ||
-                                    l - filterWidth / 2 + y < 0 || l - filterWidth / 2 + y >= gameboardWidth)
+                                    if (k - filterHeight / 2 + x < 0 || k - filterHeight / 2 + x >= GameProperties.GAMEBOARD_HEIGHT ||
+                                    l - filterWidth / 2 + y < 0 || l - filterWidth / 2 + y >= GameProperties.GAMEBOARD_WIDTH)
                                     {
                                         // the filter is out of bounds, set to 0 (0 padding)
                                         continue;
                                     }
                                     // when input value is 0 skip all filters
-                                    if (input[j * gameboardHeight * gameboardWidth + k * gameboardWidth + l
-                                        + (x - (filterHeight / 2)) * gameboardWidth + y - (filterWidth / 2)] == 0.0f)
+                                    if (input[j * GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH + k * GameProperties.GAMEBOARD_WIDTH + l
+                                        + (x - (filterHeight / 2)) * GameProperties.GAMEBOARD_WIDTH + y - (filterWidth / 2)] == 0.0f)
                                     {
                                         break;
                                     }
 
-                                    output[i * gameboardHeight * gameboardWidth + k * gameboardWidth + l] +=
-                                        input[j * gameboardHeight * gameboardWidth + k * gameboardWidth + l
-                                        + (x - (filterHeight / 2)) * gameboardWidth + y - (filterWidth / 2)] *
+                                    output[i * GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH + k * GameProperties.GAMEBOARD_WIDTH + l] +=
+                                        input[j * GameProperties.GAMEBOARD_HEIGHT * GameProperties.GAMEBOARD_WIDTH + k * GameProperties.GAMEBOARD_WIDTH + l
+                                        + (x - (filterHeight / 2)) * GameProperties.GAMEBOARD_WIDTH + y - (filterWidth / 2)] *
                                         convWeights[
-                                            index * nofFilters * nofInputPlanes * filterHeight * filterWidth +
-                                            i * nofInputPlanes * filterHeight * filterWidth +
+                                            index * nofFilters * inputPlanes * filterHeight * filterWidth +
+                                            i * inputPlanes * filterHeight * filterWidth +
                                             j * filterHeight * filterWidth +
                                             x * filterWidth + y];
                                 }
@@ -591,7 +577,7 @@ namespace TicTacToe_DL_RL
         {
             for (int i = 0; i < nofFilters; ++i)
             {
-                for (int j = 0; j < gameboardWidth * gameboardHeight; ++j)
+                for (int j = 0; j < GameProperties.GAMEBOARD_WIDTH * GameProperties.GAMEBOARD_HEIGHT; ++j)
                 {
                     // batch norm/ batch stddev
                     float x_til = (float)((input[i * input.Length / nofFilters + j] - BNMeans[index * nofFilters + i]) /
@@ -608,11 +594,13 @@ namespace TicTacToe_DL_RL
         }
         private void AddResidual(float[] input, float[] output, float[] residual)
         {
-            for (int i = 0; i < nofFilters; ++i)
+            for (int i = 0; i < Params.FILTERS; ++i)
             {
-                for (int j = 0; j < gameboardWidth * gameboardHeight; ++j)
+                for (int j = 0; j < GameProperties.GAMEBOARD_WIDTH * GameProperties.GAMEBOARD_HEIGHT; ++j)
                 {
-                    output[i * gameboardWidth * gameboardHeight + j] = input[i * gameboardWidth * gameboardHeight + j] + residual[i * gameboardWidth * gameboardHeight + j];
+                    output[i * GameProperties.GAMEBOARD_WIDTH * GameProperties.GAMEBOARD_HEIGHT + j] =
+                        input[i * GameProperties.GAMEBOARD_WIDTH * GameProperties.GAMEBOARD_HEIGHT + j] + 
+                        residual[i * GameProperties.GAMEBOARD_WIDTH * GameProperties.GAMEBOARD_HEIGHT + j];
                 }
             }
         }
@@ -785,52 +773,52 @@ namespace TicTacToe_DL_RL
                 firstConvFilterWeights[i] = weights[count];
                 count++;
             }
-            for (int i = 0; i < nofFilters; ++i)
+            for (int i = 0; i < Params.FILTERS; ++i)
             {
                 BNGammas[i] = weights[count];
                 count++;
             }
-            for (int i = 0; i < nofFilters; ++i)
+            for (int i = 0; i < Params.FILTERS; ++i)
             {
                 BNBetas[i] = weights[count];
                 count++;
             }
-            for (int i = 0; i < nofFilters; ++i)
+            for (int i = 0; i < Params.FILTERS; ++i)
             {
                 BNMeans[i] = weights[count];
                 count++;
             }
-            for (int i = 0; i < nofFilters; ++i)
+            for (int i = 0; i < Params.FILTERS; ++i)
             {
                 BNStddev[i] = (float)Math.Sqrt(Params.EPS + weights[count]);
                 count++;
             }
 
-            for(int j = 0; j < nofResidualLayers*2; ++j)
+            for(int j = 0; j < Params.RES_LAYERS*2; ++j)
             {
-                for (int i = 0; i < nofFilters * filterHeight * filterWidth * nofFilters; ++i)
+                for (int i = 0; i < Params.FILTERS * Params.FILTER_HEIGHT * Params.FILTER_WIDTH * Params.FILTERS; ++i)
                 {
-                    convFilterWeights[j * nofFilters * nofFilters * filterHeight * filterWidth + i] = weights[count];
+                    convFilterWeights[j * Params.FILTERS * Params.FILTERS * Params.FILTER_HEIGHT * Params.FILTER_WIDTH + i] = weights[count];
                     count++;
                 }
-                for (int i = 0; i < nofFilters; ++i)
+                for (int i = 0; i < Params.FILTERS; ++i)
                 {
-                    BNGammas[j*(nofFilters)+i+nofFilters] = weights[count];
+                    BNGammas[j*(Params.FILTERS)+i+Params.FILTERS] = weights[count];
                     count++;
                 }
-                for (int i = 0; i < nofFilters; ++i)
+                for (int i = 0; i < Params.FILTERS; ++i)
                 {
-                    BNBetas[j * (nofFilters) + i + nofFilters] = weights[count];
+                    BNBetas[j * (Params.FILTERS) + i + Params.FILTERS] = weights[count];
                     count++;
                 }
-                for (int i = 0; i < nofFilters; ++i)
+                for (int i = 0; i < Params.FILTERS; ++i)
                 {
-                    BNMeans[j * (nofFilters) + i + nofFilters] = weights[count];
+                    BNMeans[j * (Params.FILTERS) + i + Params.FILTERS] = weights[count];
                     count++;
                 }
-                for (int i = 0; i < nofFilters; ++i)
+                for (int i = 0; i < Params.FILTERS; ++i)
                 {
-                    BNStddev[j * (nofFilters) + i + nofFilters] = (float)Math.Sqrt(Params.EPS + weights[count]);
+                    BNStddev[j * (Params.FILTERS) + i + Params.FILTERS] = (float)Math.Sqrt(Params.EPS + weights[count]);
                     count++;
                 }
             }

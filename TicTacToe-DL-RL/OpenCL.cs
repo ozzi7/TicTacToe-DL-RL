@@ -24,7 +24,8 @@ namespace TicTacToe_DL_RL
         public static ChannelReader<Job> reader; 
 
         // for input layer
-        public static float[] input = new float[Params.MAX_PARALLEL_KERNEL_EXECUTIONS*3*25];
+        public static float[] input = new float[Params.MAX_PARALLEL_KERNEL_EXECUTIONS*GameProperties.INPUT_PLANES*
+            GameProperties.GAMEBOARD_WIDTH*GameProperties.GAMEBOARD_HEIGHT];
         public static List<float> firstConvFilterWeights = new List<float>();
         public static int[] weightIDs = new int[Params.MAX_PARALLEL_KERNEL_EXECUTIONS];
         public static int[] globalIDs = new int[Params.MAX_PARALLEL_KERNEL_EXECUTIONS];
@@ -60,7 +61,7 @@ namespace TicTacToe_DL_RL
         public static List<float> BNGammas = new List<float>();
 
         // output of NN
-        public static float[] output = new float[(Params.MAX_PARALLEL_KERNEL_EXECUTIONS) *26];
+        public static float[] output = new float[(Params.MAX_PARALLEL_KERNEL_EXECUTIONS) *(GameProperties.OUTPUT_POLICIES+1)];
 
         // opencl buffers
         static private ComputeBuffer<float> CB_input;
@@ -172,7 +173,7 @@ namespace TicTacToe_DL_RL
                     for (int i = 0; i < nofInputsFound; ++i)
                     {
                         Job job = new Job();
-                        for (int j = 0; j < 26; ++j)
+                        for (int j = 0; j < (GameProperties.OUTPUT_POLICIES+1); ++j)
                         {
                             job.output.Add(output[outputCount]);
                             outputCount++;
@@ -421,7 +422,7 @@ namespace TicTacToe_DL_RL
             CB_convFilterWeights = new ComputeBuffer<float>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, convFilterWeights.ToArray());
 
             CB_networkIndex = new ComputeBuffer<int>(context, ComputeMemoryFlags.ReadOnly | ComputeMemoryFlags.CopyHostPointer, weightIDs.ToArray());
-            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly, Params.MAX_PARALLEL_KERNEL_EXECUTIONS*26); // only specify length
+            CB_output = new ComputeBuffer<float>(context, ComputeMemoryFlags.WriteOnly, Params.MAX_PARALLEL_KERNEL_EXECUTIONS*(GameProperties.OUTPUT_POLICIES+1)); // only specify length
 
             try
             {
