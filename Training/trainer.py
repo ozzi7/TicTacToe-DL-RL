@@ -90,10 +90,3 @@ class Trainer():
                 print(np.transpose(layer, (0, 3, 1, 2)).flatten(order='C'))
             except:
                 print(layer)
-
-        prediction = self.nnet.model.predict([input])
-        np.set_printoptions(threshold=np.inf)
-        np.set_printoptions(suppress=True)
-        print("Output: ")
-        print(prediction[0])
-        print(prediction[1])

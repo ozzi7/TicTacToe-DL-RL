@@ -57,11 +57,11 @@ def read_samples(filename):
                     move = moves[i]
 
                     if player == 1:
-                        input[move[1],move[0], 1] = 1 # x, y, channel
+                        input[move[0],move[1], 1] = 1 # y, x, channel
                         input[:, :,2].fill(1)
 
                     elif player == -1:
-                        input[move[1], move[0],0] = 1
+                        input[move[0], move[1],0] = 1
                         input[:, :,2].fill(0)
 
                     inputs.append(np.copy(input))
@@ -121,4 +121,4 @@ if __name__ == '__main__':
     #trainer.train(inputs,output_values,output_policies)
     input("Press Enter to continue...")
     #(inputs, output_values, output_policies) = read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1])
-    #trainer.predict([inputs[0]])
+    #trainer.predict([inputs[7]])

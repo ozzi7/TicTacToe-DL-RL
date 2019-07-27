@@ -25,10 +25,13 @@ namespace TicTacToe_DL_RL
         public List<Tuple<int, int>> GetMoves()
         {
             List<Tuple<int, int>> moves = new List<Tuple<int, int>>();
-            for (int i = 0; i < Params.boardSizeY; ++i)
-                for (int j = 0; j < Params.boardSizeX; ++j)
-                    if (position.gameBoard[i, j] == 0)
-                        moves.Add(Tuple.Create(i, j));
+            if (!IsOver())
+            {
+                for (int i = 0; i < Params.boardSizeY; ++i)
+                    for (int j = 0; j < Params.boardSizeX; ++j)
+                        if (position.gameBoard[i, j] == 0)
+                            moves.Add(Tuple.Create(i, j));
+            }
             return moves;
         }
         public int GetScore()
@@ -70,10 +73,10 @@ namespace TicTacToe_DL_RL
             {
                 position.score = position.sideToMove == Player.X ? -1 : 1;
             }
-            else if (IsFullyOccupied())
-            {
-                position.score = 0;
-            }
+            //else if (IsFullyOccupied())
+            //{
+            //    position.score = 0;
+            //}
         }
 
         /// <summary>
