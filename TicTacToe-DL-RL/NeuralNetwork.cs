@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace TicTacToe_DL_RL
 {
-    class NeuralNetwork
+    public class NeuralNetwork
     {
         public int globalID = -1;
         public int weightsID = -1;
@@ -167,23 +167,23 @@ namespace TicTacToe_DL_RL
             Array.Clear(input,0, input.Length);
 
             // set nn input
-            for (int i = 0; i < Params.boardSizeY; ++i)
+            for (int i = 0; i < GameProperties.BOARD_SIZE_Y; ++i)
             {
-                for (int j = 0; j < Params.boardSizeX; ++j)
+                for (int j = 0; j < GameProperties.BOARD_SIZE_X; ++j)
                 {
                     if (pos.gameBoard[i, j] == 1)
                     {
-                        input[i * Params.boardSizeX + j] = 1;
+                        input[i * GameProperties.BOARD_SIZE_X + j] = 1;
                     }
                     else if (pos.gameBoard[i, j] == -1)
                     {
-                        input[Params.boardSizeY * Params.boardSizeX + i * Params.boardSizeX + j] = 1;
+                        input[GameProperties.BOARD_SIZE_Y * GameProperties.BOARD_SIZE_X + i * GameProperties.BOARD_SIZE_X + j] = 1;
                     }
                 }
             }
-            for (int i = 0; i < Params.boardSizeY * Params.boardSizeX; ++i)
+            for (int i = 0; i < GameProperties.BOARD_SIZE_Y * GameProperties.BOARD_SIZE_X; ++i)
             {   // whose turn it is
-                input[Params.boardSizeY * Params.boardSizeX * 2 + i] = pos.sideToMove == Player.X ? 1 : 0;
+                input[GameProperties.BOARD_SIZE_Y * GameProperties.BOARD_SIZE_X * 2 + i] = pos.sideToMove == Player.X ? 1 : 0;
             }
             Tuple<float[], float> resultTuple = ForwardPassCPU(input);
             //hashtable.Add(pos, resultTuple);
@@ -197,24 +197,24 @@ namespace TicTacToe_DL_RL
             Array.Clear(input, 0, input.Length);
 
             // set nn input
-            for (int i = 0; i < Params.boardSizeY; ++i)
+            for (int i = 0; i < GameProperties.BOARD_SIZE_Y; ++i)
             {
-                for (int j = 0; j < Params.boardSizeX; ++j)
+                for (int j = 0; j < GameProperties.BOARD_SIZE_X; ++j)
                 {
                     if (pos.gameBoard[i, j] == 1)
                     {
-                        input[i * Params.boardSizeX + j] = 1;
+                        input[i * GameProperties.BOARD_SIZE_X + j] = 1;
                     }
                     else if (pos.gameBoard[i, j] == -1)
                     {
-                        input[Params.boardSizeY * Params.boardSizeX + i * Params.boardSizeX + j] = 1;
+                        input[GameProperties.BOARD_SIZE_Y * GameProperties.BOARD_SIZE_X + i * GameProperties.BOARD_SIZE_X + j] = 1;
                     }
                 }
             }
 
-            for (int i = 0; i < Params.boardSizeY * Params.boardSizeX; ++i)
+            for (int i = 0; i < GameProperties.BOARD_SIZE_Y * GameProperties.BOARD_SIZE_X; ++i)
             {   // whose turn it is
-                input[Params.boardSizeY * Params.boardSizeX * 2 + i] = pos.sideToMove == Player.X ? 1 : 0;
+                input[GameProperties.BOARD_SIZE_Y * GameProperties.BOARD_SIZE_X * 2 + i] = pos.sideToMove == Player.X ? 1 : 0;
             }
 
             Job job = new Job();
@@ -280,7 +280,7 @@ namespace TicTacToe_DL_RL
             {
                 /* generate input sample */
                 // set nn input
-                for (int k = 0; k < Params.boardSizeX * Params.boardSizeY; ++k)
+                for (int k = 0; k < GameProperties.BOARD_SIZE_X * GameProperties.BOARD_SIZE_Y; ++k)
                 {   // the board itself
                     int rand = RandomGen2.Next(-1, 2);
                     if (rand == 1)
@@ -290,9 +290,9 @@ namespace TicTacToe_DL_RL
                 }
 
                 int sideToMove = RandomGen2.Next(0, 2);
-                for (int k = 0; k < Params.boardSizeX * Params.boardSizeY; ++k)
+                for (int k = 0; k < GameProperties.BOARD_SIZE_X * GameProperties.BOARD_SIZE_Y; ++k)
                 {   // whose turn it is
-                    input[Params.boardSizeX * Params.boardSizeY*2 + k] = sideToMove;
+                    input[GameProperties.BOARD_SIZE_X * GameProperties.BOARD_SIZE_Y*2 + k] = sideToMove;
                 }
 
                 /*Conv layer */

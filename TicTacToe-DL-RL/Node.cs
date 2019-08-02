@@ -21,7 +21,7 @@ namespace TicTacToe_DL_RL
         public float visits = 0;
         public List<float> nn_policy = null;
         public float nn_value = 0.0f;
-        public int moveIndex = -1; // to find the correct policy value for this node
+        public int moveIndex = -1; // to find the correct policy for this node in the parent node
         public float score_sum = 0.0f; // from -inf to inf, where values > 0 => X is winning
         public float q_value = 0.0f; // ~ winrate
         public int virtualVisits = 0; // a pending NN eval increases this

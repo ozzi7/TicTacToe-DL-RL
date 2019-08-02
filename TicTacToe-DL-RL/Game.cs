@@ -15,8 +15,13 @@ namespace TicTacToe_DL_RL
         public const int GAMEBOARD_HEIGHT = 5;
         public const int INPUT_PLANES = 3;
         public const int OUTPUT_POLICIES = 25;
+        public const int MOVES_IN_START_POS = 25;
+
+        public const int MAXIMUM_PLYS = 1337; // meaning the game is always finished to the end (>= 25)
+        public const int BOARD_SIZE_Y = 5;
+        public const int BOARD_SIZE_X = 5;
     }
-    class Game
+    public class Game
     {
         public GameState position;
 
@@ -33,8 +38,8 @@ namespace TicTacToe_DL_RL
             List<Tuple<int, int>> moves = new List<Tuple<int, int>>();
             if (!IsOver())
             {
-                for (int i = 0; i < Params.boardSizeY; ++i)
-                    for (int j = 0; j < Params.boardSizeX; ++j)
+                for (int i = 0; i < GameProperties.BOARD_SIZE_Y; ++i)
+                    for (int j = 0; j < GameProperties.BOARD_SIZE_X; ++j)
                         if (position.gameBoard[i, j] == 0)
                             moves.Add(Tuple.Create(i, j));
             }
@@ -58,9 +63,9 @@ namespace TicTacToe_DL_RL
         /// <returns></returns>
         private bool isDraw()
         {
-            for(int i = 0; i < Params.boardSizeY; ++i)
+            for(int i = 0; i < GameProperties.BOARD_SIZE_Y; ++i)
             {
-                for(int j = 0; j < Params.boardSizeX; ++j)
+                for(int j = 0; j < GameProperties.BOARD_SIZE_X; ++j)
                 {
                     if(position.gameBoard[i,j] == 0)
                     {
@@ -172,7 +177,7 @@ namespace TicTacToe_DL_RL
     /// <summary>
     /// Stores a complete state of the game
     /// </summary>
-    class GameState
+    public class GameState
     {
         // [Y coord, X coord]
         public int[,] gameBoard = new int[5, 5] { { 0, 0, 0, 0, 0 }, 
@@ -193,9 +198,9 @@ namespace TicTacToe_DL_RL
         public GameState(GameState aPosition)
         {
             //gameBoard = aPosition.gameBoard.Clone() as int[,];
-            for (int i = 0; i < Params.boardSizeY; ++i)
+            for (int i = 0; i < GameProperties.BOARD_SIZE_Y; ++i)
             {
-                for (int j = 0; j < Params.boardSizeX; ++j)
+                for (int j = 0; j < GameProperties.BOARD_SIZE_X; ++j)
                 {
                     gameBoard[i, j] = aPosition.gameBoard[i, j];
                 }
@@ -207,25 +212,25 @@ namespace TicTacToe_DL_RL
             String returnString = "Side to move: " + sideToMove + "\n";
             returnString += "Board score: " + score + "\n\n";
 
-            String boardString =
-                gameBoard[0, 0] + " " + gameBoard[0, 1] + " " + gameBoard[0, 2] + " " + gameBoard[0, 3] + " " + gameBoard[0, 4] + "\n" +
-                gameBoard[1, 0] + " " + gameBoard[1, 1] + " " + gameBoard[1, 2] + " " + gameBoard[1, 3] + " " + gameBoard[1, 4] + "\n" +
-                gameBoard[2, 0] + " " + gameBoard[2, 1] + " " + gameBoard[2, 2] + " " + gameBoard[2, 3] + " " + gameBoard[2, 4] + "\n" +
-                gameBoard[3, 0] + " " + gameBoard[3, 1] + " " + gameBoard[3, 2] + " " + gameBoard[3, 3] + " " + gameBoard[3, 4] + "\n" +
-                gameBoard[4, 0] + " " + gameBoard[4, 1] + " " + gameBoard[4, 2] + " " + gameBoard[4, 3] + " " + gameBoard[4, 4] + "\n";
+            String boardString = 
+                "a " + gameBoard[0, 0] + " " + gameBoard[0, 1] + " " + gameBoard[0, 2] + " " + gameBoard[0, 3] + " " + gameBoard[0, 4] + "\n" +
+                "b " + gameBoard[1, 0] + " " + gameBoard[1, 1] + " " + gameBoard[1, 2] + " " + gameBoard[1, 3] + " " + gameBoard[1, 4] + "\n" +
+                "c " + gameBoard[2, 0] + " " + gameBoard[2, 1] + " " + gameBoard[2, 2] + " " + gameBoard[2, 3] + " " + gameBoard[2, 4] + "\n" +
+                "d " + gameBoard[3, 0] + " " + gameBoard[3, 1] + " " + gameBoard[3, 2] + " " + gameBoard[3, 3] + " " + gameBoard[3, 4] + "\n" +
+                "e " + gameBoard[4, 0] + " " + gameBoard[4, 1] + " " + gameBoard[4, 2] + " " + gameBoard[4, 3] + " " + gameBoard[4, 4] + "\n";
             boardString = boardString.Replace("-1", "Z");
             boardString = boardString.Replace("1", "X");
             boardString = boardString.Replace("0", ".");
-
+            boardString = "  0 1 2 3 4\n" + boardString;
             return returnString + boardString + "\n";
         }
         public override int GetHashCode()
         {
             int hash = 0;
             int index = 1;
-            for (int i = 0; i < Params.boardSizeY; ++i)
+            for (int i = 0; i < GameProperties.BOARD_SIZE_Y; ++i)
             {
-                for (int j = 0; j < Params.boardSizeX; ++j)
+                for (int j = 0; j < GameProperties.BOARD_SIZE_X; ++j)
                 {
                     hash = hash + (gameBoard[i, j]*(int)Math.Pow(index,2)); // convert -1,0,1 to 0,1,2
                 }

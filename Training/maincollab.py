@@ -109,7 +109,7 @@ if __name__ == '__main__':
     for file in files:
         if count < MAX_FILES:
             print(file)
-            inputs_t,output_values_t, output_policies_t = read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + file)
+            inputs_t,output_values_t, output_policies_t = read_samples(file)
             inputs.extend(inputs_t)
             output_values.extend(output_values_t)
             output_policies.extend(output_policies_t)
@@ -119,7 +119,5 @@ if __name__ == '__main__':
     #trainer.save_init_weights()
     #trainer.test_plot(inputs,output_values,output_policies)
     trainer.train(inputs,output_values,output_policies)
-    ##input("Press Enter to continue...")
-    #input("Press Enter to continue...")
     #(inputs, output_values, output_policies) = read_samples(r'Z:/CloudStation/GitHub Projects/TicTacToe-DL-RL/Training/' + sys.argv[1])
-    #trainer.predict([inputs[7]])
+    #trainer.predict([inputs[0]])

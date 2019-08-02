@@ -46,7 +46,7 @@ namespace TicTacToe_DL_RL
         public static int SAVE_WEIGHT_EVERY_XTH_EPOCH = 20;
 
         // BP only
-        public static int NOF_GAMES_TRAIN_KERAS = 2048; // multiple of threads
+        public static int NOF_GAMES_TRAIN_KERAS = 4096; // multiple of threads
         public static int STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING = 8;
         public static int STOCHASTIC_MOVES_FIRST_X_MOVES_TESTING = 4;
 
@@ -66,10 +66,5 @@ namespace TicTacToe_DL_RL
         public static float DIRICHLET_NOISE_WEIGHT;
         public static bool USE_REAL_TERMINAL_VALUES = true;
         public static String PLOT_FILENAME = "plotdata.txt";
-
-        // GAME SPECIFIC 
-        public static int MAXIMUM_PLYS = 100; // for games which take too long to cut them off, tictactoe is done after <= 25 moves always 
-        public static int boardSizeX = 5;
-        public static int boardSizeY = 5;
     }
 }
