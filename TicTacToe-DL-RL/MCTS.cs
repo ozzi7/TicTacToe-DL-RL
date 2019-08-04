@@ -126,7 +126,7 @@ namespace TicTacToe_DL_RL
                 policy[i * GameProperties.GAMEBOARD_WIDTH + 3].ToString("0.000") + " " +
                 policy[i * GameProperties.GAMEBOARD_WIDTH + 4].ToString("0.000"));
             }
-            Console.WriteLine("Value " + rootNode.q_value);
+            Console.WriteLine("Value " + (-1)*rootNode.q_value);
         }
         public void DoMove(Tuple<int,int> move)
         {

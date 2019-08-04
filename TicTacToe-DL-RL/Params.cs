@@ -54,14 +54,14 @@ namespace TicTacToe_DL_RL
         public static int NOF_EPOCHS = 10000000;
         public static int NOF_GAMES_TEST = 64; // must be 2n for equal tests of player X and player Z
         public static int NOF_GAMES_VS_RANDOM = 16;
-        public static int NOF_SIMS_PER_MOVE_TRAINING = 100;
-        public static int NOF_SIMS_PER_MOVE_TESTING = 100;
+        public static int NOF_SIMS_PER_MOVE_TRAINING = 200;
+        public static int NOF_SIMS_PER_MOVE_TESTING = 200;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;
         public static float C_PUCT = 1.0f;
 
-        public static float MINIMUM_WIN_PERCENTAGE = 52.0f; // new networks must win at least x percent against old
+        public static float MINIMUM_WIN_PERCENTAGE = 50.0f; // new networks must win at least x percent against old
 
         public static float DIRICHLET_NOISE_WEIGHT;
         public static bool USE_REAL_TERMINAL_VALUES = true;

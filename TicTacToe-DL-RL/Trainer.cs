@@ -36,10 +36,6 @@ namespace TicTacToe_DL_RL
         public Trainer(NeuralNetwork aCurrentNN)
         {
             currentNN = aCurrentNN;
-
-            if (File.Exists(Params.PLOT_FILENAME))
-                File.Delete(Params.PLOT_FILENAME);
-            
             OpenCL.Init(Math.Max(Params.NOF_CPU_THREADS_GPU_WORKLOAD*2, Math.Max(Params.NOF_GAMES_TEST*2, Params.NOF_OFFSPRING * 2)));
         }
         /// <summary>
@@ -63,7 +59,7 @@ namespace TicTacToe_DL_RL
         /// </summary>
         public void TrainKeras()
         {
-            bool continuewithpreviousrun = false;
+            bool continuewithpreviousrun = true;
 
             bestNN = new NeuralNetwork(currentNN.weights);
             printNNOutputs(bestNN);
@@ -75,7 +71,6 @@ namespace TicTacToe_DL_RL
                 Params.GPU_ENABLED = false;
 
                 CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM);
-                Params.GPU_ENABLED = true;
 
                 WritePlotStatistics();
             }
@@ -87,8 +82,9 @@ namespace TicTacToe_DL_RL
 
                     //// #################################### CREATE NEW TRAINING GAMES ##########################################
 
-                    Params.DIRICHLET_NOISE_WEIGHT = 0.1f; // 0.2
+                    Params.DIRICHLET_NOISE_WEIGHT = 0.2f; 
                     Params.USE_REAL_TERMINAL_VALUES = true;
+                    Params.GPU_ENABLED = true;
                     ProduceTrainingGamesKeras(bestNN, Params.NOF_GAMES_TRAIN_KERAS);
 
                     // ##################################### TRAIN NETWORK WEIGHTS ############################################
@@ -136,6 +132,9 @@ namespace TicTacToe_DL_RL
 
                     bestNN = new NeuralNetwork(currentNN.weights);
 
+                    Params.DIRICHLET_NOISE_WEIGHT = 0.0f;
+                    Params.USE_REAL_TERMINAL_VALUES = true;
+                    Params.GPU_ENABLED = false;
                     CheckPerformanceVsRandomKeras(bestNN, Params.NOF_GAMES_VS_RANDOM);
                 }
 

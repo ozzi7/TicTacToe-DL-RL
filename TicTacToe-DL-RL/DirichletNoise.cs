@@ -15,7 +15,7 @@ namespace TicTacToe_DL_RL
         {
             // assume 10 random sims, 25 potential moves => 10/25
             //float init = 10.0f / nofChildren;
-            float init = 10.0f / GameProperties.MOVES_IN_START_POS;
+            float init = 10.0f / GameProperties.MOVES_IN_START_POS; // small number => sharper distribution
             double[] alphaInit = new double[nofChildren];
 
             for (int i = 0; i < nofChildren; ++i)
