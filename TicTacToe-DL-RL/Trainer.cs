@@ -59,7 +59,7 @@ namespace TicTacToe_DL_RL
         /// </summary>
         public void TrainKeras()
         {
-            bool continuewithpreviousrun = true;
+            bool continuewithpreviousrun = false;
 
             bestNN = new NeuralNetwork(currentNN.weights);
             printNNOutputs(bestNN);
@@ -1014,16 +1014,16 @@ namespace TicTacToe_DL_RL
                 if (game.position.sideToMove == aEvaluationNetworkPlayer)
                 {
                     if(train)
-                        move = nn1Player.GetMove(game, nofSims);
+                        move = nn1Player.GetMoveStochastic(game, nofSims, 1.0f); // todo: set temp
                     else
-                        move = nn1Player.GetMoveStochastic(game, nofSims);
+                        move = nn1Player.GetMove(game, nofSims);
                 }
                 else
                 {
                     if (train)
-                        move = nn2Player.GetMove(game, nofSims);
+                        move = nn2Player.GetMoveStochastic(game, nofSims, 1.0f); // todo: set temp
                     else
-                        move = nn2Player.GetMoveStochastic(game, nofSims);
+                        move = nn2Player.GetMove(game, nofSims);
                 }
 
                 game.DoMove(move);
@@ -1059,18 +1059,18 @@ namespace TicTacToe_DL_RL
 
                 if (game.position.sideToMove == aEvaluationNetworkPlayer)
                 {
-                    if (curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING)
-                        move = nn1Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING);
+                    if (curr_ply < Params.TEMPERATURE_CUTOFF_TRAINING)
+                        move = nn1Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING, Params.TEMPERATURE);
                     else
-                        move = nn1Player.GetMove(game, Params.NOF_SIMS_PER_MOVE_TRAINING);
+                        move = nn1Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING, Params.ENDGAME_TEMPERATURE);
                     policies.Add(nn1Player.mcts.GetPolicy());
                 }
                 else
                 {
-                    if (curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING)
-                        move = nn2Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING);
+                    if (curr_ply < Params.TEMPERATURE_CUTOFF_TRAINING)
+                        move = nn2Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING, Params.TEMPERATURE);
                     else
-                        move = nn2Player.GetMove(game, Params.NOF_SIMS_PER_MOVE_TRAINING);
+                        move = nn2Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING, Params.ENDGAME_TEMPERATURE);
                     policies.Add(nn2Player.mcts.GetPolicy());
                 }
                 game.DoMove(move);
@@ -1098,18 +1098,23 @@ namespace TicTacToe_DL_RL
 
                 if (game.position.sideToMove == aEvaluationNetworkPlayer)
                 {
-                    if (train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING || !train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TESTING)
-                        move = nn1Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING);
-                    else
-                        move = nn1Player.GetMove(game, Params.NOF_SIMS_PER_MOVE_TRAINING);
+                    if (train && curr_ply < Params.TEMPERATURE_CUTOFF_TRAINING)
+                        move = nn1Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING, Params.TEMPERATURE);
+                    else if(train)
+                        move = nn1Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING, Params.ENDGAME_TEMPERATURE);
+                    else if(!train)
+                        move = nn1Player.GetMove(game, Params.NOF_SIMS_PER_MOVE_TESTING);
                 }
                 else
                 {
-                    if (train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING || !train && curr_ply < Params.STOCHASTIC_MOVES_FIRST_X_MOVES_TESTING)
-                        move = nn2Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING);
-                    else
-                        move = nn2Player.GetMove(game, Params.NOF_SIMS_PER_MOVE_TRAINING);
+                    if (train && curr_ply < Params.TEMPERATURE_CUTOFF_TRAINING)
+                        move = nn1Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING, Params.TEMPERATURE);
+                    else if (train)
+                        move = nn1Player.GetMoveStochastic(game, Params.NOF_SIMS_PER_MOVE_TRAINING, Params.ENDGAME_TEMPERATURE);
+                    else if (!train)
+                        move = nn1Player.GetMove(game, Params.NOF_SIMS_PER_MOVE_TESTING);
                 }
+
                 game.DoMove(move);
                 nn1Player.DoMove(move);
                 nn2Player.DoMove(move);

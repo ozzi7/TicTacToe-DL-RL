@@ -46,9 +46,13 @@ namespace TicTacToe_DL_RL
         public static int SAVE_WEIGHT_EVERY_XTH_EPOCH = 20;
 
         // BP only
-        public static int NOF_GAMES_TRAIN_KERAS = 4096; // multiple of threads
-        public static int STOCHASTIC_MOVES_FIRST_X_MOVES_TRAINING = 8;
-        public static int STOCHASTIC_MOVES_FIRST_X_MOVES_TESTING = 4;
+        public static int NOF_GAMES_TRAIN_KERAS = 2048; // multiple of threads
+        public static int TEMPERATURE_CUTOFF_TRAINING = 8;
+        public static int TEMPERATURE_CUTOFF_TESTING = 4;
+        public static float FPU_REDUCTION = 0.05f; // node initially gets parent eval - fpu reduction
+        public static float TEMPERATURE = 1.2f;
+        public static float ENDGAME_TEMPERATURE = 0.45f;
+        public static float FPU_AT_ROOT = 1.0f; // look at all nodes in the root (only the starting board position) because we cannot use parent value
 
         // NEUROEVOLUTION + BP PARAMS
         public static int NOF_EPOCHS = 10000000;
@@ -59,7 +63,7 @@ namespace TicTacToe_DL_RL
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM1 = 80;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM2 = 10;
         public static int NOF_SIMS_PER_MOVE_VS_RANDOM3 = 1;
-        public static float C_PUCT = 1.0f;
+        public static float C_PUCT = 1.5f;
 
         public static float MINIMUM_WIN_PERCENTAGE = 50.0f; // new networks must win at least x percent against old
 

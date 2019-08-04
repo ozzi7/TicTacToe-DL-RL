@@ -51,7 +51,7 @@ namespace TicTacToe_DL_RL
             string resultString = "Node in MCTS Tree\n\n";
 
             resultString += "Visit count: " + visits + "\n";
-            resultString += "Winrate: " + q_value + "\n";
+            resultString += "Winrate: " + (-1)*q_value + "\n";
             resultString += "NN Value: " + nn_value + "\n";
 
             if (Value != null)

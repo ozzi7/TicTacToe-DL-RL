@@ -349,8 +349,9 @@ namespace TicTacToe_DL_RL
             currRootnode.visits += 1;
             currRootnode.q_value = currRootnode.score_sum / (currRootnode.visits + currRootnode.virtualVisits);
         }
-        public int findBestChildVisitCountStochastic()
+        public int findBestChildVisitCountStochastic(float temperature)
         {
+            List<float> visits = applyTemperature(rootNode, temperature);
             float randomNr = RandomGen2.NextFloat();
 
             float probabilitySum = 0.0f;
@@ -373,12 +374,13 @@ namespace TicTacToe_DL_RL
         }
         public int findBestChildVisitCount()
         {
+            List<float> visits = applyTemperature(rootNode, 0.1f);
             float bestVisitCount = -1;
             int bestChildIndex = -1;
 
-            for (int i = 0; i < rootNode.Children.Count; ++i)
+            for (int i = 0; i < visits.Count; ++i)
             {
-                float tempVisitCount = rootNode.Children[i].visits;
+                float tempVisitCount = visits[i];
                 if (tempVisitCount > bestVisitCount)
                 {
                     bestVisitCount = tempVisitCount;
@@ -401,7 +403,6 @@ namespace TicTacToe_DL_RL
                     Node<GameState> child = new Node<GameState>(currNode);
                     child.Value = new GameState(game.position);
                     child.moveIndex = moves[i].Item1 * GameProperties.BOARD_SIZE_X + moves[i].Item2;
-                    child.q_value = -currNode.q_value - 0.1f; // 
                     currNode.AddChild(child);
                 }
             }
@@ -433,9 +434,37 @@ namespace TicTacToe_DL_RL
                 }
             }
         }
-        private void applyTemperature(Node<GameState> currNode, float temp)
+        private List<float> applyTemperature(Node<GameState> currNode, float temp)
         {
-            // a constant temp of 1 until a threshold and then 0 doesnt really need this method yet..
+            List<float> visits = new List<float>();
+            if (temp == 0)
+            {
+                float max = float.NegativeInfinity;
+                float maxIndex = -1;
+                for (int i = 0; i < currNode.Children.Count; ++i)
+                {
+                    if(currNode.Children[i].visits >= max)
+                    {
+                        max = currNode.Children[i].visits;
+                        maxIndex = i;
+                    }
+                }
+                for (int i = 0; i < currNode.Children.Count; ++i)
+                {
+                    if (i != maxIndex)
+                        visits.Add(0.0f);
+                    else
+                        visits.Add(currNode.Children[i].visits);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < currNode.Children.Count; ++i)
+                {
+                    visits.Add((float)Math.Pow(currNode.Children[i].visits, 1.0 / temp));
+                }
+            }
+            return visits;
         }
         private void calculateNNOutput(Node<GameState> currNode, NeuralNetwork NN)
         {
@@ -504,7 +533,11 @@ namespace TicTacToe_DL_RL
                     float temp_UCT_score = float.NegativeInfinity;
 
                     // q_value
-                    float childWinrate = currNode.Children[i].q_value;
+                    float childWinrate;
+                    if (currNode.Children[i].visits != 0)
+                        childWinrate = currNode.Children[i].q_value;
+                    else
+                        childWinrate = -currNode.q_value - Params.FPU_REDUCTION;
 
                     // exploration
                     float explorationTerm = 0.0f;

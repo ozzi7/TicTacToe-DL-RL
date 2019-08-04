@@ -33,11 +33,10 @@ namespace TicTacToe_DL_RL
             int best_child_index = mcts.findBestChildVisitCount();
             return moves[best_child_index];
         }
-        public Tuple<int, int> GetMoveStochastic(Game game, int nofSimsPerMove)
+        public Tuple<int, int> GetMoveStochastic(Game game, int nofSimsPerMove, float temp)
         {
             mcts.Search(nn, nofSimsPerMove);
-
-            int best_child_index = mcts.findBestChildVisitCountStochastic();
+            int best_child_index = mcts.findBestChildVisitCountStochastic(temp);
             List<Tuple<int,int>> moves = game.GetMoves();
             return moves[best_child_index];
         }
