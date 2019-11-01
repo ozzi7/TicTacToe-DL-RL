@@ -3,7 +3,8 @@ The AI uses Monte Carlo Tree Search (MCTS) and a Deep Neural Network (DNN) to gu
 It can be trained with both backpropagation (see keras/python code) or using deep neuroevolution (as per arXiv:1703.03864 [stat.ML])
 
 
-Neural Network Structure
+Neural Network Structure  
+
 Input: 5x5x3
 
 Conv. filter size: 3x3  
