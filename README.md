@@ -1,6 +1,6 @@
 Implementation of AlphaZero (see arXiv:1712.01815 [cs.AI]) for Tic-Tac-Toe on a 5x5 board (4 in a row to win). 
 The AI uses Monte Carlo Tree Search (MCTS) and a Deep Neural Network (DNN) to guide the search.
-It can be trained with both backpropagation (see keras/python code) or using deep neuroevolution (as per arXiv:1703.03864 [stat.ML])
+It can be trained with both backpropagation (see keras/python code) or using deep neuroevolution (as per arXiv:1703.03864 [stat.ML]).
 
 
 Neural Network Structure  
